@@ -1,0 +1,38 @@
+[
+  {
+    "isActive": false,
+    "balance": "$3,960.64",
+    "age": 30,
+    "eyeColor": "blue",
+    "name": "Dawn Keith",
+    "gender": "female",
+    "company": "COSMOSIS",
+    "email": "dawnkeith@cosmosis.com",
+    "phone": "+1 (839) 437-3421",
+    "address": "392 Clifford Place, Fontanelle, Arizona, 2687"
+  },
+  {
+    "isActive": false,
+    "balance": "$1,280.14",
+    "age": 31,
+    "eyeColor": "green",
+    "name": "Bettie Eaton",
+    "gender": "female",
+    "company": "COMTREK",
+    "email": "bettieeaton@comtrek.com",
+    "phone": "+1 (861) 460-2317",
+    "address": "203 Allen Avenue, Elrama, North Carolina, 4453"
+  },
+  {
+    "isActive": true,
+    "balance": "$2,042.37",
+    "age": 38,
+    "eyeColor": "green",
+    "name": "Margie Ayala",
+    "gender": "female",
+    "company": "VOIPA",
+    "email": "margieayala@voipa.com",
+    "phone": "+1 (941) 569-2231",
+    "address": "111 Schroeders Avenue, Suitland, Louisiana, 7042"
+  }
+]

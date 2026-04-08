@@ -1,0 +1,15 @@
+export enum CometBFTErrorCode {
+    // Erreurs JSON-RPC standard
+    PARSE_ERROR = -32700,
+    INVALID_REQUEST = -32600,
+    METHOD_NOT_FOUND = -32601,
+    INVALID_PARAMS = -32602,
+    INTERNAL_ERROR = -32603,
+
+    // Erreurs spécifiques à CometBFT / Tendermint
+    ENDPOINT_CLOSED_WHILE_NODE_IS_CATCHING_UP = -32603,
+    TX_ALREADY_EXISTS = -32003,
+    TX_OUT_OF_GAS = -32002,
+    TX_CHECK_FAILED = -32001,
+    TX_DELIVER_FAILED = -32000,
+}

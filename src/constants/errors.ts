@@ -1,0 +1,2 @@
+// WALLET INTERFACE
+export const WI_INVALID_SIGNATURE = 0x00;

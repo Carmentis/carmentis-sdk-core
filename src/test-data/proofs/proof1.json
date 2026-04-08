@@ -1,0 +1,215 @@
+{
+  "info": {
+    "type": "proof",
+    "microblock": "0000000000000000000000000000000000000000000000000000000000000000",
+    "timestamp": "2025-06-06T10:32:30.409Z",
+    "author": "Arnauld Chevallier"
+  },
+  "recordData": [
+    {
+      "type": 1,
+      "name": "root",
+      "entries": [
+        {
+          "type": 2,
+          "index": 1,
+          "properties": [
+            {
+              "type": 5,
+              "name": "isActive",
+              "attributes": 0,
+              "channel": 0,
+              "leafIndex": 21,
+              "salt": "C2CB8AC90DFD4698BAAA7EF8E7CBCED4",
+              "value": false
+            },
+            {
+              "type": 3,
+              "name": "balance",
+              "attributes": 0,
+              "channel": 0,
+              "leafIndex": 5,
+              "salt": "5E4F9F44A001D2D4B90EA9FA16C4E920",
+              "value": "$1,280.14"
+            },
+            {
+              "type": 4,
+              "name": "age",
+              "attributes": 0,
+              "channel": 0,
+              "leafIndex": 4,
+              "salt": "CA9701AFE2201B33431AFD558A442321",
+              "value": 31
+            },
+            {
+              "type": 3,
+              "name": "eyeColor",
+              "attributes": 0,
+              "channel": 0,
+              "leafIndex": 9,
+              "salt": "EF5F9B796F14FDD0846A17782144E3BA",
+              "value": "green"
+            },
+            {
+              "type": 3,
+              "name": "name",
+              "attributes": 0,
+              "channel": 0,
+              "leafIndex": 8,
+              "salt": "8A610D29AF281EA9D60CE49B9DFAFD68",
+              "value": "Bettie Eaton"
+            },
+            {
+              "type": 3,
+              "name": "gender",
+              "attributes": 0,
+              "channel": 0,
+              "leafIndex": 18,
+              "salt": "E97D5840B633D317E9F0B83D24C3058F",
+              "value": "female"
+            },
+            {
+              "type": 3,
+              "name": "company",
+              "attributes": 0,
+              "channel": 0,
+              "leafIndex": 13,
+              "salt": "88C1EC5A1C69A62CC418BB86B564A861",
+              "value": "COMTREK"
+            },
+            {
+              "type": 3,
+              "name": "email",
+              "attributes": 0,
+              "channel": 0,
+              "leafIndex": 25,
+              "salt": "840205443992ECD6191B2B7D52C8FC42",
+              "value": "bettieeaton@comtrek.com"
+            },
+            {
+              "type": 3,
+              "name": "phone",
+              "attributes": 0,
+              "channel": 0,
+              "leafIndex": 10,
+              "salt": "D3E9582601AAD07514AC411F9C5AAFF1",
+              "value": "+1 (861) 460-2317"
+            },
+            {
+              "type": 3,
+              "name": "address",
+              "attributes": 0,
+              "channel": 0,
+              "leafIndex": 16,
+              "salt": "164DDF9836B65E4D243A47994F88A404",
+              "value": "203 Allen Avenue, Elrama, North Carolina, 4453"
+            }
+          ]
+        },
+        {
+          "type": 2,
+          "index": 2,
+          "properties": [
+            {
+              "type": 5,
+              "name": "isActive",
+              "attributes": 0,
+              "channel": 0,
+              "leafIndex": 1,
+              "salt": "E47F0BBB044A3A7D3190EE174D88C91B",
+              "value": true
+            },
+            {
+              "type": 3,
+              "name": "balance",
+              "attributes": 0,
+              "channel": 0,
+              "leafIndex": 0,
+              "salt": "33C6EF546D597AE1DEE2B5C37A6C8B87",
+              "value": "$2,042.37"
+            },
+            {
+              "type": 4,
+              "name": "age",
+              "attributes": 0,
+              "channel": 0,
+              "leafIndex": 12,
+              "salt": "D622608E4E85F8709D8A870FD38A999A",
+              "value": 38
+            },
+            {
+              "type": 3,
+              "name": "eyeColor",
+              "attributes": 0,
+              "channel": 0,
+              "leafIndex": 14,
+              "salt": "9FE5F0EF4A0EFBFE42828629E55BA94C",
+              "value": "green"
+            },
+            {
+              "type": 3,
+              "name": "name",
+              "attributes": 0,
+              "channel": 0,
+              "leafIndex": 26,
+              "salt": "FC9D49F68CF4E6511731BB792037BF60",
+              "value": "Margie Ayala"
+            },
+            {
+              "type": 3,
+              "name": "gender",
+              "attributes": 0,
+              "channel": 0,
+              "leafIndex": 27,
+              "salt": "158B8439C6610F68036E8BBF2F85B4AD",
+              "value": "female"
+            },
+            {
+              "type": 3,
+              "name": "company",
+              "attributes": 0,
+              "channel": 0,
+              "leafIndex": 19,
+              "salt": "6E7E9CBF2077A01950D332767C806E5C",
+              "value": "VOIPA"
+            },
+            {
+              "type": 3,
+              "name": "email",
+              "attributes": 0,
+              "channel": 0,
+              "leafIndex": 22,
+              "salt": "AF6A55951625FA0891FDB7ED736D51B4",
+              "value": "margieayala@voipa.com"
+            },
+            {
+              "type": 3,
+              "name": "phone",
+              "attributes": 0,
+              "channel": 0,
+              "leafIndex": 2,
+              "salt": "27D2D3D913A40D8D895E7A1634EA83A1",
+              "value": "+1 (941) 569-2231"
+            },
+            {
+              "type": 3,
+              "name": "address",
+              "attributes": 0,
+              "channel": 0,
+              "leafIndex": 3,
+              "salt": "9C6560B8FD1BABFFDA32A305A9903C7B",
+              "value": "111 Schroeders Avenue, Suitland, Louisiana, 7042"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "merkleData": [
+    {
+      "channel": 0,
+      "nLeaves": 30,
+      "witnesses": "581F35FF3361E9D6A10931C718A01EEB053FDA24B57D1A541B2834C91B99B35778004B6C7D27B2DDDD82CE37FB8BB25BA388723D232D8FD7ABA1F63885A277E77B657D67A8EC798127F5CF335DA9313D91560527CE890A240A347187CAC85B8DA0BE738DC8BE8A74234997B2DF0EACC2652D6C050BACB3CED2EA7EC292E5D60CCFC7A387977AFC03C12BBF8DC99AA3032F762DC8E9CE51DAC3B4AF25B15A6FA7DB70C0AE6373E9464DA744FD7D2300447F24348A91A9379F5C001B7597DEDF048C8D7421835E213980365AEED0E869102A4BF516950AF3B5100A8E94486E12B6DC2C7784D92BE711974D14471FB8B869E797A96A9BF525A696050A3CE2DDD7E4"
+    }
+  ]
+}

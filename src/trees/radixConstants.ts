@@ -1,0 +1,9 @@
+const CACHE_HORIZON = 2;
+const HASH_SIZE = 32;
+const ROOT_ANCHORING_HASH = new Uint8Array(HASH_SIZE);
+
+export const RADIX_CST = {
+  CACHE_HORIZON,
+  HASH_SIZE,
+  ROOT_ANCHORING_HASH
+};

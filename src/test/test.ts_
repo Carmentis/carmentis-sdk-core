@@ -1,0 +1,76 @@
+export const enum DATA {
+  TYPE_UINT8    = 0x02,
+  TYPE_UINT16   = 0x03,
+  TYPE_UINT32   = 0x04,
+  TYPE_UINT48   = 0x05,
+  TYPE_STRING   = 0x06,
+  TYPE_BOOLEAN  = 0x07,
+  TYPE_BIN256   = 0x08,
+
+  TYPE_ARRAY_OF = 0x80,
+  TYPE_OBJECT   = 0x40,
+};
+
+type TypeMap = {
+  [DATA.TYPE_UINT8]: number;
+  [DATA.TYPE_UINT16]: number;
+  [DATA.TYPE_UINT32]: number;
+  [DATA.TYPE_UINT48]: number;
+  [DATA.TYPE_STRING]: string;
+  [DATA.TYPE_BOOLEAN]: boolean;
+  [DATA.TYPE_BIN256]: Uint8Array;
+};
+
+type IsArray<T extends number> = T extends number ? (T & DATA.TYPE_ARRAY_OF extends 0 ? false : true) : false;
+type IsObject<T extends number> = T extends number ? (T & DATA.TYPE_OBJECT extends 0 ? false : true) : false;
+type BaseType<T extends number> = T & ~(DATA.TYPE_ARRAY_OF | DATA.TYPE_OBJECT);
+
+type SchemaItem = {
+  name: string;
+  type: number;
+  schema?: SchemaItem[];
+};
+
+type InferSchema<T extends readonly SchemaItem[]> = {
+  [K in T[number] as K["name"]]: K extends { type: infer Type, schema?: infer SubSchema }
+    ? IsArray<Type> extends true
+      ? IsObject<Type> extends true
+        ? InferSchema<Extract<SubSchema, readonly SchemaItem[]>>[]
+        : TypeMap[BaseType<Extract<Type, number>>][]
+      : IsObject<Type> extends true
+        ? InferSchema<Extract<SubSchema, readonly SchemaItem[]>>
+        : TypeMap[BaseType<Extract<Type, number>>]
+    : never;
+};
+
+const APP_LEDGER_VB_STATE = [
+  { name: "signatureAlgorithmId", type: DATA.TYPE_UINT8 },
+  { name: "applicationId",        type: DATA.TYPE_BIN256 },
+  {
+    name: "channels",
+    type: DATA.TYPE_ARRAY_OF | DATA.TYPE_OBJECT,
+    schema: [
+      { name: "name",      type: DATA.TYPE_STRING },
+      { name: "isPrivate", type: DATA.TYPE_BOOLEAN },
+      { name: "creatorId", type: DATA.TYPE_UINT8 }
+    ]
+  },
+  {
+    name: "actors",
+    type: DATA.TYPE_ARRAY_OF | DATA.TYPE_OBJECT,
+    schema: [
+      { name: "name",       type: DATA.TYPE_STRING },
+      { name: "subscribed", type: DATA.TYPE_BOOLEAN },
+      {
+        name: "invitations",
+        type: DATA.TYPE_ARRAY_OF | DATA.TYPE_OBJECT,
+        schema: [
+          { name: "channelId", type: DATA.TYPE_UINT8 },
+          { name: "height",    type: DATA.TYPE_UINT48 }
+        ]
+      }
+    ]
+  }
+] as const;
+
+type AppLedgerVBState = InferSchema<typeof APP_LEDGER_VB_STATE>;
