@@ -3,7 +3,8 @@
 src/**/*.js
 src/**/*.d.ts
 src/**/*.map
-
+vite.config*
+!vite.config.ts
 
 # Logs
 logs
