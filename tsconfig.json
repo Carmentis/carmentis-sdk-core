@@ -12,6 +12,8 @@
     "verbatimModuleSyntax": false,
     "moduleDetection": "force",
     "noEmit": false,
+    "outDir": "./dist",
+    "rootDir": "./src",
     "declaration": true,
     "declarationMap": true,
 
@@ -25,6 +27,7 @@
     "node_modules",
     "**/*.spec.ts",
     "**/*.test.ts",
-    "src/tests" // ou le dossier où sont vos tests
+    "src/tests",
+    "vite.config.ts"
   ]
 }
