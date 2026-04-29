@@ -18,7 +18,7 @@
   ],
   "scripts": {
     "dev": "vite",
-    "build": "barrelsby --delete -e .d.ts -e .js -e spec -n common -d src && tsc && vite build",
+    "build": "barrelsby --delete -e .d.ts -e .js -e spec -n common -d src && vite build",
     "test": "vitest --globals"
   },
   "publishConfig": {
@@ -45,7 +45,6 @@
     "@noble/post-quantum": "^0.4.1",
     "@noble/secp256k1": "^2.2.3",
     "@types/node": "^25.5.2",
-    "axios": "^1.14.0",
     "cbor-x": "^1.6.0",
     "decimal.js": "^10.6.0",
     "valibot": "^1.2.0"

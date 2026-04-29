@@ -12,7 +12,6 @@ import {CMTSToken} from "../economics/currencies/token";
 import {AccountStateAbciResponse} from "../type/valibot/provider/abci/AbciResponse";
 import {Logger} from "./Logger";
 
-
 /**
  * This class models the availability of tokens for a given account.
  *
@@ -86,6 +85,14 @@ export class BalanceAvailability {
         const lock = nodeStakingLocks.find((lock) =>
             Utils.binaryIsEqual(lock.parameters.validatorNodeId, nodeId)
         );
+        return lock;
+    }
+
+    getNodeStakingLockOrFail(nodeId: Uint8Array) {
+        const lock = this.getNodeStakingLock(nodeId);
+        if (lock == undefined) {
+            throw new Error(`Staking not found for node ${Utils.binaryToHexa(nodeId)}`);
+        }
         return lock;
     }
 
@@ -204,6 +211,10 @@ export class BalanceAvailability {
         const existingLock = this.getNodeStakingLock(nodeId);
 
         if (existingLock === undefined) {
+            this.logger.info(
+                `Creating new staking of ${amountInAtomics} atomics ` +
+                `for node ${Utils.binaryToHexa(nodeId)}`
+            );
             this.locks.push({
                 type: LockType.NodeStaking,
                 lockedAmountInAtomics: amountInAtomics,
@@ -218,6 +229,10 @@ export class BalanceAvailability {
             });
         }
         else {
+            this.logger.info(
+                `Adding ${amountInAtomics} atomics to existing staking ` +
+                `for node ${Utils.binaryToHexa(nodeId)}`
+            );
             existingLock.lockedAmountInAtomics += amountInAtomics;
         }
     }
@@ -227,16 +242,18 @@ export class BalanceAvailability {
      * Sets a plan to unlock staked tokens for a given node.
      */
     planNodeStakingUnlock(plannedUnlockAmountInAtomics: number, plannedUnlockTimestamp: number, nodeAccountId: Uint8Array) {
-        const existingLock = this.getNodeStakingLock(nodeAccountId);
+        const existingLock = this.getNodeStakingLockOrFail(nodeAccountId);
 
-        if(existingLock === undefined) {
-            throw new Error(`Staking not found`);
-        }
         if(existingLock.parameters.plannedUnlockAmountInAtomics != 0) {
             throw new Error(`There's already a pending staking unlock for this node`);
         }
+        const plannedUnlockDayTimestamp = Utils.addDaysToTimestamp(plannedUnlockTimestamp, 0);
+        this.logger.info(
+            `Planned staking unlock of ${plannedUnlockAmountInAtomics} atomics ` +
+            `on account ${Utils.binaryToHexa(nodeAccountId)}`
+        );
         existingLock.parameters.plannedUnlockAmountInAtomics = plannedUnlockAmountInAtomics;
-        existingLock.parameters.plannedUnlockTimestamp = Utils.addDaysToTimestamp(plannedUnlockTimestamp, 0);
+        existingLock.parameters.plannedUnlockTimestamp = plannedUnlockDayTimestamp;
     }
 
     /**
@@ -267,11 +284,13 @@ export class BalanceAvailability {
      * Sets slashing for a given node.
      */
     setSlashing(nodeId: Uint8Array, plannedTimestamp: number) {
-        const nodeStakingLocks = this.getNodeStakingLocks();
-        const nodeStakingLock = nodeStakingLocks.find((obj) => obj.parameters.validatorNodeId == nodeId);
-        if (nodeStakingLock == undefined) {
-            throw new Error(`Staking not found`);
-        }
+        const nodeStakingLock = this.getNodeStakingLockOrFail(nodeId);
+
+        this.logger.info(
+            `Setting slashing of ${nodeStakingLock.lockedAmountInAtomics} atomics ` +
+            `for node ${Utils.binaryToHexa(nodeId)}, ` +
+            `effective on ${new Date(plannedTimestamp * 1000).toISOString()}`
+        );
         nodeStakingLock.parameters.slashed = true;
         nodeStakingLock.parameters.plannedSlashingAmountInAtomics = nodeStakingLock.lockedAmountInAtomics;
         nodeStakingLock.parameters.plannedSlashingTimestamp = plannedTimestamp;
@@ -281,18 +300,18 @@ export class BalanceAvailability {
      * Cancels slashing for a given node.
      */
     cancelNodeSlashing(nodeId: Uint8Array) {
-        const nodeStakingLocks = this.getNodeStakingLocks();
-        const nodeStakingLock = nodeStakingLocks.find((obj) => obj.parameters.validatorNodeId == nodeId);
-        if (nodeStakingLock == undefined) {
-            throw new Error(`Staking not found`);
-        }
+        const nodeStakingLock = this.getNodeStakingLockOrFail(nodeId);
+
         if (nodeStakingLock.parameters.slashed) {
+            this.logger.info(
+                `Cancelled slashing of node ${Utils.binaryToHexa(nodeId)}`
+            );
             nodeStakingLock.parameters.slashed = false;
             nodeStakingLock.parameters.plannedSlashingAmountInAtomics = 0;
             nodeStakingLock.parameters.plannedSlashingTimestamp = 0;
         }
         else {
-            this.logger.warn(`No pending slashing for this node`);
+            this.logger.warn(`No pending slashing for node ${Utils.binaryToHexa(nodeId)}`);
         }
     }
 
@@ -311,6 +330,10 @@ export class BalanceAvailability {
                     lock.parameters.plannedSlashingTimestamp != 0 &&
                     referenceTimestamp >= lock.parameters.plannedSlashingTimestamp
                 ) {
+                    this.logger.info(
+                        `Applying slashing of ${slashedAmountInAtomics} atomics ` +
+                        `on node ${Utils.binaryToHexa(lock.parameters.validatorNodeId)}`
+                    );
                     lock.lockedAmountInAtomics -= slashedAmountInAtomics;
                     this.balanceInAtomics -= slashedAmountInAtomics;
                     totalSlashed += slashedAmountInAtomics;
@@ -360,12 +383,9 @@ export class BalanceAvailability {
     /**
      * Unstakes tokens for a given node.
      */
-    private removeNodeStaking(amountInAtomics: number, nodeAccountId: Uint8Array) {
-        const lock = this.getNodeStakingLock(nodeAccountId);
+    private removeNodeStaking(amountInAtomics: number, nodeId: Uint8Array) {
+        const lock = this.getNodeStakingLockOrFail(nodeId);
 
-        if (lock === undefined) {
-            throw new Error(`Staking not found`);
-        }
         if (amountInAtomics < 0) {
             throw new Error(`Unstake amount must be greater than 0`);
         }

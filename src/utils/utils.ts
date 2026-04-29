@@ -24,7 +24,8 @@ export const Utils = {
     binaryCompare,
     intToByteArray,
     byteArrayToInt,
-    getGenesisEpochInTimestamp: getInitialTimestampInSeconds
+    getGenesisEpochInTimestamp: getInitialTimestampInSeconds,
+    jsonPrettify,
 };
 
 const logger = Logger.getLogger(["utils"])
@@ -280,4 +281,23 @@ function intToByteArray(n: number, minSize: number = 1) {
  */
 function byteArrayToInt(array: number[]) {
     return array.reduce((t, n) => t * 0x100 + n, 0);
+}
+
+/**
+ * Formats JSON with a specific format for Uint8Array's so that they are more readable
+ */
+function jsonPrettify(json: unknown, indent = 2) {
+    return JSON.stringify(
+        json,
+        (key, value) => {
+            if (value instanceof Uint8Array) {
+                const truncated = value.length > 32;
+                const head = binaryToHexa(value.slice(0, truncated ? 24 : 32));
+                const tail = truncated ? "(...)" + binaryToHexa(value.slice(-8)) : "";
+                return `Uint8Array[${value.length}]:${head}${tail}`;
+            }
+            return value;
+        },
+        indent
+    );
 }

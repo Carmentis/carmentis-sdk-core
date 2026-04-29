@@ -16,9 +16,10 @@ export class OrganizationMicroblockStructureChecker implements IMicroblockStruct
                 SectionType.ORG_CREATION
             );
             checker.group(
-                SectionConstraint.AT_MOST_ONE,
+                SectionConstraint.AT_LEAST_ONE,
                 [
-                    [SectionConstraint.ONE, SectionType.ORG_DESCRIPTION]
+                    [SectionConstraint.AT_MOST_ONE, SectionType.ORG_DESCRIPTION],
+                    [SectionConstraint.ANY, SectionType.CUSTOM]
                 ]
             );
             checker.expects(SectionConstraint.ONE, SectionType.SIGNATURE);

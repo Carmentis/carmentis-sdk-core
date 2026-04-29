@@ -1,7 +1,6 @@
 import {Base64} from "../data/base64";
 import {Utils} from "../utils/utils";
 import * as v from 'valibot';
-import axios, {AxiosError} from "axios";
 import {
     IllegalParameterError,
     NodeConnectionRefusedError,
@@ -258,30 +257,49 @@ export class NetworkProvider implements IExternalProvider {
     }
 
 
-    private static async query(urlObject: any, postBody: object = {}): Promise<{data: string}> {
+    private static async query(
+        urlObject: any,
+        postBody: object = {},
+        timeoutMs = 10000,
+    ): Promise<{ data: string }> {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
         try {
-            const response = await axios.post(urlObject, postBody, {
+            const res = await fetch(urlObject, {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json; charset=UTF-8',
                     'Accept': 'application/json',
-                }
+                },
+                body: JSON.stringify(postBody),
+                signal: controller.signal,
             });
-            const data = response.data
-            return data;
-        } catch (e) {
-            if (e instanceof AxiosError) {
-                // connection refused
-                if (e.code === 'ECONNREFUSED') {
-                    throw new NodeConnectionRefusedError(urlObject)
-                }
 
-                // internal server error
-                if (e.status === 500) {
-                    throw new NodeError(`Internal error in the node: ${e.message}`)
-                }
-
+            if (res.status === 500) {
+                throw new NodeError(`Internal error in the node: ${res.statusText}`);
             }
-            throw e
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}`);
+            }
+
+            const data = await res.json();
+            return data;
+
+        } catch (e: any) {
+            if (e?.name === 'AbortError') {
+                throw new NodeError(`Request timeout after ${timeoutMs}ms`)
+            }
+            if (e?.cause?.code === 'ECONNREFUSED' || e?.code === 'ECONNREFUSED') {
+                throw new NodeConnectionRefusedError(urlObject);
+            }
+            if (e instanceof TypeError) {
+                throw new NodeConnectionRefusedError(urlObject);
+            }
+
+            throw e;
+        } finally {
+            clearTimeout(timeout);
         }
     }
 

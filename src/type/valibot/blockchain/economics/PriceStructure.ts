@@ -3,6 +3,7 @@ import * as v from 'valibot';
 export const PriceCategorySchema = v.object({
     pricingRate: v.number(),
     maximumNumberOfDays: v.number(),
+    divisor: v.number(),
 });
 export type PriceCategory = v.InferOutput<typeof PriceCategorySchema>;
 

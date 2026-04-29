@@ -29,11 +29,12 @@ export class ProtocolInternalState implements IInternalState {
 
     static createInitialState() {
         const priceStructure: PriceStructure = [
-            { pricingRate: 100, maximumNumberOfDays: 7 },
-            { pricingRate: 70, maximumNumberOfDays: 30 },
-            { pricingRate: 40, maximumNumberOfDays: 365 },
-            { pricingRate: 20, maximumNumberOfDays: 3650 },
-            { pricingRate: 10, maximumNumberOfDays: 36500 },
+            { pricingRate: 100, maximumNumberOfDays: 366, divisor: 366 },       // 1 * 1.0 = 1.0
+            { pricingRate: 50, maximumNumberOfDays: 366 * 5, divisor: 366 },    // 4 * 0.5 = 2.0
+            { pricingRate: 20, maximumNumberOfDays: 366 * 10, divisor: 366 },   // 5 * 0.2 = 1.0
+            // an extra rate of 1.0 is applied for any number of days beyond 10 years
+            // (in particular, this is what happens for infinite storage)
+            { pricingRate: 100, maximumNumberOfDays: 366 * 10 + 1, divisor: 1 },
         ];
 
         return new ProtocolInternalState({

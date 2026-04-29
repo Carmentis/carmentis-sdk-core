@@ -45,7 +45,8 @@ export class FirstFeesFormula implements IFeesFormula {
 
         // we compute the final price: first, the storage price
         const protocolState = await this.provider.getProtocolState();
-        const storagePriceManager  =  new StoragePriceManager(protocolState.getPriceStructure());
+        const priceStructure = protocolState.getPriceStructure();
+        const storagePriceManager = new StoragePriceManager(priceStructure);
         const numberOfDaysStorage = storagePriceManager.getNumberOfDaysOfStorage(referenceTimestampInSeconds, expirationDay);
         const finalPrice = storagePriceManager.getStoragePrice(baseFee, numberOfDaysStorage);
 

@@ -145,10 +145,10 @@ export class MicroblockConsistencyChecker {
 
         // raise an error if the timestamp is too far in the past
         if (result === TimestampValidationResult.TOO_FAR_IN_THE_PAST)
-            throw new Error(`timestamp is too far in the past (header:${this.header.timestamp} / current:${currentTimestamp})`);
+            throw new Error(`timestamp is too far in the past (header:${microblock.getTimestamp()} / current:${currentTimestamp})`);
 
         if (result === TimestampValidationResult.TOO_FAR_IN_THE_FUTURE)
-            throw new Error(`timestamp is too far in the future (header:${this.header.timestamp} / current:${currentTimestamp})`);
+            throw new Error(`timestamp is too far in the future (header:${microblock.getTimestamp()} / current:${currentTimestamp})`);
 
     }
 

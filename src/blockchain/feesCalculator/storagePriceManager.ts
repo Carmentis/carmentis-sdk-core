@@ -1,7 +1,6 @@
 import {CMTSToken} from "../../economics/currencies/token";
 import {PriceBreakdown, PriceStructure} from "../../type/valibot/blockchain/economics/PriceStructure";
 
-
 const SECONDS_IN_DAY = 86400;
 
 export class StoragePriceManager {
@@ -34,16 +33,21 @@ export class StoragePriceManager {
             const category = this.priceStructure[index];
             let categoryDays: number;
             let pricingRate: number;
+            let divisor: number;
 
             if (category == undefined) {
                 categoryDays = numberOfDays - days;
                 pricingRate = 0;
+                divisor = 1;
             }
             else {
                 categoryDays = Math.min(category.maximumNumberOfDays, numberOfDays) - days;
                 pricingRate = category.pricingRate;
+                divisor = category.divisor;
             }
-            const priceInAtomics = Math.floor(basePriceInAtomics * categoryDays * pricingRate / 100);
+            const priceInAtomics = Math.floor(
+                basePriceInAtomics * categoryDays * pricingRate / 100 / divisor
+            );
             breakdown.push({
                 numberOfDays: categoryDays,
                 pricingRate,

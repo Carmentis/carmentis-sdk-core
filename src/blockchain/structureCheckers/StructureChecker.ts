@@ -59,7 +59,7 @@ export class StructureChecker {
         }
 
         if (!this.checkConstraint(constraint, count)) {
-            throw new MicroblockStructureCheckingError(`expected ${ConstraintNameByConstraint[constraint]} of type ${this.getSectionLabelBySectionType(type)}, got ${count}`);
+            throw new MicroblockStructureCheckingError(`expected ${ConstraintNameByConstraint[constraint]} of type ${this.getSectionLabelBySectionType(type)} in section, got ${count}`);
         }
     }
 
@@ -91,14 +91,14 @@ export class StructureChecker {
         }
 
         if (!this.checkConstraint(groupConstraint, groupCount)) {
-            throw new MicroblockStructureCheckingError(`expected ${ConstraintNameByConstraint[groupConstraint]} in group, got ${groupCount}`);
+            throw new MicroblockStructureCheckingError(`expected ${ConstraintNameByConstraint[groupConstraint]} section(s) in group, got ${groupCount}`);
         }
 
         for (const [constraint, type] of list) {
             const count = counts.get(type);
 
             if (!this.checkConstraint(constraint, count)) {
-                throw new MicroblockStructureCheckingError(`expected ${ConstraintNameByConstraint[constraint]} of type ${this.getSectionLabelBySectionType(type)}, got ${count}`);
+                throw new MicroblockStructureCheckingError(`expected ${ConstraintNameByConstraint[constraint]} of type ${this.getSectionLabelBySectionType(type)} in group section, got ${count}`);
             }
         }
     }
@@ -171,10 +171,5 @@ export class StructureChecker {
      */
     getSectionLabelBySectionType(type: SectionType): string {
         return SectionLabel.getSectionLabelFromSectionType(type)
-        /*
-        const section = SECTIONS.DEF[this.microblock.getType()][type];
-        return section ? section.label : "unknown";
-
-         */
     }
 }
