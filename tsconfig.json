@@ -3,6 +3,7 @@
     "target": "es2023",
     "module": "esnext",
     "lib": ["ES2023", "DOM"],
+    "types": ["node"],
     "skipLibCheck": true,
 
     /* Bundler mode */
@@ -12,6 +13,8 @@
     "verbatimModuleSyntax": false,
     "moduleDetection": "force",
     "noEmit": false,
+    "outDir": "./dist",
+    "rootDir": "./src",
     "declaration": true,
     "declarationMap": true,
 
@@ -25,6 +28,7 @@
     "node_modules",
     "**/*.spec.ts",
     "**/*.test.ts",
-    "src/tests" // ou le dossier où sont vos tests
+    "src/tests",
+    "vite.config.ts"
   ]
 }

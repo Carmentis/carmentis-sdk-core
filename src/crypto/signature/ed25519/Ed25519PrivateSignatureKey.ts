@@ -6,7 +6,9 @@ import {Ed25519PublicSignatureKey} from "./Ed25519PublicSignatureKey";
 import {sha256} from "@noble/hashes/sha2";
 import {SignatureScheme} from "../SignatureScheme";
 import {Ed25519SignatureScheme} from "./Ed25519SignatureScheme";
-
+import {sha512} from "@noble/hashes/sha2";
+import {hashes} from "@noble/ed25519";
+hashes.sha512 = sha512;
 /**
  * Represents a private signature key using the Ed25519 curve. This class extends
  * from `Ed25519PublicSignatureKey` and implements the `PrivateSignatureKey` interface.
