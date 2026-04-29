@@ -74,6 +74,7 @@ export * from "./crypto/encoder/CryptoEncoderFactory";
 export * from "./crypto/encoder/signature/BytesSignatureEncoder";
 export * from "./crypto/encoder/signature/HandlerBasedSignatureEncoder";
 export * from "./crypto/encoder/signature/ISignatureEncoderHandler";
+export * from "./crypto/encoder/signature/JwkSignatureEncoder";
 export * from "./crypto/encoder/signature/SignatureEncoderInterface";
 export * from "./crypto/encoder/signature/StringSignatureEncoder";
 export * from "./crypto/encoder/signature/hcv/BaseHCVSignatureDecoder";
