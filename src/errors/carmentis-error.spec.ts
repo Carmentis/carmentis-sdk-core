@@ -1,4 +1,5 @@
 import {CarmentisError, EconomicsError} from './carmentis-error';
+import {describe, it, expect} from 'vitest';
 
 describe('CarmentisError.isCarmentisError', () => {
     it('should return true for an instance of CarmentisError', () => {

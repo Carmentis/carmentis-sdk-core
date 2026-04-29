@@ -2,7 +2,7 @@
 import {EurosToCMTSConverter} from './currency-converter';
 import {Euros} from "./euros";
 import {CMTSToken} from "./token";
-
+import {describe, it, expect, beforeEach} from 'vitest';
 describe('EurosToCMTSConverter', () => {
     let converter: EurosToCMTSConverter;
 

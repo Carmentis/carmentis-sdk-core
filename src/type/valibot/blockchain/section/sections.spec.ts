@@ -5,7 +5,7 @@ import {
 import {SectionType} from "./SectionType";
 import {Utils} from "../../../../utils/utils";
 import * as val from 'valibot';
-
+import {describe, it, expect} from 'vitest';
 describe("Section encoding and decoding", () => {
     it('Should encode and decode an application creation section',  () => {
         const appCreationSection : ApplicationCreationSection = {
