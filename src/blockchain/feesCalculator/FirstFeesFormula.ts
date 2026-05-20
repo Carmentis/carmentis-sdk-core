@@ -7,7 +7,7 @@ import {SignatureSchemeId} from "../../crypto/signature/SignatureSchemeId";
 import {Section} from "../../type/valibot/blockchain/section/sections";
 import {BlockchainUtils} from "../../utils/BlockchainUtils";
 import {IProvider} from "../../providers/IProvider";
-import {StoragePriceManager} from "./storagePriceManager";
+import {RetentionCostCalculator} from "./RetentionCostCalculator";
 import {Utils} from "../../utils/utils";
 
 /**
@@ -27,36 +27,47 @@ export class FirstFeesFormula implements IFeesFormula {
         expirationDay: number,
         referenceTimestampInSeconds = Utils.getTimestampInSeconds()
     ): Promise<CMTSToken> {
-        // we search the expiration day from the microblock
-        //const expirationDay = await this.searchExpirationDayFromMicroblock(this.provider, vbId, microblock);
         if (expirationDay < 0) throw new Error("Invalid expiration day");
 
-
         // we start by computing the base gas price
-        const totalSize = this.computeSizeInBytesOfMicroblock(microblock);
         const definedGasPrice = microblock.getGasPrice();
         const usedGasPrice = definedGasPrice.isZero() ? FirstFeesFormula.DEFAULT_GAS_PRICE : definedGasPrice;
+        const gas = await this.computeGas(
+            signatureSchemeId,
+            microblock,
+            expirationDay,
+            referenceTimestampInSeconds,
+        );
+        const fees = CMTSToken.createAtomic(
+            gas * usedGasPrice.getAmountAsAtomic()
+        );
+        return fees;
+    }
 
+    async computeGas(
+        signatureSchemeId: SignatureSchemeId,
+        microblock: Microblock,
+        expirationDay: number,
+        referenceTimestampInSeconds = Utils.getTimestampInSeconds()
+    ) {
         // we compute the base fee
-        const baseFeeInAtomic =  (
-            ECO.FIXED_GAS_FEE + ECO.GAS_PER_BYTE * totalSize
-        ) * usedGasPrice.getAmountAsAtomic();
-        const baseFee = CMTSToken.createAtomic(baseFeeInAtomic);
+        const totalSize = this.computeSizeInBytesOfMicroblock(microblock);
+        const baseStorageCostInGasAtoms = ECO.GAS_PER_BYTE * totalSize * ECO.GAS_ATOMS_PER_GAS;
 
         // we compute the final price: first, the storage price
         const protocolState = await this.provider.getProtocolState();
-        const priceStructure = protocolState.getPriceStructure();
-        const storagePriceManager = new StoragePriceManager(priceStructure);
+        const priceStructure = protocolState.getRetentionPolicy();
+        const storagePriceManager = new RetentionCostCalculator(priceStructure);
         const numberOfDaysStorage = storagePriceManager.getNumberOfDaysOfStorage(referenceTimestampInSeconds, expirationDay);
-        const finalPrice = storagePriceManager.getStoragePrice(baseFee, numberOfDaysStorage);
+        const storageCostInGasAtoms = storagePriceManager.getStorageCost(baseStorageCostInGasAtoms, numberOfDaysStorage);
 
         // then, the additional signature-related costs
-        const additionalCosts = CMTSToken.createAtomic(
-            this.getAdditionalCosts(signatureSchemeId) * usedGasPrice.getAmountAsAtomic()
-        );
-        finalPrice.add(additionalCosts);
-
-        return finalPrice;
+        const additionalCosts = this.getAdditionalCosts(signatureSchemeId);
+        const gas =
+            Math.floor(storageCostInGasAtoms / ECO.GAS_ATOMS_PER_GAS) +
+            additionalCosts +
+            ECO.FIXED_GAS_FEE;
+        return gas;
     }
 
     private getAdditionalCosts(signatureSchemeId: SignatureSchemeId) {
@@ -85,11 +96,11 @@ export class FirstFeesFormula implements IFeesFormula {
         const sections = microblock.getAllSections();
         if (sections.length === 0) return 0;
 
-        // if the gas fees are set (non-zero) in the microblock then, with high probabilities, the microblock
-        // will not be modified later one and so we exclude the last signature section.
-        // otherwise, the microblock will be modified later one and so we include the last signature section.
-        const maxGasFeesInMicroblock = microblock.getMaxFees();
-        if (maxGasFeesInMicroblock.isZero()) {
+        // if the gas is set (non-zero) in the microblock then, with high probabilities, the microblock
+        // will not be modified later on and so we exclude the last signature section.
+        // otherwise, the microblock will be modified later on and so we include the last signature section.
+        const gasInMicroblock = microblock.getGas();
+        if (gasInMicroblock === 0) {
             let totalSize = this.getSizeOfListOfSections(sections);
             return totalSize
         } else {

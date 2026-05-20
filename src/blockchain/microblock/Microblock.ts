@@ -262,7 +262,7 @@ export class Microblock {
             height: 1,
             previousHash: Microblock.generatePreviousHashForGenesisMicroblock(type, defaultExpirationDay),
             timestamp: defaultTimestampInSeconds,
-            maxFees: 0,
+            gas: 0,
             gasPrice: defaultGasPrice,
             bodyHash: Microblock.computeInitialBodyHash(),
             feesPayerAccount: Utils.getNullHash(),
@@ -296,7 +296,7 @@ export class Microblock {
             height: height,
             previousHash: previousHash,
             timestamp: Utils.getTimestampInSeconds(),
-            maxFees: 0,
+            gas: 0,
             gasPrice: 0,
             bodyHash: Utils.getNullHash(),
             feesPayerAccount: Utils.getNullHash(),
@@ -328,7 +328,6 @@ export class Microblock {
     getHeader(): MicroblockHeader {
         return this.header;
     }
-
 
     /**
      * Retrieves the hash of the microblock.
@@ -370,39 +369,27 @@ export class Microblock {
         return this.header.timestamp;
     }
 
-
     /**
      * Returns the gas in the header.
-     * @deprecated No more gas in contained in the header. Use getMaxFees instead.
      */
-    getGas(): CMTSToken {
-        return this.getMaxFees();
+    getGas(): number {
+        return this.header.gas;
     }
 
     /**
-     *
+     * Get the fees in tokens
      */
-    getMaxFees(): CMTSToken {
-        return CMTSToken.createAtomic(this.header.maxFees);
+    getFees(): CMTSToken {
+        return CMTSToken.createAtomic(this.header.gas * this.header.gasPrice);
     }
 
-
     /**
-     * Assign the maximum gas fees.
-     * @param maxFees
-     */
-    setMaxFees(maxFees: CMTSToken) {
-        this.header.maxFees = maxFees.getAmountAsAtomic();
-        this.hash = Microblock.computeMicroblockHash(this.header)
-    }
-
-
-    /**
-     * @deprecated No gas in the header anymore. Use setMaxFees instead.
+     * Assign the gas.
      * @param gas
      */
-    setGas(gas: CMTSToken) {
-        this.setMaxFees(gas);
+    setGas(gas: number) {
+        this.header.gas = gas;
+        this.hash = Microblock.computeMicroblockHash(this.header)
     }
 
     setHeight(number: number) {
@@ -543,20 +530,20 @@ export class Microblock {
         this.addSection(signatureSectionObject);
     }
 
-
     /**
      * Creates a digital signature using the provided private key and optionally includes gas-related data.
      *
      * @param {PrivateSignatureKey} privateKey - The private key used to sign the data.
      * @param {boolean} includeGas - A flag indicating whether gas-related data should be included in the signature.
      * @return {Uint8Array} The generated digital signature as a byte array.
+     * @private
      */
-    async sign(privateKey: PrivateSignatureKey, includeGas: boolean = true): Promise<Uint8Array> {
+    private async sign(privateKey: PrivateSignatureKey, includeGas: boolean = true): Promise<Uint8Array> {
         const sections = this.sections;
         const bodyHash = Microblock.computeBodyHashFromSections(sections);
         const headerToBeSigned: MicroblockHeader = {
             ...this.header,
-            maxFees: includeGas ? this.header.maxFees: 0,
+            gas: includeGas ? this.header.gas : 0,
             gasPrice: includeGas ? this.header.gasPrice : 0,
             bodyHash,
         }
@@ -564,7 +551,6 @@ export class Microblock {
         const signature = await privateKey.sign(headerData)
         return signature
     }
-
 
     /**
      * Verifies the signature of the last signature section using the provided public key.
@@ -575,8 +561,14 @@ export class Microblock {
      */
     async verify(
         publicKey: PublicSignatureKey,
-        verificationParams: { includeGas?: boolean, verifiedSignatureIndex?: number | 'last' }
-        = { includeGas: true, verifiedSignatureIndex: 'last' }
+        verificationParams: {
+            includeGas?: boolean,
+            verifiedSignatureIndex?: number | 'last'
+        }
+        = {
+            includeGas: true,
+            verifiedSignatureIndex: 'last'
+        }
     ) {
         const includeGas = typeof verificationParams.includeGas === 'boolean' ? verificationParams.includeGas : true;
 
@@ -607,7 +599,7 @@ export class Microblock {
         const sections = this.sections.slice(0, sectionIndexInMicroblock);
         const headerToBeVerified: MicroblockHeader = {
             ...this.header,
-            maxFees: includeGas ? this.header.maxFees : 0,
+            gas: includeGas ? this.header.gas : 0,
             gasPrice: includeGas ? this.header.gasPrice : 0,
             bodyHash: Microblock.computeBodyHashFromSections(sections)
         }
@@ -799,7 +791,7 @@ export class Microblock {
         output += `    Height: ${this.header.height}\n`;
         output += `    Previous Hash: ${encoder.encode(this.header.previousHash)}\n`;
         output += `    Timestamp: ${this.header.timestamp}\n`;
-        output += `    Max fees: ${this.header.maxFees}\n`;
+        output += `    Gas: ${this.header.gas}\n`;
         output += `    Gas Price: ${this.header.gasPrice}\n`;
         output += `    Body Hash: ${encoder.encode(this.header.bodyHash)}\n`;
         output += `    Computed body Hash: ${encoder.encode(this.computeBodyHash())}\n`;

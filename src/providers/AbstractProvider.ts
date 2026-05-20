@@ -94,15 +94,15 @@ export abstract class AbstractProvider implements IProvider {
         return FeesCalculationFormulaFactory.getFeesCalculationFormulaByVersion(this, feesVersion);
     }
 
-    async computeMicroblockFees(
+    async computeMicroblockGas(
         mb: Microblock,
         options: { signatureSchemeId?: SignatureSchemeId, referenceTimestampInSeconds?: number } = {}
-    ): Promise<CMTSToken> {
+    ): Promise<number> {
         const referenceTimestampInSeconds = options.referenceTimestampInSeconds ?? Utils.getTimestampInSeconds();
 
         let expirationDay = 0;
         if (mb.isGenesisMicroblock()) {
-            expirationDay =    Microblock.extractExpirationDayFromGenesisPreviousHash(mb.getPreviousHash().toBytes());
+            expirationDay = Microblock.extractExpirationDayFromGenesisPreviousHash(mb.getPreviousHash().toBytes());
         } else {
             const vbId = await this.getVirtualBlockchainIdContainingMicroblock(mb.getPreviousHash());
             const vbState = await this.getVirtualBlockchainState(vbId.toBytes());
@@ -115,7 +115,7 @@ export abstract class AbstractProvider implements IProvider {
         if (sigScheme === null) throw new Error("Signature scheme ID cannot be null");
 
         const feesFormula = await this.getCurrentFeesFormula();
-        return feesFormula.computeFees(sigScheme, mb, expirationDay, referenceTimestampInSeconds);
+        return feesFormula.computeGas(sigScheme, mb, expirationDay, referenceTimestampInSeconds);
     }
 
     abstract getVirtualBlockchainStatus(virtualBlockchainId: Uint8Array): Promise<VirtualBlockchainStatus | null>

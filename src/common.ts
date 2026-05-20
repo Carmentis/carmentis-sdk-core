@@ -5,7 +5,7 @@
 export * from "./blockchain/feesCalculator/FeesCalculationFormulaFactory";
 export * from "./blockchain/feesCalculator/FirstFeesFormula";
 export * from "./blockchain/feesCalculator/IFeesFormula";
-export * from "./blockchain/feesCalculator/storagePriceManager";
+export * from "./blockchain/feesCalculator/RetentionCostCalculator";
 export * from "./blockchain/internalStates/AccountInternalState";
 export * from "./blockchain/internalStates/ApplicationInternalState";
 export * from "./blockchain/internalStates/ApplicationLedgerInternalState";
@@ -188,7 +188,7 @@ export * from "./type/VirtualBlockchainType";
 export * from "./type/types";
 export * from "./type/valibot/primitives";
 export * from "./type/valibot/account/Account";
-export * from "./type/valibot/blockchain/economics/PriceStructure";
+export * from "./type/valibot/blockchain/economics/RetentionPolicy";
 export * from "./type/valibot/blockchain/microblock/MicroblockBody";
 export * from "./type/valibot/blockchain/microblock/MicroblockHeader";
 export * from "./type/valibot/blockchain/microblock/MicroblockStruct";

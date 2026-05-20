@@ -2,7 +2,7 @@ import {configure, configureSync, getConsoleSink, getLogger} from "@logtape/logt
 
 export class Logger {
     static getLogger(context: string[] = []) {
-        return getLogger(["@cmts-dev/carmentis-sdk", ...context])
+        return getLogger(["@cmts-dev/carmentis-sdk-core", ...context])
     }
 
     static getProviderLogger() {
@@ -21,7 +21,7 @@ export class Logger {
         configureSync({
             sinks: { console: getConsoleSink() },
             loggers: [
-                { category: "@cmts-dev/carmentis-sdk", lowestLevel: "debug", sinks: ["console"] }
+                { category: "@cmts-dev/carmentis-sdk-core", lowestLevel: "debug", sinks: ["console"] }
             ]
         });
     }

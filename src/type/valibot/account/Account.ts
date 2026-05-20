@@ -99,6 +99,8 @@ export const AccountHistoryEntrySchema = v.object({
     height: v.pipe(v.number(), v.integer(), v.minValue(0)),
     previousHistoryHash: bin256(),
     type: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(255)),
+    publicReference: v.string(),
+    privateReference: v.string(),
     timestamp: v.pipe(v.number(), v.integer(), v.minValue(0)),
     linkedAccount: bin256(),
     amount: v.pipe(v.number(), v.integer(), v.minValue(0)),

@@ -6,7 +6,7 @@ import {
 } from "../../type/valibot/blockchain/virtualBlockchain/internalStates";
 import * as v from 'valibot';
 import {ProtocolVariables} from "../../type/valibot/blockchain/protocol/ProtocolVariables";
-import {PriceStructure} from "../../type/valibot/blockchain/economics/PriceStructure";
+import {RetentionPolicy} from "../../type/valibot/blockchain/economics/RetentionPolicy";
 import {CMTSToken} from "../../economics/currencies/token";
 
 enum ProtocolName {
@@ -28,13 +28,17 @@ export class ProtocolInternalState implements IInternalState {
     }
 
     static createInitialState() {
-        const priceStructure: PriceStructure = [
-            { pricingRate: 100, maximumNumberOfDays: 366, divisor: 366 },       // 1 * 1.0 = 1.0
-            { pricingRate: 50, maximumNumberOfDays: 366 * 5, divisor: 366 },    // 4 * 0.5 = 2.0
-            { pricingRate: 20, maximumNumberOfDays: 366 * 10, divisor: 366 },   // 5 * 0.2 = 1.0
-            // an extra rate of 1.0 is applied for any number of days beyond 10 years
-            // (in particular, this is what happens for infinite storage)
-            { pricingRate: 100, maximumNumberOfDays: 366 * 10 + 1, divisor: 1 },
+        // Retention ratios:
+        // - 1.0 for the first year
+        // - 4 * 0.5 = 2.0 for the next 4 years (total: 3.0 for 5 years)
+        // - 5 * 0.2 = 1.0 for the next 5 years (total: 4.0 for 10 years)
+        // - 1.0 for any number of days beyond (total: 5.0, in particular for infinite storage)
+        const daysInYear = 366;
+        const retentionPolicy: RetentionPolicy = [
+            { retentionRatio: 100, maximumNumberOfDays: daysInYear, dayDivisor: daysInYear },
+            { retentionRatio: 50, maximumNumberOfDays: daysInYear * 5, dayDivisor: daysInYear },
+            { retentionRatio: 20, maximumNumberOfDays: daysInYear * 10, dayDivisor: daysInYear },
+            { retentionRatio: 100, maximumNumberOfDays: daysInYear * 10 + 1, dayDivisor: 1 },
         ];
 
         return new ProtocolInternalState({
@@ -54,7 +58,7 @@ export class ProtocolInternalState implements IInternalState {
                 maximumNodeStakingAmountInAtomics: CMTSToken.create(10_000_000).getAmountAsAtomic(),
                 unstakingDelayInDays: 30,
                 maxBlockSizeInBytes: 4_194_304,
-                priceStructure,
+                retentionPolicy,
                 abciVersion: 1,
             },
             protocolUpdates: []
@@ -117,8 +121,8 @@ export class ProtocolInternalState implements IInternalState {
         return this.internalState.currentProtocolVariables.unstakingDelayInDays;
     }
 
-    getPriceStructure() {
-        return this.internalState.currentProtocolVariables.priceStructure;
+    getRetentionPolicy() {
+        return this.internalState.currentProtocolVariables.retentionPolicy;
     }
 
     toObject(): ProtocolVBInternalStateObject {

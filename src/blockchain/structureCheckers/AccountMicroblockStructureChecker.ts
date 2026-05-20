@@ -1,7 +1,6 @@
 import {IMicroblockStructureChecker} from "./IMicroblockStructureChecker";
 import {StructureChecker} from "./StructureChecker";
 import {Microblock} from "../microblock/Microblock";
-import {SECTIONS} from "../../constants/constants";
 import {SectionConstraint} from "./SectionConstraint";
 import {SectionType} from "../../type/valibot/blockchain/section/SectionType";
 import {MicroblockStructureCheckingError} from "../../errors/carmentis-error";
@@ -12,30 +11,34 @@ export class AccountMicroblockStructureChecker implements IMicroblockStructureCh
     checkMicroblockStructure(microblock: Microblock): boolean {
         try {
             const checker = new StructureChecker(microblock);
-            checker.expects(
-                checker.isFirstBlock() ? SectionConstraint.ONE : SectionConstraint.AT_MOST_ONE,
-                SectionType.ACCOUNT_PUBLIC_KEY
-            );
-            if (checker.isFirstBlock()) {
-                checker.group(
-                    SectionConstraint.ONE,
-                    [
-                        [ SectionConstraint.AT_MOST_ONE, SectionType.ACCOUNT_TOKEN_ISSUANCE ],
-                        [ SectionConstraint.AT_MOST_ONE, SectionType.ACCOUNT_CREATION ]
-                    ]
-                )
-            } else {
-                checker.group(
-                    SectionConstraint.AT_LEAST_ONE,
-                    [
-                        [ SectionConstraint.ANY, SectionType.ACCOUNT_TRANSFER ],
-                        [ SectionConstraint.ANY, SectionType.ACCOUNT_VESTING_TRANSFER ],
-                        [ SectionConstraint.ANY, SectionType.ACCOUNT_STAKE ],
-                        [ SectionConstraint.ANY, SectionType.ACCOUNT_UNSTAKE ],
-                        [ SectionConstraint.ANY, SECTIONS.ACCOUNT_ESCROW_TRANSFER ],
-                        [ SectionConstraint.ANY, SectionType.ACCOUNT_ESCROW_SETTLEMENT ]
-                    ]
+            const isEscrowSettlement =
+                !checker.isFirstBlock() &&
+                checker.expects(SectionConstraint.AT_MOST_ONE, SectionType.ACCOUNT_ESCROW_SETTLEMENT) === 1;
+            if (!isEscrowSettlement) {
+                checker.expects(
+                    checker.isFirstBlock() ? SectionConstraint.ONE : SectionConstraint.AT_MOST_ONE,
+                    SectionType.ACCOUNT_PUBLIC_KEY
                 );
+                if (checker.isFirstBlock()) {
+                    checker.group(
+                        SectionConstraint.ONE,
+                        [
+                            [SectionConstraint.AT_MOST_ONE, SectionType.ACCOUNT_TOKEN_ISSUANCE],
+                            [SectionConstraint.AT_MOST_ONE, SectionType.ACCOUNT_CREATION]
+                        ]
+                    )
+                } else {
+                    checker.group(
+                        SectionConstraint.AT_LEAST_ONE,
+                        [
+                            [SectionConstraint.ANY, SectionType.ACCOUNT_TRANSFER],
+                            [SectionConstraint.ANY, SectionType.ACCOUNT_VESTING_TRANSFER],
+                            [SectionConstraint.ANY, SectionType.ACCOUNT_STAKE],
+                            [SectionConstraint.ANY, SectionType.ACCOUNT_UNSTAKE],
+                            [SectionConstraint.ANY, SectionType.ACCOUNT_ESCROW_TRANSFER],
+                        ]
+                    );
+                }
             }
             checker.expects(SectionConstraint.ONE, SectionType.SIGNATURE);
             checker.endsHere();

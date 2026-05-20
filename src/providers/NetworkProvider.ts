@@ -256,7 +256,6 @@ export class NetworkProvider implements IExternalProvider {
         return response.serializedVirtualBlockchainState;
     }
 
-
     private static async query(
         urlObject: any,
         postBody: object = {},
@@ -277,6 +276,7 @@ export class NetworkProvider implements IExternalProvider {
             });
 
             if (res.status === 500) {
+                console.error(res);
                 throw new NodeError(`Internal error in the node: ${res.statusText}`);
             }
             if (!res.ok) {

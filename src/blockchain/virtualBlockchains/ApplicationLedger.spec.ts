@@ -17,7 +17,7 @@ beforeAll(async () => {
     await configure({
         sinks: { console: getConsoleSink() },
         loggers: [
-            { category: '@cmts-dev/carmentis-sdk', lowestLevel: 'debug', sinks: ['console']  }
+            { category: '@cmts-dev/carmentis-sdk-core', lowestLevel: 'debug', sinks: ['console']  }
         ]
     })
 })

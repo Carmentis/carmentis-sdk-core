@@ -55,8 +55,8 @@ export interface IProvider {
      */
     getProtocolState(): Promise<ProtocolInternalState>;
 
-    computeMicroblockFees(
+    computeMicroblockGas(
         mb: Microblock,
         options?: { signatureSchemeId?: SignatureSchemeId, referenceTimestampInSeconds?: number }
-    ): Promise<CMTSToken>
+    ): Promise<number>
 }

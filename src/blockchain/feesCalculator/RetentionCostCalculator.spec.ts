@@ -1,20 +1,20 @@
 import { describe, it, expect } from 'vitest'
-import { StoragePriceManager } from './storagePriceManager';
-import {CMTSToken} from "../../economics/currencies/token";
-import {PriceStructure} from "../../type/valibot/blockchain/economics/PriceStructure";
+import { RetentionCostCalculator } from './RetentionCostCalculator';
+import { CMTSToken } from "../../economics/currencies/token";
+import { RetentionPolicy } from "../../type/valibot/blockchain/economics/RetentionPolicy";
 
 describe("storage price manager", () => {
     it("Should compute correct prices", () => {
-        const priceStructure: PriceStructure = [
-            { pricingRate: 100, maximumNumberOfDays: 366, divisor: 366 },       // 1 * 1.0 = 1.0
-            { pricingRate: 50, maximumNumberOfDays: 366 * 5, divisor: 366 },    // 4 * 0.5 = 2.0
-            { pricingRate: 20, maximumNumberOfDays: 366 * 10, divisor: 366 },   // 5 * 0.2 = 1.0
+        const retentionPolicy: RetentionPolicy = [
+            { retentionRatio: 100, maximumNumberOfDays: 366, dayDivisor: 366 },       // 1 * 1.0 = 1.0
+            { retentionRatio: 50, maximumNumberOfDays: 366 * 5, dayDivisor: 366 },    // 4 * 0.5 = 2.0
+            { retentionRatio: 20, maximumNumberOfDays: 366 * 10, dayDivisor: 366 },   // 5 * 0.2 = 1.0
             // an extra rate of 1.0 is applied for any number of days beyond 10 years
             // (in particular, this is what happens for infinite storage)
-            { pricingRate: 100, maximumNumberOfDays: 366 * 10 + 1, divisor: 1 },
+            { retentionRatio: 100, maximumNumberOfDays: 366 * 10 + 1, dayDivisor: 1 },
         ];
 
-        const storagePriceManager = new StoragePriceManager(priceStructure);
+        const storagePriceManager = new RetentionCostCalculator(retentionPolicy);
 
         const cost30 = Math.floor(30 * 100000 / 366);
         const cost366 = Math.floor(366 * 100000 / 366);
@@ -34,7 +34,7 @@ describe("storage price manager", () => {
 
         tests.forEach(([ days, expectedPriceInAtomics ]) => {
             const baseFee = CMTSToken.createCMTS(1);
-            const computedPrice = storagePriceManager.getStoragePrice(baseFee, days);
+            const computedPrice = storagePriceManager.getStorageCost(baseFee, days);
             const computedPriceInAtomics = computedPrice.getAmountAsAtomic();
 
             console.log(days, storagePriceManager.getBreakdown(baseFee, days));

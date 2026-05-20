@@ -61,6 +61,7 @@ export class StructureChecker {
         if (!this.checkConstraint(constraint, count)) {
             throw new MicroblockStructureCheckingError(`expected ${ConstraintNameByConstraint[constraint]} of type ${this.getSectionLabelBySectionType(type)} in section, got ${count}`);
         }
+        return count;
     }
 
     /**

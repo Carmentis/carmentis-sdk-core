@@ -38,14 +38,12 @@ export const MicroblockHeaderSchema = val.object({
     timestamp: val.number(),
 
     /**
-     * The max fees corresponds to the maximum amount of fees that can be charged for publishing this microblock.
-     *
-     * It is computed as: max_fees = f(mb, vbContext) * gasPrice for some function f (defined by the protocol).
+     * The computed gas for this microblock.
      */
-    maxFees: val.number(),
+    gas: val.number(),
 
     /**
-     * The gas price is used to convert gas to fees by multiplying it with the gas computed by f.
+     * The gas price is used to convert gas to fees by multiplying it with the gas.
      */
     gasPrice: val.number(),
 

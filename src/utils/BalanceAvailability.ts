@@ -177,21 +177,21 @@ export class BalanceAvailability {
     }
 
     /**
-     * Releases escrowed tokens by giving the signature of the agent.
+     * Removes an escrow lock, given its identifier.
      */
-    releaseEscrowedTokens(fundEmitterAccountId: Uint8Array, transferAuthorizerSignature: Uint8Array) {
+    removeEscrowLock(escrowIdentifier: Uint8Array) {
         const lockIndex = this.locks.findIndex((lock) =>
             lock.type == LockType.Escrow &&
-            Utils.binaryIsEqual(lock.parameters.fundEmitterAccountId, fundEmitterAccountId)
+            Utils.binaryIsEqual(lock.parameters.escrowIdentifier, escrowIdentifier)
         );
 
         if (lockIndex == -1) {
             throw new Error(`Escrow not found`);
         }
 
-        // TODO: check signature
-
+        const amount = this.locks[lockIndex].lockedAmountInAtomics;
         this.locks.splice(lockIndex, 1);
+        return amount;
     }
 
     /**

@@ -10,7 +10,7 @@ export const MINIMUM_GAS_PRICE = 1;
 export const MAXIMUM_GAS_PRICE = 2 ** 29 - 1;
 export const FIXED_GAS_FEE     = 1000;
 export const GAS_PER_BYTE      = 1;
-export const GAS_UNIT          = 1000;
+export const GAS_ATOMS_PER_GAS = 100000;
 
 // bookkeeping operations
 export const BK_PLUS = 0x1;

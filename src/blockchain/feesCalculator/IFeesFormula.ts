@@ -19,4 +19,14 @@ export interface IFeesFormula {
         expirationDay: number,
         referenceTimestampInSeconds: number
     ): Promise<CMTSToken>;
+
+    /**
+     * Compute the gas for a given microblock.
+     */
+    computeGas(
+        signatureSchemeId: SignatureSchemeId,
+        microblock: Microblock,
+        expirationDay: number,
+        referenceTimestampInSeconds: number
+    ): Promise<number>;
 }

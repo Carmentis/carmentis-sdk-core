@@ -168,7 +168,6 @@ export type ValidatorNodeSlashingCancellationSection = val.InferOutput<typeof Va
 // ---------------------------------------------------------------------------
 // Organization Sections
 // ---------------------------------------------------------------------------
-
 export const OrganizationCreationSectionSchema = val.object({
     type: val.literal(SectionType.ORG_CREATION),
     accountId: accountId(),

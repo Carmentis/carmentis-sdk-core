@@ -11,25 +11,26 @@ export class ValidatorNodeMicroblockStructureChecker implements IMicroblockStruc
     checkMicroblockStructure(microblock: Microblock): boolean {
         try {
             const checker = new StructureChecker(microblock);
-            checker.expects(
-                checker.isFirstBlock() ? SectionConstraint.ONE : SectionConstraint.ZERO,
-                SectionType.VN_CREATION
-            );
-            checker.group(
-                SectionConstraint.AT_LEAST_ONE,
-                checker.isFirstBlock() ? 
+            const isApproval =
+                !checker.isFirstBlock() &&
+                checker.expects(SectionConstraint.AT_MOST_ONE, SectionType.VN_APPROVAL) === 1;
+            const isSlashingCancellation =
+                !isApproval &&
+                !checker.isFirstBlock() &&
+                checker.expects(SectionConstraint.AT_MOST_ONE, SectionType.VN_SLASHING_CANCELLATION) === 1;
+            if (!isApproval && !isSlashingCancellation) {
+                checker.expects(
+                    checker.isFirstBlock() ? SectionConstraint.ONE : SectionConstraint.ZERO,
+                    SectionType.VN_CREATION
+                );
+                checker.group(
+                    SectionConstraint.AT_LEAST_ONE,
                     [
-                        [ SectionConstraint.AT_MOST_ONE, SectionType.VN_COMETBFT_PUBLIC_KEY_DECLARATION ],
-                        [ SectionConstraint.AT_MOST_ONE, SectionType.VN_RPC_ENDPOINT ]
+                        [SectionConstraint.AT_MOST_ONE, SectionType.VN_COMETBFT_PUBLIC_KEY_DECLARATION],
+                        [SectionConstraint.AT_MOST_ONE, SectionType.VN_RPC_ENDPOINT]
                     ]
-                :
-                    [
-                        [ SectionConstraint.AT_MOST_ONE, SectionType.VN_COMETBFT_PUBLIC_KEY_DECLARATION ],
-                        [ SectionConstraint.AT_MOST_ONE, SectionType.VN_RPC_ENDPOINT ],
-                        [ SectionConstraint.AT_MOST_ONE, SectionType.VN_APPROVAL ],
-                        [ SectionConstraint.AT_MOST_ONE, SectionType.VN_SLASHING_CANCELLATION ]
-                    ]
-            );
+                );
+            }
             checker.expects(SectionConstraint.ONE, SectionType.SIGNATURE);
             checker.endsHere();
             return true;

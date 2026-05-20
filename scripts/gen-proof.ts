@@ -64,8 +64,12 @@ async function test() {
     ])
     mb.setFeesPayerAccount(sellerAccountId.toBytes());
     mb.setTimestamp(Utils.getTimestampInSeconds())
-    //mb.setGas(await feesFormula.computeFees(sellerSk.getSignatureSchemeId(), mb))
-    mb.setMaxFees(CMTSToken.createCMTS(150));
+    mb.setGas(
+        await provider.computeMicroblockGas(
+            mb,
+            { signatureSchemeId: sellerSk.getSignatureSchemeId() }
+        )
+    );
     await mb.seal(sellerSk);
     await provider.publishMicroblock(mb);
     await provider.awaitMicroblockAnchoring(mb.getHash().toBytes());
@@ -88,8 +92,12 @@ async function test() {
     ]);
     carmentisOrganizationMicroblock.setFeesPayerAccount(newAccountId.toBytes());
     carmentisOrganizationMicroblock.setTimestamp(Utils.getTimestampInSeconds());
-    //carmentisOrganizationMicroblock.setGas(await feesFormula.computeFees(sk.getSignatureSchemeId(), carmentisOrganizationMicroblock));
-    carmentisOrganizationMicroblock.setMaxFees(CMTSToken.createCMTS(150));
+    carmentisOrganizationMicroblock.setGas(
+        await provider.computeMicroblockGas(
+            carmentisOrganizationMicroblock,
+            { signatureSchemeId: sk.getSignatureSchemeId() }
+        )
+    );
     await carmentisOrganizationMicroblock.seal(sk);
     const { microblockData: carmentisOrganizationData, microblockHash: carmentisOrgId } =
         carmentisOrganizationMicroblock.serialize();
@@ -137,8 +145,12 @@ async function test() {
     ]);
     carmentisOrganizationSecondMicroblock.setFeesPayerAccount(newAccountId.toBytes());
     carmentisOrganizationSecondMicroblock.setTimestamp(Utils.getTimestampInSeconds());
-    //carmentisOrganizationSecondMicroblock.setGas(await feesFormula.computeFees(sk.getSignatureSchemeId(), carmentisOrganizationSecondMicroblock));
-    carmentisOrganizationSecondMicroblock.setMaxFees(CMTSToken.createCMTS(150));
+    carmentisOrganizationSecondMicroblock.setGas(
+        await provider.computeMicroblockGas(
+            carmentisOrganizationSecondMicroblock,
+            { signatureSchemeId: sk.getSignatureSchemeId() }
+        )
+    );
     await carmentisOrganizationSecondMicroblock.seal(sk);
     carmentisOrganizationSecondMicroblock.serialize();
     await provider.publishMicroblock(carmentisOrganizationSecondMicroblock);
@@ -169,7 +181,12 @@ async function test() {
     ]);
     applicationMicroblock.setFeesPayerAccount(newAccountId.toBytes());
     applicationMicroblock.setTimestamp(Utils.getTimestampInSeconds());
-    applicationMicroblock.setMaxFees(CMTSToken.createCMTS(150));
+    applicationMicroblock.setGas(
+        await provider.computeMicroblockGas(
+            applicationMicroblock,
+            { signatureSchemeId: sk.getSignatureSchemeId() }
+        )
+    );
     await applicationMicroblock.seal(sk);
     const { microblockHash: applicationId } = applicationMicroblock.serialize();
     await provider.publishMicroblock(applicationMicroblock);
@@ -246,7 +263,12 @@ async function test() {
         appLedgerMicroblock.setPreviousHash(vbSeed);
         appLedgerMicroblock.setFeesPayerAccount(newAccountId.toBytes());
         appLedgerMicroblock.setTimestamp(Utils.getTimestampInSeconds());
-        appLedgerMicroblock.setMaxFees(CMTSToken.createCMTS(300));
+        appLedgerMicroblock.setGas(
+            await provider.computeMicroblockGas(
+                appLedgerMicroblock,
+                { signatureSchemeId: sk.getSignatureSchemeId() }
+            )
+        );
         await appLedgerMicroblock.seal(sk);
         const {microblockHash: applicationLedgerId} = appLedgerMicroblock.serialize();
         await provider.publishMicroblock(appLedgerMicroblock);

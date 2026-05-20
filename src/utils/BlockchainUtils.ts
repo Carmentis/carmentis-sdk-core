@@ -114,7 +114,7 @@ export class BlockchainUtils {
      * @return {VirtualBlockchainState} The decoded virtual blockchain state object.
      */
     static decodeVirtualBlockchainState(serializedVirtualBlockchainState: Uint8Array) : VirtualBlockchainState {
-        return v.parse(VirtualBlockchainStateSchema, this.decodeObjectFromBinary(serializedVirtualBlockchainState))
+        return v.parse(VirtualBlockchainStateSchema, this.decodeObjectFromBinary(serializedVirtualBlockchainState));
     }
 
     static encodeMicroblockBody(body: MicroblockBody) {

@@ -160,16 +160,15 @@ export class MicroblockConsistencyChecker {
             throw new IllegalStateError("You have already called reconstructMicroblockAndVirtualBlockchain() method. You can only call it once.")
 
         const microblock = this.checkedMicroblock;
-        const computedFees = await this.provider.computeMicroblockFees(
+        const computedGas = await this.provider.computeMicroblockGas(
             microblock,
             { referenceTimestampInSeconds: referenceTimestamp }
         );
-        const maxFees = microblock.getMaxFees();
-        if (maxFees.getAmountAsAtomic() < computedFees.getAmountAsAtomic()) {
-            throw new Error(`Computed fees ${computedFees.toString()} is strictly higher than max fees ${maxFees.toString()} `);
+        const declaredGas = microblock.getGas();
+        if (declaredGas != computedGas) {
+            throw new Error(`Computed gas ${computedGas} is not equal to declared gas ${declaredGas} `);
         }
     }
-
 
     private get virtualBlockchain() {
         if (this.verificationState.isMicroblockParsingCompleted) {
