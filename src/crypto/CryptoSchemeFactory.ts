@@ -28,12 +28,16 @@ import {SignatureSchemeId} from "./signature/SignatureSchemeId";
 import {Secp256k1SignatureScheme} from "./signature/secp256k1/Secp256k1SignatureScheme";
 import {Secp256k1PublicSignatureKey} from "./signature/secp256k1/Secp256k1PublicSignatureKey";
 import {Secp256k1PrivateSignatureKey} from "./signature/secp256k1/Secp256k1PrivateSignatureKey";
+import {Ed25519SignatureScheme} from "./signature/ed25519/Ed25519SignatureScheme";
+import {Ed25519PrivateSignatureKey} from "./signature/ed25519/Ed25519PrivateSignatureKey";
+import {Ed25519PublicSignatureKey} from "./signature/ed25519/Ed25519PublicSignatureKey";
 
 export class CryptoSchemeFactory {
     static createPrivateSignatureKey( schemeId: number, seed: Uint8Array ): PrivateSignatureKey {
         switch (schemeId) {
             case SignatureSchemeId.SECP256K1: return new Secp256k1PrivateSignatureKey(seed);
             case SignatureSchemeId.ML_DSA_65: return new MLDSA65PrivateSignatureKey(seed);
+            case SignatureSchemeId.ED25519: return new Ed25519PrivateSignatureKey(seed.slice(0, 32));
             default: throw `Not supported signature scheme ID: ${schemeId}`
         }
     }
@@ -46,6 +50,7 @@ export class CryptoSchemeFactory {
         switch (schemeId) {
             case SignatureSchemeId.ML_DSA_65: return new MLDSA65PrivateSignatureKey(seed);
             case SignatureSchemeId.SECP256K1: return Secp256k1PrivateSignatureKey.genFromSeed(seed);
+            case SignatureSchemeId.ED25519: return new Ed25519PrivateSignatureKey(seed.slice(0, 32));
             default: throw `Not supported signature scheme ID: ${schemeId}`
         }
     }
@@ -91,6 +96,7 @@ export class CryptoSchemeFactory {
         switch (schemeId) {
             case SignatureSchemeId.SECP256K1: return new Secp256k1PublicSignatureKey(publicKey);
             case SignatureSchemeId.ML_DSA_65: return new MLDSA65PublicSignatureKey(publicKey);
+            case SignatureSchemeId.ED25519: return new Ed25519PublicSignatureKey(publicKey);
             default: throw new Error(`Not supported signature scheme ID: ${schemeId}`)
         }
     }
@@ -160,6 +166,7 @@ export class CryptoSchemeFactory {
         switch (schemeId) {
             case SignatureSchemeId.SECP256K1: return new Secp256k1SignatureScheme();
             case SignatureSchemeId.ML_DSA_65: return new MLDSA65SignatureScheme();
+            case SignatureSchemeId.ED25519: return new Ed25519SignatureScheme();
             default: throw new Error(`Not supported signature scheme ID: ${schemeId}`)
         }
     }
