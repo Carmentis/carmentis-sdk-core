@@ -19,7 +19,6 @@ import {VirtualBlockchainStatus} from "../type/valibot/provider/VirtualBlockchai
 import {VirtualBlockchainType} from "../type/VirtualBlockchainType";
 import {Microblock} from "../blockchain/microblock/Microblock";
 import {FeesCalculationFormulaFactory} from "../blockchain/feesCalculator/FeesCalculationFormulaFactory";
-import {CMTSToken} from "../economics/currencies/token";
 import {SignatureSchemeId} from "../crypto/signature/SignatureSchemeId";
 import {Utils} from "../utils/utils";
 

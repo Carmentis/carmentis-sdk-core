@@ -22,6 +22,14 @@ export const SignatureSectionSchema = val.object({
 })
 export type SignatureSection = val.InferOutput<typeof SignatureSectionSchema>;
 
+export const AuxiliarySignatureSectionSchema = val.object({
+    type: val.literal(SectionType.AUXILIARY_SIGNATURE),
+    tag: string(),
+    signature: uint8array(),
+    schemeId: uint8(),
+})
+export type AuxiliarySignatureSection = val.InferOutput<typeof AuxiliarySignatureSectionSchema>;
+
 export const AllowedAdditionalWriterSectionSchema = val.object({
     type: val.literal(SectionType.ALLOWED_ADDITIONAL_WRITER),
     allowedWriterAccountId: uint8array(),
@@ -307,6 +315,7 @@ export type ApplicationLedgerEndorsementRequestSection = val.InferOutput<typeof 
 export const SectionSchema = val.variant(
     "type",
     [
+        AuxiliarySignatureSectionSchema,
         SignatureSectionSchema,
         AllowedAdditionalWriterSectionSchema,
         CustomSectionSchema,

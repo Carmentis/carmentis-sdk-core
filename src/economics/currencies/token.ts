@@ -259,6 +259,16 @@ export class CMTSToken implements Currency{
     }
 
     /**
+     * Multiplies the value of the current CMTSToken by a provided constant and returns a new CMTSToken with the resulting value.
+     *
+     * @param {number} constant - The multiplication constant.
+     * @return {CMTSToken} A new CMTSToken object representing the result of the multiplication.
+     */
+    mul(constant: number): CMTSToken {
+        return CMTSToken.createAtomic(this.getAmountAsAtomic() * constant)
+    }
+
+    /**
      * Converts the object to a string representation combining the amount and its unit label.
      * The returned string typically includes the numerical value and its corresponding unit.
      *

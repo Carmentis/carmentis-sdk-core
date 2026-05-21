@@ -1,5 +1,6 @@
 export enum SectionType {
     // Generic (non-specific) sections
+    AUXILIARY_SIGNATURE = 126,
     SIGNATURE = 127,
     ALLOWED_ADDITIONAL_WRITER = 128,
     CUSTOM = 129,

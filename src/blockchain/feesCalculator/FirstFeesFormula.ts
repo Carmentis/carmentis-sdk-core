@@ -96,22 +96,13 @@ export class FirstFeesFormula implements IFeesFormula {
         const sections = microblock.getAllSections();
         if (sections.length === 0) return 0;
 
-        // if the gas is set (non-zero) in the microblock then, with high probabilities, the microblock
-        // will not be modified later on and so we exclude the last signature section.
-        // otherwise, the microblock will be modified later on and so we include the last signature section.
-        const gasInMicroblock = microblock.getGas();
-        if (gasInMicroblock === 0) {
-            let totalSize = this.getSizeOfListOfSections(sections);
-            return totalSize
-        } else {
-            // if the last section is a signature, we exclude it from the computation of the total size
-            const isLastSectionSig = sections[sections.length - 1].type === SectionType.SIGNATURE;
-            let sectionsUsedInComputeOfSize = isLastSectionSig ?
-                sections.slice(0, sections.length - 1) :
-                sections;
-            const totalSize = this.getSizeOfListOfSections(sectionsUsedInComputeOfSize)
-            return totalSize
-        }
+        // if the last section is of type SIGNATURE, we exclude it from the computation of the total size
+        const isLastSectionSig = sections[sections.length - 1].type === SectionType.SIGNATURE;
+        let sectionsUsedInComputeOfSize = isLastSectionSig ?
+            sections.slice(0, sections.length - 1) :
+            sections;
+        const totalSize = this.getSizeOfListOfSections(sectionsUsedInComputeOfSize)
+        return totalSize
     }
 
     private getSizeOfListOfSections(sections: Section[]): number {

@@ -84,13 +84,8 @@ describe('Chain test', () => {
         ])
         mb.setFeesPayerAccount(sellerAccountId.toBytes());
         mb.setTimestamp(Utils.getTimestampInSeconds())
-        mb.setGas(
-            await provider.computeMicroblockGas(
-                mb,
-                { signatureSchemeId: sellerSk.getSignatureSchemeId() }
-            )
-        );
-        await mb.seal(sellerSk);
+        mb.setGasPrice(CMTSToken.createMilliToken(1));
+        await mb.setGasAndSeal(provider, sellerSk);
         await provider.publishMicroblock(mb);
         await provider.awaitMicroblockAnchoring(mb.getHash().toBytes());
 
@@ -112,13 +107,8 @@ describe('Chain test', () => {
         ]);
         carmentisOrganizationMicroblock.setFeesPayerAccount(newAccountId.toBytes());
         carmentisOrganizationMicroblock.setTimestamp(Utils.getTimestampInSeconds());
-        carmentisOrganizationMicroblock.setGas(
-            await provider.computeMicroblockGas(
-                carmentisOrganizationMicroblock,
-                { signatureSchemeId: sk.getSignatureSchemeId() }
-            )
-        );
-        await carmentisOrganizationMicroblock.seal(sk);
+        carmentisOrganizationMicroblock.setGasPrice(CMTSToken.createMilliToken(1));
+        await carmentisOrganizationMicroblock.setGasAndSeal(provider, sk);
         const { microblockData: carmentisOrganizationData, microblockHash: carmentisOrgId } =
             carmentisOrganizationMicroblock.serialize();
         await provider.publishMicroblock(carmentisOrganizationMicroblock);
@@ -165,13 +155,8 @@ UI9X4hM8epAa/Lg=
         ]);
         carmentisOrganizationSecondMicroblock.setFeesPayerAccount(newAccountId.toBytes());
         carmentisOrganizationSecondMicroblock.setTimestamp(Utils.getTimestampInSeconds());
-        carmentisOrganizationSecondMicroblock.setGas(
-            await provider.computeMicroblockGas(
-                carmentisOrganizationSecondMicroblock,
-                { signatureSchemeId: sk.getSignatureSchemeId() }
-            )
-        );
-        await carmentisOrganizationSecondMicroblock.seal(sk);
+        carmentisOrganizationSecondMicroblock.setGasPrice(CMTSToken.createMilliToken(1));
+        await carmentisOrganizationSecondMicroblock.setGasAndSeal(provider, sk);
         carmentisOrganizationSecondMicroblock.serialize();
         await provider.publishMicroblock(carmentisOrganizationSecondMicroblock);
         await provider.awaitMicroblockAnchoring(carmentisOrganizationSecondMicroblock.getHash().toBytes());
@@ -203,13 +188,8 @@ UI9X4hM8epAa/Lg=
         ]);
         applicationMicroblock.setFeesPayerAccount(newAccountId.toBytes());
         applicationMicroblock.setTimestamp(Utils.getTimestampInSeconds());
-        applicationMicroblock.setGas(
-            await provider.computeMicroblockGas(
-                applicationMicroblock,
-                { signatureSchemeId: sk.getSignatureSchemeId() }
-            )
-        );
-        await applicationMicroblock.seal(sk);
+        applicationMicroblock.setGasPrice(CMTSToken.createMilliToken(1));
+        await applicationMicroblock.setGasAndSeal(provider, sk);
         const { microblockHash: applicationId } = applicationMicroblock.serialize();
         await provider.publishMicroblock(applicationMicroblock);
         await provider.awaitMicroblockAnchoring(applicationMicroblock.getHash().toBytes());
@@ -285,13 +265,8 @@ UI9X4hM8epAa/Lg=
             appLedgerMicroblock.setPreviousHash(vbSeed);
             appLedgerMicroblock.setFeesPayerAccount(newAccountId.toBytes());
             appLedgerMicroblock.setTimestamp(Utils.getTimestampInSeconds());
-            appLedgerMicroblock.setGas(
-                await provider.computeMicroblockGas(
-                    appLedgerMicroblock,
-                    { signatureSchemeId: sk.getSignatureSchemeId() }
-                )
-            );
-            await appLedgerMicroblock.seal(sk);
+            appLedgerMicroblock.setGasPrice(CMTSToken.createMilliToken(1));
+            await appLedgerMicroblock.setGasAndSeal(provider, sk);
             const {microblockHash: applicationLedgerId} = appLedgerMicroblock.serialize();
             await provider.publishMicroblock(appLedgerMicroblock);
             await provider.awaitMicroblockAnchoring(appLedgerMicroblock.getHash().toBytes());

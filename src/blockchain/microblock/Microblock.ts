@@ -2,6 +2,7 @@ import {CHAIN} from "../../constants/constants";
 import {Utils} from "../../utils/utils";
 import {Crypto} from "../../crypto/crypto";
 import {Hash} from "../../entities/Hash";
+import {Provider} from "../../providers/Provider";
 import {
     CarmentisError,
     IllegalParameterError,
@@ -377,7 +378,7 @@ export class Microblock {
     }
 
     /**
-     * Get the fees in tokens
+     * Get the fees as a CMTSToken
      */
     getFees(): CMTSToken {
         return CMTSToken.createAtomic(this.header.gas * this.header.gasPrice);
@@ -506,6 +507,19 @@ export class Microblock {
      */
     getAllSections(): Section[] {
         return this.sections
+    }
+
+    async setGasAndSeal(
+        provider: Provider,
+        privateKey: PrivateSignatureKey,
+        sealingParams: { feesPayerAccount?: Uint8Array, includeGas?: boolean } = {}
+    ) {
+        const gas = await provider.computeMicroblockGas(
+            this,
+            { signatureSchemeId: privateKey.getSignatureSchemeId() }
+        )
+        this.setGas(gas);
+        await this.seal(privateKey, sealingParams);
     }
 
     /**
