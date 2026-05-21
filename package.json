@@ -18,7 +18,7 @@
   ],
   "scripts": {
     "dev": "vite",
-    "build": "barrelsby --delete -e .d.ts -e .js -e spec -n common -d src && vite build",
+    "build": "barrelsby --config barrelsby.json && vite build",
     "test": "vitest --globals"
   },
   "publishConfig": {

@@ -1,0 +1,10 @@
+{
+  "directory": "src",
+  "name": "common",
+  "delete": true,
+  "exclude": [
+    "\\.d\\.ts$",
+    "\\.js$",
+    "\\.spec\\.ts$"
+  ]
+}
