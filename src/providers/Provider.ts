@@ -197,7 +197,7 @@ export class Provider extends AbstractProvider {
         return null;
     }
 
-    async getListOfMicroblockBody(hashes: Uint8Array[]) {
+    async getListOfMicroblockBody(hashes: Uint8Array[]): Promise<MicroblockBody[]> {
         // get as much data as possible from the internal provider
         const res: {hash: Uint8Array, body: MicroblockBody}[] = [];
         const missingHashes: Uint8Array[] = [];

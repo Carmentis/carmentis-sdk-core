@@ -18,7 +18,7 @@ import {
     AbciResponse,
     AbciResponseType,
     AccountByPublicKeyHashAbciResponseSchema,
-    AccountHistoryAbciResponseSchema,
+    AccountHistoryAbciResponseSchema, AccountStateAbciResponse,
     AccountStateAbciResponseSchema,
     BlockContentAbciResponseSchema,
     BlockInformationAbciResponseSchema,
@@ -129,7 +129,7 @@ export class NetworkProvider implements IExternalProvider {
         return v.parse(ValidatorNodeByAddressAbciResponseSchema, answer);
     }
 
-    async getAccountState(accountHash: Uint8Array) {
+    async getAccountState(accountHash: Uint8Array): Promise<AccountStateAbciResponse> {
         this.requestLogger.info(`Requesting account state for account hash {accountHash}`, () => ({
             accountHash: Utils.binaryToHexa(accountHash)
         }));

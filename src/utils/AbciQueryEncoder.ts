@@ -5,19 +5,19 @@ import * as v from 'valibot';
 
 
 export class AbciQueryEncoder {
-    static encodeAbciRequest(request: AbciRequest) {
+    static encodeAbciRequest(request: AbciRequest): Uint8Array {
         return encode(v.parse(AbciRequestSchema, request));
     }
 
-    static decodeAbciRequest(request: Uint8Array) {
+    static decodeAbciRequest(request: Uint8Array): AbciRequest {
         return v.parse(AbciRequestSchema, decode(request));
     }
 
-    static encodeAbciResponse(response: AbciResponse) {
+    static encodeAbciResponse(response: AbciResponse): Uint8Array {
         return encode(v.parse(AbciResponseSchema, response));
     }
 
-    static decodeAbciResponse(response: Uint8Array) {
+    static decodeAbciResponse(response: Uint8Array): AbciResponse {
         const decodedResponse = decode(response);
         return v.parse(AbciResponseSchema, decodedResponse);
     }

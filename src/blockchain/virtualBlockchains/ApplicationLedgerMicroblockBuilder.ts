@@ -2,11 +2,12 @@ import {ApplicationLedgerVb} from "./ApplicationLedgerVb";
 import {Microblock} from "../microblock/Microblock";
 import {MicroBlockNotFoundInVirtualBlockchainAtHeightError} from "../../errors/carmentis-error";
 import {IMicroblockSearchFailureFallback} from "./fallbacks/IMicroblockSearchFailureFallback";
-import {Height, IProvider, Provider} from "../../common";
 import {VirtualBlockchain} from "./VirtualBlockchain";
 import {IApplicationLedgerInternalStateUpdater} from "../internalStates/IInternalStateUpdater";
 import {InternalStateUpdaterFactory} from "../internalStatesUpdater/InternalStateUpdaterFactory";
 import {Section} from "../../type/valibot/blockchain/section/sections";
+import {IProvider} from "../../providers/IProvider";
+import {Height} from "../../type/Height";
 
 
 export class ApplicationLedgerMicroblockBuilder implements IMicroblockSearchFailureFallback {

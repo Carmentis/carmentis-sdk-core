@@ -12,30 +12,30 @@ export class WalletInteractiveAnchoringEncoder {
         tagUint8Array: true,
         mapsAsObjects: true,
     });
-    static encodeRequest(request: WalletInteractiveAnchoringRequest) {
+    static encodeRequest(request: WalletInteractiveAnchoringRequest): Uint8Array {
         return this.encoder.encode(v.parse(WalletInteractiveAnchoringRequestSchema, request));
     }
 
-    static decodeRequest(request: Uint8Array) {
+    static decodeRequest(request: Uint8Array): WalletInteractiveAnchoringRequest {
         return v.parse(WalletInteractiveAnchoringRequestSchema, this.encoder.decode(request));
     }
 
-    static encodeResponse(response: WalletInteractiveAnchoringResponse) {
+    static encodeResponse(response: WalletInteractiveAnchoringResponse): Uint8Array {
         return this.encoder.encode(v.parse(WalletInteractiveAnchoringResponseSchema, response));
     }
 
-    static decodeResponse(response: Uint8Array) {
+    static decodeResponse(response: Uint8Array): WalletInteractiveAnchoringResponse {
         const decodedResponse = this.encoder.decode(response);
         return v.parse(WalletInteractiveAnchoringResponseSchema, decodedResponse);
     }
 }
 
 export class WalletInteractiveAnchoringValidation {
-    static validateRequest(request: object) {
+    static validateRequest(request: object): WalletInteractiveAnchoringRequest {
         return v.parse(WalletInteractiveAnchoringRequestSchema, request);
     }
 
-    static validateResponse(response: object) {
+    static validateResponse(response: object): WalletInteractiveAnchoringResponse {
         return v.parse(WalletInteractiveAnchoringResponseSchema, response);
     }
 }

@@ -91,11 +91,11 @@ export class BlockchainUtils {
     }
 
 
-    static encodeVirtualBlockchainInfo(virtualBlockchainInfo: VirtualBlockchainInfo) {
+    static encodeVirtualBlockchainInfo(virtualBlockchainInfo: VirtualBlockchainInfo): Uint8Array {
         return this.encodeObjectToBinary(v.parse(VirtualBlockchainInfoSchema, virtualBlockchainInfo));
     }
 
-    static decodeVirtualBlockchainInfo(serializedInfo: Uint8Array) {
+    static decodeVirtualBlockchainInfo(serializedInfo: Uint8Array): VirtualBlockchainInfo {
         return v.parse(VirtualBlockchainInfoSchema, this.decodeObjectFromBinary(serializedInfo));
     }
 
@@ -117,11 +117,11 @@ export class BlockchainUtils {
         return v.parse(VirtualBlockchainStateSchema, this.decodeObjectFromBinary(serializedVirtualBlockchainState));
     }
 
-    static encodeMicroblockBody(body: MicroblockBody) {
+    static encodeMicroblockBody(body: MicroblockBody): Uint8Array {
         return this.encodeObjectToBinary(v.parse(MicroblockBodySchema, body));
     }
 
-    static decodeMicroblockBody(serializedBody: Uint8Array) {
+    static decodeMicroblockBody(serializedBody: Uint8Array): MicroblockBody {
         return v.parse(MicroblockBodySchema, this.decodeObjectFromBinary(serializedBody));
     }
 
@@ -133,11 +133,11 @@ export class BlockchainUtils {
         return v.parse(SectionSchema, this.decodeObjectFromBinary(serializedSection));
     }
 
-    static encodeMicroblockHeader(header: MicroblockHeader) {
+    static encodeMicroblockHeader(header: MicroblockHeader): Uint8Array {
         return this.encodeObjectToBinary(v.parse(MicroblockHeaderSchema, header));
     }
 
-    static decodeMicroblockHeader(serializedHeader: Uint8Array) {
+    static decodeMicroblockHeader(serializedHeader: Uint8Array): MicroblockHeader {
         const decoded = this.decodeObjectFromBinary(serializedHeader)
         const result = v.parse(MicroblockHeaderSchema, decoded);
         if (!Utils.binaryIsEqual(decoded.bodyHash!, result.bodyHash)) {
