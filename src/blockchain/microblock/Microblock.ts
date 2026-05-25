@@ -550,9 +550,8 @@ export class Microblock {
      * @param {PrivateSignatureKey} privateKey - The private key used to sign the data.
      * @param {boolean} includeGas - A flag indicating whether gas-related data should be included in the signature.
      * @return {Uint8Array} The generated digital signature as a byte array.
-     * @private
      */
-    private async sign(privateKey: PrivateSignatureKey, includeGas: boolean = true): Promise<Uint8Array> {
+    async sign(privateKey: PrivateSignatureKey, includeGas: boolean = true): Promise<Uint8Array> {
         const sections = this.sections;
         const bodyHash = Microblock.computeBodyHashFromSections(sections);
         const headerToBeSigned: MicroblockHeader = {
