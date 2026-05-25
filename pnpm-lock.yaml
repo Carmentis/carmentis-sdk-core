@@ -26,9 +26,6 @@ importers:
       '@noble/secp256k1':
         specifier: ^2.2.3
         version: 2.3.0
-      '@types/node':
-        specifier: ^25.5.2
-        version: 25.5.2
       cbor-x:
         specifier: ^1.6.0
         version: 1.6.4
@@ -60,6 +57,9 @@ importers:
       '@types/jest':
         specifier: ^30.0.0
         version: 30.0.0
+      '@types/node':
+        specifier: ^25.5.2
+        version: 25.5.2
       '@typescript-eslint/eslint-plugin':
         specifier: ^8.59.4
         version: 8.59.4(@typescript-eslint/parser@8.59.4(eslint@10.4.0)(typescript@6.0.2))(eslint@10.4.0)(typescript@6.0.2)
