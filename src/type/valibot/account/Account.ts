@@ -2,7 +2,7 @@ import * as v from "valibot";
 import {bin256, uint8array} from "../primitives";
 
 export const LOCK_TYPE_COUNT = 3;
-export const enum LockType {
+export enum LockType {
     Escrow = 0,
     Vesting = 1,
     NodeStaking = 2

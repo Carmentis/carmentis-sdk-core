@@ -1,4 +1,4 @@
-export const enum SectionType {
+export  enum SectionType {
     // Generic (non-specific) sections
     AUXILIARY_SIGNATURE = 126,
     SIGNATURE = 127,
