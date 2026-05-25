@@ -10,7 +10,7 @@
     ".": {
       "import": "./dist/carmentis-sdk-core.es",
       "require": "./dist/carmentis-sdk-core.cjs",
-      "types": "./dist/carmentis-sdk-core.d.ts"
+      "types": "./dist/common.d.ts"
     }
   },
   "files": [
@@ -51,7 +51,6 @@
     "@noble/hashes": "^1.7.1",
     "@noble/post-quantum": "^0.4.1",
     "@noble/secp256k1": "^2.2.3",
-    "@types/node": "^25.5.2",
     "cbor-x": "^1.6.0",
     "decimal.js": "^10.6.0",
     "jose": "^6.2.2",

@@ -6,15 +6,21 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills';
 export default defineConfig({
     plugins: [
         nodePolyfills(),
-        dts({ rollupTypes: true }),
+        dts({ rollupTypes: false }),
     ],
     build: {
         lib: {
             entry: resolve(import.meta.dirname, 'src/common.ts'),
             name: 'CarmentisSDKCore',
-            fileName: (format) => `carmentis-sdk-core.${format}`,
             formats: ['es', 'cjs'],
+            fileName: (format) => `carmentis-sdk-core.${format}`,
+            /*
+
+
+
+
+             */
         },
-        sourcemap: true,
+        sourcemap: false,
     },
 })
