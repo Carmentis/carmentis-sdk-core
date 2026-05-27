@@ -565,12 +565,72 @@ export class Microblock {
         return signature
     }
 
+    async verifySignature(
+        publicKey: PublicSignatureKey,
+    ) {
+        const signatureSections = this.sections.filter((section) =>
+            section.type === SectionType.SIGNATURE
+        );
+        if (signatureSections.length === 0) {
+            throw new IllegalStateError("The current microblock has no SIGNATURE section");
+        }
+        if (signatureSections.length !== 1) {
+            throw new IllegalStateError("There are several SIGNATURE sections");
+        }
+        const lastSection = this.sections[this.sections.length - 1];
+        if (lastSection.type !== SectionType.SIGNATURE) {
+            throw new IllegalStateError("The SIGNATURE section is not the last one");
+        }
+        return this.verifySignatureOfSections(publicKey, true, this.sections.length - 1);
+    }
+
+    async verifyAuxiliarySignature(
+        publicKey: PublicSignatureKey,
+        tag: string,
+    ) {
+        const signatureSections = this.sections.filter((section) =>
+            section.type === SectionType.AUXILIARY_SIGNATURE && section.tag === tag
+        );
+        if (signatureSections.length === 0) {
+            throw new IllegalStateError(`The current microblock has no AUXILIARY_SIGNATURE section with tag '${tag}'`);
+        }
+        if (signatureSections.length !== 1) {
+            throw new IllegalStateError(`The current microblock has several AUXILIARY_SIGNATURE section with tag '${tag}'`);
+        }
+        const sectionIndex = this.sections.findIndex((section) =>
+            section.type === SectionType.AUXILIARY_SIGNATURE && section.tag === tag
+        );
+        return this.verifySignatureOfSections(publicKey, false, sectionIndex);
+    }
+
+    private async verifySignatureOfSections(
+        publicKey: PublicSignatureKey,
+        includeGas: boolean,
+        signatureSectionIndex: number,
+    ) {
+        const signatureSection = this.sections[signatureSectionIndex];
+        if (signatureSection.type !== SectionType.SIGNATURE && signatureSection.type !== SectionType.AUXILIARY_SIGNATURE) {
+            throw new IllegalStateError("Attempt to verify the signature of a non-signature section");
+        }
+        const signedSections = this.sections.slice(0, signatureSectionIndex);
+        const headerToBeVerified: MicroblockHeader = {
+            ...this.header,
+            gas: includeGas ? this.header.gas : 0,
+            gasPrice: includeGas ? this.header.gasPrice : 0,
+            bodyHash: Microblock.computeBodyHashFromSections(signedSections)
+        }
+        const headerData = BlockchainUtils.encodeMicroblockHeader(headerToBeVerified);
+        const signature = signatureSection.signature;
+        return publicKey.verify(headerData, signature);
+    }
+
     /**
      * Verifies the signature of the last signature section using the provided public key.
      *
      * @param {PublicSignatureKey} publicKey - The public key used to verify the signature.
      * @param {boolean} [includeGas=true] - Optional flag to indicate if gas calculations should be included during verification.
      * @return {Promise<boolean>} A promise that resolves to a boolean indicating whether the signature verification was successful.
+     * @deprecated Please use either verifySignature() or verifyAuxiliarySignature()
      */
     async verify(
         publicKey: PublicSignatureKey,
