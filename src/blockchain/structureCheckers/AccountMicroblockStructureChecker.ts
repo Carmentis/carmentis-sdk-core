@@ -42,6 +42,7 @@ export class AccountMicroblockStructureChecker implements IMicroblockStructureCh
                     );
                 }
             }
+            checker.expects(SectionConstraint.ANY, SectionType.AUXILIARY_SIGNATURE);
             checker.expects(SectionConstraint.ONE, SectionType.SIGNATURE);
             checker.endsHere();
             return true;

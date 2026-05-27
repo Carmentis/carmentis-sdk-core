@@ -22,6 +22,7 @@ export class OrganizationMicroblockStructureChecker implements IMicroblockStruct
                     [SectionConstraint.ANY, SectionType.CUSTOM]
                 ]
             );
+            checker.expects(SectionConstraint.ANY, SectionType.AUXILIARY_SIGNATURE);
             checker.expects(SectionConstraint.ONE, SectionType.SIGNATURE);
             checker.endsHere();
             return true;

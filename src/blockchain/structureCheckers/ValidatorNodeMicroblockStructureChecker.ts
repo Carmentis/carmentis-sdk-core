@@ -32,6 +32,7 @@ export class ValidatorNodeMicroblockStructureChecker implements IMicroblockStruc
                     ]
                 );
             }
+            checker.expects(SectionConstraint.ANY, SectionType.AUXILIARY_SIGNATURE);
             checker.expects(SectionConstraint.ONE, SectionType.SIGNATURE);
             checker.endsHere();
             return true;

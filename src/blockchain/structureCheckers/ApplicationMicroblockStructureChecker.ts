@@ -24,6 +24,7 @@ export class ApplicationMicroblockStructureChecker implements IMicroblockStructu
                     [SectionConstraint.ANY, SectionType.CUSTOM],
                 ]
             );
+            checker.expects(SectionConstraint.ANY, SectionType.AUXILIARY_SIGNATURE);
             checker.expects(SectionConstraint.ONE, SectionType.SIGNATURE);
             checker.endsHere();
             return true;

@@ -20,11 +20,13 @@ export class ProtocolMicroblockStructureChecker implements IMicroblockStructureC
                 checker.group(
                     SectionConstraint.AT_MOST_ONE,
                     [
-                        [SectionConstraint.ONE, SectionType.PROTOCOL_UPDATE]
+                        [SectionConstraint.ONE, SectionType.PROTOCOL_UPDATE],
+                        [SectionConstraint.ANY, SectionType.CUSTOM],
                     ]
                 );
             }
 
+            checker.expects(SectionConstraint.ANY, SectionType.AUXILIARY_SIGNATURE);
             checker.expects(SectionConstraint.ONE, SectionType.SIGNATURE);
             checker.endsHere();
             return true;
