@@ -1,6 +1,6 @@
 {
   "name": "@cmts-dev/carmentis-sdk-core",
-  "version": "1.2.8",
+  "version": "1.2.9",
   "type": "module",
   "license": "Apache-2.0",
   "main": "./dist/carmentis-sdk-core.cjs",
@@ -8,7 +8,9 @@
   "types": "./dist/common.d.ts",
   "typesVersions": {
     "*": {
-      "*": ["./dist/common.d.ts"]
+      "*": [
+        "./dist/common.d.ts"
+      ]
     }
   },
   "exports": {
