@@ -13,7 +13,7 @@ export default defineConfig({
             entry: resolve(import.meta.dirname, 'src/common.ts'),
             name: 'CarmentisSDKCore',
             formats: ['es', 'cjs'],
-            fileName: (format) => `carmentis-sdk-core.${format}`,
+            fileName: (format) => `carmentis-sdk-core.${format === 'es' ? 'js' : 'cjs'}`,
             /*
 
 

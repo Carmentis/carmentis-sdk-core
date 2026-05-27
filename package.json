@@ -5,10 +5,15 @@
   "license": "Apache-2.0",
   "main": "./dist/carmentis-sdk-core.cjs",
   "module": "./dist/carmentis-sdk-core.js",
-  "types": "./dist/carmentis-sdk-core.d.ts",
+  "types": "./dist/common.d.ts",
+  "typesVersions": {
+    "*": {
+      "*": ["./dist/common.d.ts"]
+    }
+  },
   "exports": {
     ".": {
-      "import": "./dist/carmentis-sdk-core.es",
+      "import": "./dist/carmentis-sdk-core.js",
       "require": "./dist/carmentis-sdk-core.cjs",
       "types": "./dist/common.d.ts"
     }
