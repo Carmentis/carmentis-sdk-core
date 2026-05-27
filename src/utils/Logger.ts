@@ -1,4 +1,5 @@
 import {configure, configureSync, getConsoleSink, getLogger} from "@logtape/logtape";
+import type {Logger as LogtapeLogger} from "@logtape/logtape";
 
 export class Logger {
     static getLogger(context: string[] = []) {

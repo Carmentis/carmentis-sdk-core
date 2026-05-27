@@ -1,14 +1,12 @@
 {
   "compilerOptions": {
     "target": "es2023",
-    "module": "esnext",
+    "module": "commonjs",
     "lib": ["ES2023", "DOM"],
     "types": ["node"],
     "skipLibCheck": true,
 
     /* Bundler mode */
-    //"isolatedModules": true,
-    "moduleResolution": "bundler",
     "allowImportingTsExtensions": false,
     "verbatimModuleSyntax": false,
     "moduleDetection": "force",
@@ -17,6 +15,7 @@
     "rootDir": "./src",
     "declaration": true,
     "declarationMap": true,
+    "esModuleInterop": true,
 
     /* Linting */
     "noUnusedLocals": false,
