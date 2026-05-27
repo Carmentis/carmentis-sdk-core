@@ -24,7 +24,8 @@ export class AccountMicroblockStructureChecker implements IMicroblockStructureCh
                         SectionConstraint.ONE,
                         [
                             [SectionConstraint.AT_MOST_ONE, SectionType.ACCOUNT_TOKEN_ISSUANCE],
-                            [SectionConstraint.AT_MOST_ONE, SectionType.ACCOUNT_CREATION]
+                            [SectionConstraint.AT_MOST_ONE, SectionType.ACCOUNT_CREATION],
+                            [SectionConstraint.ANY, SectionType.CUSTOM],
                         ]
                     )
                 } else {
@@ -36,6 +37,7 @@ export class AccountMicroblockStructureChecker implements IMicroblockStructureCh
                             [SectionConstraint.ANY, SectionType.ACCOUNT_STAKE],
                             [SectionConstraint.ANY, SectionType.ACCOUNT_UNSTAKE],
                             [SectionConstraint.ANY, SectionType.ACCOUNT_ESCROW_TRANSFER],
+                            [SectionConstraint.ANY, SectionType.CUSTOM],
                         ]
                     );
                 }

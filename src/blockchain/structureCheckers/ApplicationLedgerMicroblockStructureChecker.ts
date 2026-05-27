@@ -31,9 +31,8 @@ export class ApplicationLedgerMicroblockStructureChecker implements IMicroblockS
                     [SectionConstraint.ANY, SectionType.ALLOWED_ADDITIONAL_WRITER],
                 ]
             );
-            // between one and two (included) signatures
-            // TODO(fix): allow more signatures
-            checker.expects(SectionConstraint.AT_LEAST_ONE, SectionType.SIGNATURE);
+            checker.expects(SectionConstraint.ANY, SectionType.AUXILIARY_SIGNATURE);
+            checker.expects(SectionConstraint.ONE, SectionType.SIGNATURE);
             checker.endsHere();
             return true;
         } catch (e) {

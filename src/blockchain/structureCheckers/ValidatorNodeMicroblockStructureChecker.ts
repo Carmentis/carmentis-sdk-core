@@ -27,7 +27,8 @@ export class ValidatorNodeMicroblockStructureChecker implements IMicroblockStruc
                     SectionConstraint.AT_LEAST_ONE,
                     [
                         [SectionConstraint.AT_MOST_ONE, SectionType.VN_COMETBFT_PUBLIC_KEY_DECLARATION],
-                        [SectionConstraint.AT_MOST_ONE, SectionType.VN_RPC_ENDPOINT]
+                        [SectionConstraint.AT_MOST_ONE, SectionType.VN_RPC_ENDPOINT],
+                        [SectionConstraint.ANY, SectionType.CUSTOM],
                     ]
                 );
             }

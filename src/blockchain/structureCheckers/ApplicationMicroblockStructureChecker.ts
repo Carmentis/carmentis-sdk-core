@@ -20,7 +20,8 @@ export class ApplicationMicroblockStructureChecker implements IMicroblockStructu
             checker.group(
                 SectionConstraint.AT_LEAST_ONE,
                 [
-                    [ SectionConstraint.AT_MOST_ONE, SectionType.APP_DESCRIPTION ]
+                    [ SectionConstraint.AT_MOST_ONE, SectionType.APP_DESCRIPTION ],
+                    [SectionConstraint.ANY, SectionType.CUSTOM],
                 ]
             );
             checker.expects(SectionConstraint.ONE, SectionType.SIGNATURE);
