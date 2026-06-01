@@ -272,12 +272,40 @@ export class CMTSToken implements Currency{
      * Converts the object to a string representation combining the amount and its unit label.
      * The returned string typically includes the numerical value and its corresponding unit.
      *
-     * @return {string} A string representation of the object in the format "{amount} {unitLabel}".
+     * @param unit - The unit in which the value should be represented: either TokenUnit.TOKEN (default) or TokenUnit.ATOMIC
+     * @param options - Optional formatting configuration applied only when `unit === TokenUnit.TOKEN`.
+     * @param options.decimalPlaces - Fixed number of decimal places to display. No formatting if undefined (default).
+     * @param options.grouping - Whether to enable digit grouping (defaults to false)
+     * @param options.locale - BCP 47 locale string used for number formatting
+     * - If set to `"system"`, the runtime default locale is used.
+     * - If omitted, defaults to `"en-EN"`.
+     * @return {string} A string representation of the object in the format `"{amount} {unitLabel}"`.
      */
-    toString( unit : TokenUnit = TokenUnit.TOKEN ) {
+    toString(
+        unit: TokenUnit = TokenUnit.TOKEN,
+        options: {
+            decimalPlaces?: number,
+            grouping?: boolean,
+            locale?: string,
+        } = {}
+    ): string {
+        const amount = this.getAmountAsCMTS();
+        options.locale = options.locale === "system" ? undefined : options.locale || "en-EN";
         switch (unit) {
-            case TokenUnit.TOKEN: return `${this.getAmountAsCMTS()} ${CMTSToken.getUnitLabel(unit)}`;
-            case TokenUnit.ATOMIC:  return `${this.getAmountAsAtomic()} ${CMTSToken.getUnitLabel(unit)}`;
+            case TokenUnit.TOKEN: {
+                const formattedAmount = Intl.NumberFormat(
+                    options.locale,
+                    {
+                        minimumFractionDigits: options.decimalPlaces === undefined ? 0 : options.decimalPlaces,
+                        maximumFractionDigits: options.decimalPlaces === undefined ? 8 : options.decimalPlaces,
+                        useGrouping: options.grouping || false,
+                    }
+                ).format(amount);
+                return `${formattedAmount} ${CMTSToken.getUnitLabel(unit)}`;
+            }
+            case TokenUnit.ATOMIC: {
+                return `${amount} ${CMTSToken.getUnitLabel(unit)}`;
+            }
             default: throw new InvalidTokenUnitError();
         }
     }
