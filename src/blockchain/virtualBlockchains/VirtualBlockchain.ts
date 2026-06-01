@@ -277,9 +277,6 @@ export abstract class VirtualBlockchain<InternalState extends IInternalState = I
      */
     async getMicroblock(height: Height): Promise<Microblock> {
         this.logger.debug(`Accessing microblock at height ${height} of vb`)
-        for (const entry of this.microblockHashByHeight.entries()) {
-            this.logger.debug(`\t- Height ${entry[0]}: ${Utils.binaryToHexa(entry[1])}`)
-        }
 
         // if the provided height is strictly lower, then we raise an error
         if (height < 1) throw new IllegalParameterError(`Cannot retrieve microblock at height strictly lower than 1: got ${height}`);
