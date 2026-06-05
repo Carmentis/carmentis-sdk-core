@@ -58,6 +58,9 @@ export const BlockInformationAbciResponseSchema = v.object({
     hash: bin256(),
     timestamp: v.pipe(v.number(), v.integer(), v.minValue(0)),
     proposerAddress: uint8array(),
+    vbRadixHash: uint8array(),
+    tokenRadixHash: uint8array(),
+    storageHash: uint8array(),
     size: v.pipe(v.number(), v.integer(), v.minValue(0)),
     microblockCount: v.pipe(v.number(), v.integer(), v.minValue(0)),
 });
