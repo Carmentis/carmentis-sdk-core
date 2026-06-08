@@ -10,7 +10,7 @@ export default defineConfig({
     ],
     build: {
         lib: {
-            entry: resolve(import.meta.dirname, 'src/common.ts'),
+            entry: resolve(import.meta.dirname, 'src/carmentis-sdk-core.ts'),
             name: 'CarmentisSDKCore',
             formats: ['es', 'cjs'],
             fileName: (format) => `carmentis-sdk-core.${format === 'es' ? 'js' : 'cjs'}`,

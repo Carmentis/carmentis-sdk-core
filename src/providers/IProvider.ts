@@ -9,18 +9,18 @@ import {PublicSignatureKey} from "../crypto/signature/PublicSignatureKey";
 import {ProtocolInternalState} from "../blockchain/internalStates/ProtocolInternalState";
 import {MicroblockHeader} from "../type/valibot/blockchain/microblock/MicroblockHeader";
 import {MicroblockBody} from "../type/valibot/blockchain/microblock/MicroblockBody";
+import {MicroblockStruct} from "../type/valibot/blockchain/microblock/MicroblockStruct";
 import {VirtualBlockchainState} from "../type/valibot/blockchain/virtualBlockchain/virtualBlockchains";
 import {VirtualBlockchainStatus} from "../type/valibot/provider/VirtualBlockchainStatus";
 import {Microblock} from "../blockchain/microblock/Microblock";
 import {SignatureSchemeId} from "../crypto/signature/SignatureSchemeId";
-import {Utils} from "../utils/utils";
-import {CMTSToken} from "../economics/currencies/token";
 
 export interface IProvider {
     getVirtualBlockchainIdContainingMicroblock(microblockHash: Hash): Promise<Hash>;
-    getMicroblockHeader(microblockHash: Hash): Promise<MicroblockHeader|null>;
-    getMicroblockBody(microblockHash: Hash): Promise<MicroblockBody|null>;
+    getMicroblockHeader(microblockHash: Hash): Promise<MicroblockHeader | null>;
+    getMicroblockBody(microblockHash: Hash): Promise<MicroblockBody | null>;
     getListOfMicroblockBody(microblockHashes: Uint8Array[]):  Promise<MicroblockBody[]>;
+    getSerializedMicroblockByHeight(virtualBlockchainId: Uint8Array, height: number): Promise<Uint8Array | null>;
 
     /**
      * Returns the state of the virtual blockchain.
@@ -39,7 +39,7 @@ export interface IProvider {
      * This method returns the virtual blockchain state and the list of microblock hashes composing the virtual blockchain.
      * @param virtualBlockchainId
      */
-    getVirtualBlockchainStatus(virtualBlockchainId: Uint8Array): Promise<VirtualBlockchainStatus | null>
+    getVirtualBlockchainStatus(virtualBlockchainId: Uint8Array): Promise<VirtualBlockchainState | null>
     getAccountIdFromPublicKey(publicKey: PublicSignatureKey): Promise<Hash>;
     loadProtocolVirtualBlockchain(protocolId: Hash): Promise<ProtocolVb>;
     loadValidatorNodeVirtualBlockchain(validatorNodeId: Hash): Promise<ValidatorNodeVb>;

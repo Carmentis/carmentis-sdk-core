@@ -3,10 +3,7 @@ import {accountId, boolean, height, number, string} from "../../primitives";
 import {ProtocolUpdateSchema} from "../protocol/ProtocolUpdate";
 import {ProtocolVariablesSchema} from "../protocol/ProtocolVariables";
 
-// ---------------------------------------------------------------------------
 // Protocol VB Internal State
-// ---------------------------------------------------------------------------
-
 export const ProtocolVBInternalStateObjectSchema = val.object({
     organizationId: accountId(),
     currentProtocolVariables: ProtocolVariablesSchema,
@@ -14,30 +11,21 @@ export const ProtocolVBInternalStateObjectSchema = val.object({
 });
 export type ProtocolVBInternalStateObject = val.InferOutput<typeof ProtocolVBInternalStateObjectSchema>;
 
-// ---------------------------------------------------------------------------
 // Account VB Internal State
-// ---------------------------------------------------------------------------
-
 export const AccountVirtualBlockchainInternalStateSchema = val.object({
     signatureSchemeId: number(),
     publicKeyHeight: height(),
 });
 export type AccountVBInternalStateObject = val.InferOutput<typeof AccountVirtualBlockchainInternalStateSchema>;
 
-// ---------------------------------------------------------------------------
 // Organization VB Internal State
-// ---------------------------------------------------------------------------
-
 export const OrganizationVBInternalStateObjectSchema = val.object({
     accountId: accountId(),
     descriptionHeight: height(),
 });
 export type OrganizationVBInternalStateObject = val.InferOutput<typeof OrganizationVBInternalStateObjectSchema>;
 
-// ---------------------------------------------------------------------------
 // Validator Node VB Internal State
-// ---------------------------------------------------------------------------
-
 export const ValidatorNodeVBInternalStateObjectSchema = val.object({
     organizationId: accountId(),
     cometbftPublicKeyDeclarationHeight: height(),
@@ -46,20 +34,14 @@ export const ValidatorNodeVBInternalStateObjectSchema = val.object({
 });
 export type ValidatorNodeVBInternalStateObject = val.InferOutput<typeof ValidatorNodeVBInternalStateObjectSchema>;
 
-// ---------------------------------------------------------------------------
 // Application VB Internal State
-// ---------------------------------------------------------------------------
-
 export const ApplicationVBInternalStateObjectSchema = val.object({
     organizationId: accountId(),
     descriptionHeight: height(),
 });
 export type ApplicationVBInternalStateObject = val.InferOutput<typeof ApplicationVBInternalStateObjectSchema>;
 
-// ---------------------------------------------------------------------------
 // Application Ledger Internal State
-// ---------------------------------------------------------------------------
-
 export const ApplicationLedgerChannelSchema = val.object({
     name: string(),
     isPrivate: boolean(),

@@ -2,11 +2,10 @@ import * as v from 'valibot';
 import {MicroblockInformationSchema} from "../MicroblockInformationSchema";
 import {bin256, uint8array} from "../../primitives";
 import {MicroblockBodySchema} from "../../blockchain/microblock/MicroblockBody";
+import {MicroblockProofSchema} from "../../blockchain/microblock/MicroblockProof";
 import {
     LockSchema,
     AccountHistorySchema,
-    AccountStateSchema,
-    AccountUpdate,
     AccountUpdateSchema
 } from "../../account/Account";
 
@@ -32,9 +31,11 @@ export enum AbciResponseType {
     RAW_BLOCK_CONTENT = 30,
     BLOCK_MODIFIED_ACCOUNTS = 32,
     ACCOUNT_UPDATES = 34,
+    SERIALIAZED_MICROBLOCK_BY_HEIGHT = 38,
+    MICROBLOCK_PROOF = 40,
 }
 // ============================================================================================================================ //
-//  ABCI AbciResponse Schemas                                                                                                      //
+//  ABCI AbciResponse Schemas                                                                                                   //
 // ============================================================================================================================ //
 
 // MSG_ERROR (0x00)
@@ -96,7 +97,6 @@ export const VirtualBlockchainUpdateAbciResponseSchema = v.object({
     exists: v.boolean(),
     changed: v.boolean(),
     serializedVirtualBlockchainState: uint8array(),
-    serializedHeaders: v.array(uint8array()),
 });
 
 // MSG_MICROBLOCK_INFORMATION (0x0C)
@@ -177,6 +177,16 @@ export const AccountUpdatesAbciResponseSchema = v.object({
     list: v.array(AccountUpdateSchema),
 });
 
+export const SerializedMicroblockByHeightAbciResponseSchema = v.object({
+    responseType: v.literal(AbciResponseType.SERIALIAZED_MICROBLOCK_BY_HEIGHT),
+    serializedContent: uint8array(),
+});
+
+export const MicroblockProofAbciResponseSchema = v.object({
+    responseType: v.literal(AbciResponseType.MICROBLOCK_PROOF),
+    proof: MicroblockProofSchema,
+});
+
 // ============================================================================================================================ //
 //  ABCI AbciResponse Variant Schema                                                                                               //
 // ============================================================================================================================ //
@@ -199,6 +209,8 @@ export const AbciResponseSchema = v.variant('responseType', [
     GenesisSnapshotAbciResponseSchema,
     BlockModifiedAccountsAbciResponseSchema,
     AccountUpdatesAbciResponseSchema,
+    SerializedMicroblockByHeightAbciResponseSchema,
+    MicroblockProofAbciResponseSchema,
 ]);
 
 // ============================================================================================================================ //
@@ -223,3 +235,5 @@ export type ObjectListAbciResponse = v.InferOutput<typeof ObjectListAbciResponse
 export type GenesisSnapshotAbciResponse = v.InferOutput<typeof GenesisSnapshotAbciResponseSchema>;
 export type BlockModifiedAccountsAbciResponse = v.InferOutput<typeof BlockModifiedAccountsAbciResponseSchema>;
 export type AccountUpdatesAbciResponse = v.InferOutput<typeof AccountUpdatesAbciResponseSchema>;
+export type SerializedMicroblockByHeightAbciResponse = v.InferOutput<typeof SerializedMicroblockByHeightAbciResponseSchema>;
+export type MicroblockProofAbciResponse = v.InferOutput<typeof MicroblockProofAbciResponseSchema>;

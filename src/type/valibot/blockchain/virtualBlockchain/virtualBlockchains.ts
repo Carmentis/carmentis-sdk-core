@@ -14,6 +14,7 @@ export const VirtualBlockchainSharedPropertiesSchema = v.object({
     height: number(),
     expirationDay: number(),
     lastMicroblockHash: uint8array(),
+    merkleRootHash: uint8array(),
 })
 
 export const AccountVirtualBlockchainStateSchema = v.object({

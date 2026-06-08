@@ -1,5 +1,5 @@
 import * as v from 'valibot';
-import {bin256, uint8, uint8array} from "../../primitives";
+import {bin256, uint8array} from "../../primitives";
 import {RequestedAccountUpdateSchema} from "../../account/Account";
 
 // ============================================================================================================================ //
@@ -23,6 +23,9 @@ export enum AbciRequestType {
     GET_RAW_BLOCK_CONTENT = 29,
     GET_BLOCK_MODIFIED_ACCOUNTS = 31,
     GET_ACCOUNT_UPDATES = 33,
+    GET_MICROBLOCK_INFORMATION_BY_HEIGHT = 35,
+    GET_SERIALIZED_MICROBLOCK_BY_HEIGHT = 37,
+    GET_MICROBLOCK_PROOF = 39,
 }
 
 // ============================================================================================================================ //
@@ -56,7 +59,7 @@ export const GetVirtualBlockchainStateAbciRequestSchema = v.object({
 export const GetVirtualBlockchainUpdateAbciRequestSchema = v.object({
     requestType: v.literal(AbciRequestType.GET_VIRTUAL_BLOCKCHAIN_UPDATE),
     virtualBlockchainId: bin256(),
-    knownHeight: v.pipe(v.number(), v.integer(), v.minValue(0)),
+    knownStateHash: bin256(),
 });
 
 // MSG_GET_MICROBLOCK_INFORMATION (0x0B)
@@ -131,6 +134,26 @@ export const GetAccountUpdatesAbciRequestSchema = v.object({
     list: v.array(RequestedAccountUpdateSchema),
 });
 
+// MSG_GET_MICROBLOCK_INFORMATION_BY_HEIGHT (0x23)
+export const GetMicroblockInformationByHeightAbciRequestSchema = v.object({
+    requestType: v.literal(AbciRequestType.GET_MICROBLOCK_INFORMATION_BY_HEIGHT),
+    virtualBlockchainId: bin256(),
+    height: v.number(),
+});
+
+// MSG_GET_SERIALIZED_MICROBLOCK_BY_HEIGHT (0x25)
+export const GetSerializedMicroblockByHeightAbciRequestSchema = v.object({
+    requestType: v.literal(AbciRequestType.GET_SERIALIZED_MICROBLOCK_BY_HEIGHT),
+    virtualBlockchainId: bin256(),
+    height: v.number(),
+});
+
+// MSG_GET_MICROBLOCK_PROOF (0x27)
+export const GetMicroblockProofAbciRequestSchema = v.object({
+    requestType: v.literal(AbciRequestType.GET_MICROBLOCK_PROOF),
+    hash: bin256(),
+});
+
 // ============================================================================================================================ //
 //  ABCI AbciRequest Variant Schema                                                                                                //
 // ============================================================================================================================ //
@@ -152,6 +175,9 @@ export const AbciRequestSchema = v.variant('requestType', [
     GetRawBlockContentAbciRequestSchema,
     GetBlockModifiedAccountsAbciRequestSchema,
     GetAccountUpdatesAbciRequestSchema,
+    GetMicroblockInformationByHeightAbciRequestSchema,
+    GetSerializedMicroblockByHeightAbciRequestSchema,
+    GetMicroblockProofAbciRequestSchema,
 ]);
 
 // ============================================================================================================================ //
@@ -164,6 +190,7 @@ export type GetBlockContentAbciRequest = v.InferOutput<typeof GetBlockContentAbc
 export type GetVirtualBlockchainStateAbciRequest = v.InferOutput<typeof GetVirtualBlockchainStateAbciRequestSchema>;
 export type GetVirtualBlockchainUpdateAbciRequest = v.InferOutput<typeof GetVirtualBlockchainUpdateAbciRequestSchema>;
 export type GetMicroblockInformationAbciRequest = v.InferOutput<typeof GetMicroblockInformationAbciRequestSchema>;
+export type GetMicroblockInformationByHeightAbciRequest = v.InferOutput<typeof GetMicroblockInformationByHeightAbciRequestSchema>;
 export type AwaitMicroblockAnchoringAbciRequest = v.InferOutput<typeof AwaitMicroblockAnchoringAbciRequestSchema>;
 export type GetMicroblockBodysAbciRequest = v.InferOutput<typeof GetMicroblockBodysAbciRequestSchema>;
 export type GetAccountStateAbciRequest = v.InferOutput<typeof GetAccountStateAbciRequestSchema>;
@@ -175,3 +202,5 @@ export type GetGenesisSnapshotAbciRequest = v.InferOutput<typeof GetGenesisSnaps
 export type GetRawBlockContentAbciRequest = v.InferOutput<typeof GetRawBlockContentAbciRequestSchema>;
 export type GetBlockModifiedAccountsAbciRequest = v.InferOutput<typeof GetBlockModifiedAccountsAbciRequestSchema>;
 export type GetAccountUpdatesAbciRequest = v.InferOutput<typeof GetAccountUpdatesAbciRequestSchema>;
+export type GetSerializedMicroblockByHeightAbciRequest = v.InferOutput<typeof GetSerializedMicroblockByHeightAbciRequestSchema>;
+export type GetMicroblockProofAbciRequest = v.InferOutput<typeof GetMicroblockProofAbciRequestSchema>;

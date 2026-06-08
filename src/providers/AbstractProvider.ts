@@ -15,12 +15,12 @@ import {Logger} from "../utils/Logger";
 import {MicroblockHeader} from "../type/valibot/blockchain/microblock/MicroblockHeader";
 import {MicroblockBody} from "../type/valibot/blockchain/microblock/MicroblockBody";
 import {VirtualBlockchainState} from "../type/valibot/blockchain/virtualBlockchain/virtualBlockchains";
-import {VirtualBlockchainStatus} from "../type/valibot/provider/VirtualBlockchainStatus";
 import {VirtualBlockchainType} from "../type/VirtualBlockchainType";
 import {Microblock} from "../blockchain/microblock/Microblock";
 import {FeesCalculationFormulaFactory} from "../blockchain/feesCalculator/FeesCalculationFormulaFactory";
 import {SignatureSchemeId} from "../crypto/signature/SignatureSchemeId";
 import {Utils} from "../utils/utils";
+import {MicroblockStruct} from "../type/valibot/blockchain/microblock/MicroblockStruct";
 
 export abstract class AbstractProvider implements IProvider {
     private log = Logger.getAbstractProviderLogger(AbstractProvider.name);
@@ -117,11 +117,12 @@ export abstract class AbstractProvider implements IProvider {
         return feesFormula.computeGas(sigScheme, mb, expirationDay, referenceTimestampInSeconds);
     }
 
-    abstract getVirtualBlockchainStatus(virtualBlockchainId: Uint8Array): Promise<VirtualBlockchainStatus | null>
+    abstract getVirtualBlockchainStatus(virtualBlockchainId: Uint8Array): Promise<VirtualBlockchainState | null>
     abstract getAccountIdFromPublicKey(publicKey: PublicSignatureKey): Promise<Hash>;
     abstract getListOfMicroblockBody(microblockHashes: Uint8Array[]): Promise<MicroblockBody[]>
     abstract getMicroblockBody(microblockHash: Hash): Promise<MicroblockBody | null>;
     abstract getMicroblockHeader(microblockHash: Hash): Promise<MicroblockHeader | null>;
+    abstract getSerializedMicroblockByHeight(virtualBlockchainId: Uint8Array, height: number): Promise<Uint8Array|null>;
     abstract getVirtualBlockchainIdContainingMicroblock(microblockHash: Hash): Promise<Hash>;
     abstract getVirtualBlockchainState(virtualBlockchainId: Uint8Array): Promise<VirtualBlockchainState | null>;
     abstract getProtocolState(): Promise<ProtocolInternalState>;
@@ -129,20 +130,19 @@ export abstract class AbstractProvider implements IProvider {
     private async initializeVirtualBlockchain(vb :VirtualBlockchain, vbId: Hash) {
         const identifier = vbId.toBytes()
         const vbState = await this.getVirtualBlockchainStatus(identifier);
-        if (vbState === null || vbState.state === undefined) {
+        if (vbState === null) {
             throw new  VirtualBlockchainNotFoundError(vbId);
         }
         // the type is already assigned when creating the virtual blockchain
-        if (vbState.state.type !== vb.getType()) throw new Error("Invalid blockchain type loaded");
+        if (vbState.type !== vb.getType()) throw new Error("Invalid blockchain type loaded");
 
         vb.setIdentifier(identifier) //this.identifier = identifier;
-        vb.setHeight(vbState.state.height) //this.height = content.state.height;
-        vb.setExpirationDay(vbState.state.expirationDay) //this.expirationDay = content.state.expirationDay;
-        vb.setMicroblockHashes(vbState.microblockHashes) // this.microblockHashes = content.microblockHashes;
+        vb.setHeight(vbState.height) //this.height = content.state.height;
+        vb.setExpirationDay(vbState.expirationDay) //this.expirationDay = content.state.expirationDay;
         vb.setInternalState(
             InternalStateFactory.createInternalStateFromObject(
                 vb.getType(),
-                vbState.state.internalState
+                vbState.internalState
             )
         );
     }

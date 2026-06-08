@@ -201,6 +201,7 @@ export * from "./type/valibot/account/Account";
 export * from "./type/valibot/blockchain/economics/RetentionPolicy";
 export * from "./type/valibot/blockchain/microblock/MicroblockBody";
 export * from "./type/valibot/blockchain/microblock/MicroblockHeader";
+export * from "./type/valibot/blockchain/microblock/MicroblockProof";
 export * from "./type/valibot/blockchain/microblock/MicroblockStruct";
 export * from "./type/valibot/blockchain/protocol/ProtocolUpdate";
 export * from "./type/valibot/blockchain/protocol/ProtocolVariables";

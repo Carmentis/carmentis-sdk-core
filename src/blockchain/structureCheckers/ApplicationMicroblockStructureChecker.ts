@@ -1,7 +1,6 @@
 import {IMicroblockStructureChecker} from "./IMicroblockStructureChecker";
 import {StructureChecker} from "./StructureChecker";
 import {Microblock} from "../microblock/Microblock";
-import {SECTIONS} from "../../constants/constants";
 import {Logger} from "../../utils/Logger";
 import {MicroblockStructureCheckingError} from "../../errors/carmentis-error";
 import {SectionConstraint} from "./SectionConstraint";

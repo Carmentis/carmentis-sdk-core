@@ -26,7 +26,7 @@ import {
     GenesisSnapshotAbciResponse,
     GenesisSnapshotAbciResponseSchema,
     MicroblockBodysAbciResponse,
-    MicroblockBodysAbciResponseSchema,
+    MicroblockBodysAbciResponseSchema, SerializedMicroblockByHeightAbciResponseSchema,
     MicroblockInformationAbciResponseSchema,
     ObjectListAbciResponseSchema,
     ValidatorNodeByAddressAbciResponseSchema,
@@ -35,6 +35,9 @@ import {
 } from "../type/valibot/provider/abci/AbciResponse";
 import {AbciQueryEncoder} from "../utils/AbciQueryEncoder";
 import {EncoderFactory} from "../utils/encoder";
+import {MicroblockHeaderSchema} from "../type/valibot/blockchain/microblock/MicroblockHeader";
+import {MicroblockBodySchema} from "../type/valibot/blockchain/microblock/MicroblockBody";
+import {MicroblockStruct} from "../type/valibot/blockchain/microblock/MicroblockStruct";
 
 export class NetworkProvider implements IExternalProvider {
     private static staticLogger = Logger.getNetworkProviderLogger();
@@ -48,12 +51,13 @@ export class NetworkProvider implements IExternalProvider {
         try {
             new URL(url);
             return new NetworkProvider(url);
-        } catch(e) {
+        } catch (e) {
             throw new IllegalParameterError(`Invalid node URL: got ${url}`);
         }
     }
 
-    constructor(private readonly nodeUrl: string) {}
+    constructor(private readonly nodeUrl: string) {
+    }
 
     async sendSerializedMicroblock(serializedMicroblock: Uint8Array) {
         this.requestLogger.info(`Sending serialized microblock (${serializedMicroblock.length} bytes)`);
@@ -66,7 +70,7 @@ export class NetworkProvider implements IExternalProvider {
     }
 
     async awaitMicroblockAnchoring(hash: Uint8Array) {
-        const hashString =  Utils.binaryToHexa(hash);
+        const hashString = Utils.binaryToHexa(hash);
         this.requestLogger.info(`Awaiting microblock {hash} to be published...`, () => ({
             hash: hashString
         }));
@@ -115,7 +119,8 @@ export class NetworkProvider implements IExternalProvider {
 
     async getValidatorNodeByAddress(address: Uint8Array) {
         this.requestLogger.info(`Requesting validator node id for address {address}`, () => ({
-            address: Utils.binaryToHexa(address)}
+                address: Utils.binaryToHexa(address)
+            }
         ));
 
         const answer = await this.abciQuery({
@@ -159,7 +164,7 @@ export class NetworkProvider implements IExternalProvider {
         });
 
         const response = v.parse(AccountHistoryAbciResponseSchema, answer);
-        this.responseLogger.info(`Receiving account history with ${response.list.length} entries` );
+        this.responseLogger.info(`Receiving account history with ${response.list.length} entries`);
         return response;
     }
 
@@ -184,8 +189,8 @@ export class NetworkProvider implements IExternalProvider {
         this.requestLogger.info(`Requesting list of objects of type ${type}`);
 
         const answer = await this.abciQuery({
-                requestType: AbciRequestType.GET_OBJECT_LIST,
-                type: type
+            requestType: AbciRequestType.GET_OBJECT_LIST,
+            type: type
         });
 
         const response = v.parse(ObjectListAbciResponseSchema, answer);
@@ -193,7 +198,7 @@ export class NetworkProvider implements IExternalProvider {
         return response;
     }
 
-    async getMicroblockInformation(hash: Uint8Array): Promise<MicroblockInformation | null>  {
+    async getMicroblockInformation(hash: Uint8Array): Promise<MicroblockInformation | null> {
         this.requestLogger.info(`Requesting microblock information for hash ${Utils.binaryToHexa(hash)}`);
 
         const answer = await this.abciQuery({
@@ -213,6 +218,20 @@ export class NetworkProvider implements IExternalProvider {
         return v.parse(MicroblockInformationSchema, response);
     }
 
+    async getSerializedMicroblockByHeight(virtualBlockchainId: Uint8Array, height: number): Promise<Uint8Array | null> {
+        this.requestLogger.info(`Requesting microblock for VB ${Utils.binaryToHexa(virtualBlockchainId)} at height ${height}`);
+
+        const answer = await this.abciQuery({
+            requestType: AbciRequestType.GET_SERIALIZED_MICROBLOCK_BY_HEIGHT,
+            virtualBlockchainId,
+            height,
+        });
+
+        const response = v.parse(SerializedMicroblockByHeightAbciResponseSchema, answer);
+        this.responseLogger.info(`Received microblock - size: ${response.serializedContent.length} bytes`);
+        return response.serializedContent;
+    }
+
     async getMicroblockBodys(hashes: Uint8Array[]): Promise<MicroblockBodysAbciResponse | null>  {
         this.requestLogger.info(`Requesting microblock bodys for microblock hashes ${hashes.length}`);
         this.requestLogger.info(`Lisf of requested hashes: {hashes}`, () => ({
@@ -229,12 +248,12 @@ export class NetworkProvider implements IExternalProvider {
         return response;
     }
 
-    async getVirtualBlockchainUpdate(virtualBlockchainId: Uint8Array, knownHeight: number) {
-        this.requestLogger.info(`Request virtual blockchain update for virtualBlockchainId: ${Utils.binaryToHexa(virtualBlockchainId)}, knownHeight: ${knownHeight}`);
+    async getVirtualBlockchainUpdate(virtualBlockchainId: Uint8Array, knownStateHash: Uint8Array) {
+        this.requestLogger.info(`Request virtual blockchain update for virtualBlockchainId: ${Utils.binaryToHexa(virtualBlockchainId)}`);
         const answer = await this.abciQuery({
             requestType: AbciRequestType.GET_VIRTUAL_BLOCKCHAIN_UPDATE,
-            virtualBlockchainId: virtualBlockchainId,
-            knownHeight: knownHeight
+            virtualBlockchainId,
+            knownStateHash,
         });
 
         this.responseLogger.info(`Receiving virtual blockchain update`);

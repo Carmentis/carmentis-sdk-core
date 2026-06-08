@@ -40,7 +40,8 @@ export class ValidatorNodeVb extends VirtualBlockchain<ValidatorNodeInternalStat
             height: height,
             internalState: this.internalState.toObject(),
             lastMicroblockHash: lastMicroblockHash,
-            type: this.getType()
+            type: this.getType(),
+            merkleRootHash: this.getMerkleRootHash()
         };
     }
 

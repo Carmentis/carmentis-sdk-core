@@ -1,6 +1,6 @@
 {
   "directory": "src",
-  "name": "common",
+  "name": "carmentis-sdk-core",
   "delete": true,
   "exclude": [
     "\\.d\\.ts$",

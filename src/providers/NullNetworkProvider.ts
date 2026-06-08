@@ -1,5 +1,6 @@
 import {IExternalProvider} from "./IExternalProvider";
 import {MicroblockInformation} from "../type/valibot/provider/MicroblockInformationSchema";
+import {MicroblockStruct} from "../type/valibot/blockchain/microblock/MicroblockStruct";
 import {
     AbciResponse,
     AccountByPublicKeyHashAbciResponse,
@@ -53,15 +54,16 @@ export class NullNetworkProvider implements IExternalProvider {
     getObjectList(type: number): Promise<ObjectListAbciResponse> {
         throw new Error("Method not implemented.");
     }
-
     getMicroblockInformation(hash: Uint8Array): Promise<MicroblockInformation | null>  {
         return Promise.resolve(null);
     }
-
+    getSerializedMicroblockByHeight(virtualBlockchainId: Uint8Array, height: number): Promise<Uint8Array | null>  {
+        return Promise.resolve(null);
+    }
     getMicroblockBodys(hashes: Uint8Array[]): Promise<MicroblockBodysAbciResponse | null > {
         return Promise.resolve(null);
     }
-    getVirtualBlockchainUpdate(virtualBlockchainId: Uint8Array, knownHeight: number): Promise<VirtualBlockchainUpdateAbciResponse> {
+    getVirtualBlockchainUpdate(virtualBlockchainId: Uint8Array): Promise<VirtualBlockchainUpdateAbciResponse> {
         throw new Error("Method not implemented.");
         //return Promise.resolve({ responseType: AbciResponseType.VIRTUAL_BLOCKCHAIN_UPDATE, exists: true, changed: false });
     }

@@ -37,7 +37,8 @@ export class ApplicationVb extends VirtualBlockchain<ApplicationInternalState> {
             height: height,
             internalState: this.internalState.toObject(),
             lastMicroblockHash: lastMicroblockHash,
-            type: this.getType()
+            type: this.getType(),
+            merkleRootHash: this.getMerkleRootHash(),
         };
     }
 

@@ -11,10 +11,9 @@ import {Height} from "../../type/Height";
 
 
 export class ApplicationLedgerMicroblockBuilder implements IMicroblockSearchFailureFallback {
-
     private stateUpdater?: IApplicationLedgerInternalStateUpdater;
-    constructor(protected mbUnderConstruction: Microblock, protected vb: ApplicationLedgerVb, private provider: IProvider) {
 
+    constructor(protected mbUnderConstruction: Microblock, protected vb: ApplicationLedgerVb, private provider: IProvider) {
     }
 
     onMicroblockSearchFailureForExceedingHeight(vb: VirtualBlockchain, askedHeight: Height): Promise<Microblock> {
@@ -29,7 +28,7 @@ export class ApplicationLedgerMicroblockBuilder implements IMicroblockSearchFail
 
     protected async updateStateWithSection(section: Section) {
         // if not already defined, create the state updater with the current protocol state
-        if (!this.stateUpdater)  {
+        if (!this.stateUpdater) {
             const protocolState = await this.provider.getProtocolState();
             this.stateUpdater = InternalStateUpdaterFactory.createApplicationLedgerInternalStateUpdater(
                 protocolState.getApplicationLedgerInternalStateUpdaterVersion()
@@ -50,6 +49,4 @@ export class ApplicationLedgerMicroblockBuilder implements IMicroblockSearchFail
     protected getInternalState() {
         return this.vb.getInternalState();
     }
-
-
 }

@@ -45,7 +45,8 @@ export class ProtocolVb extends VirtualBlockchain<ProtocolInternalState> {
             height: height,
             internalState: this.internalState.toObject(),
             lastMicroblockHash: lastMicroblockHash,
-            type: this.getType()
+            type: this.getType(),
+            merkleRootHash: this.getMerkleRootHash(),
         };
     }
 

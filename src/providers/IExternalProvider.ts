@@ -14,40 +14,25 @@ import {
     ValidatorNodeByAddressAbciResponse,
     VirtualBlockchainUpdateAbciResponse
 } from "../type/valibot/provider/abci/AbciResponse";
+import {MicroblockStruct} from "../type/valibot/blockchain/microblock/MicroblockStruct";
 
 export interface IExternalProvider {
     sendSerializedMicroblock(serializedMicroblock: Uint8Array): Promise<any>;
-
     awaitMicroblockAnchoring(hash: Uint8Array): Promise<MicroblockInformation>;
-
     getChainInformation(): Promise<ChainInformationAbciResponse>;
-
     getBlockInformation(height: number): Promise<BlockInformationAbciResponse>;
-
     getBlockContent(height: number): Promise<BlockContentAbciResponse>;
-
     getValidatorNodeByAddress(address: Uint8Array): Promise<ValidatorNodeByAddressAbciResponse>;
-
     getAccountState(accountHash: Uint8Array): Promise<AccountStateAbciResponse>;
-
     getAccountHistory(accountHash: Uint8Array, lastHistoryHash: Uint8Array, maxRecords: number): Promise<AccountHistoryAbciResponse>;
-
     getAccountByPublicKeyHash(publicKeyHash: Uint8Array): Promise<AccountByPublicKeyHashAbciResponse>;
-
     getObjectList(type: number): Promise<ObjectListAbciResponse>;
-
     getMicroblockInformation(hash: Uint8Array): Promise<MicroblockInformation | null> ;
-
+    getSerializedMicroblockByHeight(virtualBlockchainId: Uint8Array, height: number): Promise<Uint8Array | null>;
     getMicroblockBodys(hashes: Uint8Array[]): Promise<MicroblockBodysAbciResponse  | null>;
-
-    getVirtualBlockchainUpdate(virtualBlockchainId: Uint8Array, knownHeight: number): Promise<VirtualBlockchainUpdateAbciResponse>;
-
+    getVirtualBlockchainUpdate(virtualBlockchainId: Uint8Array, knownStateHash: Uint8Array): Promise<VirtualBlockchainUpdateAbciResponse>;
     getSerializedVirtualBlockchainState(virtualBlockchainId: any): Promise<Uint8Array>;
-
     broadcastTx(data: Uint8Array): Promise<any>;
-
     abciQuery(request: AbciRequest): Promise<AbciResponse>
-
     getGenesisSnapshot(): Promise<GenesisSnapshotAbciResponse>;
-
 }

@@ -18,8 +18,6 @@ import {BlockchainUtils} from "../../utils/BlockchainUtils";
 import {ProtocolInternalState} from "../internalStates/ProtocolInternalState";
 import {Utils} from "../../utils/utils";
 import {VirtualBlockchainState} from "../../type/valibot/blockchain/virtualBlockchain/virtualBlockchains";
-import {height} from "../../type/valibot/primitives";
-import {Crypto} from "../../crypto/crypto";
 
 /**
  * Abstract class representing a Virtual Blockchain (VB).
@@ -62,6 +60,7 @@ export abstract class VirtualBlockchain<InternalState extends IInternalState = I
 
     protected provider: IProvider;
     private type: number;
+    private merkleRootHash: Uint8Array;
     private expirationDay: number;
 
     /**
@@ -82,6 +81,7 @@ export abstract class VirtualBlockchain<InternalState extends IInternalState = I
         this.microblockHashByHeight = new Map();
         this.microblockByHeight = new Map<Height, Microblock>();
         this.type = type;
+        this.merkleRootHash = Utils.getNullHash();
         this.expirationDay = 0;
         this.height = 0;
         this.microblockSearchFailureFallback = new ThrownErrorMicroblockSearchFailureFallback();
@@ -152,6 +152,14 @@ export abstract class VirtualBlockchain<InternalState extends IInternalState = I
     setInternalState(localState: InternalState): void {
         this.internalState = localState;
     };
+
+    setMerkleRootHash(merkleRootHash: Uint8Array) {
+        this.merkleRootHash = merkleRootHash;
+    }
+
+    getMerkleRootHash(): Uint8Array {
+        return this.merkleRootHash;
+    }
 
     /**
      * This method returns a new microblock which extends the virtual blockchain state.
@@ -266,7 +274,6 @@ export abstract class VirtualBlockchain<InternalState extends IInternalState = I
         return hashes;
     }
 
-
     /**
      * Retrieves the microblock based on the given height.
      *
@@ -293,27 +300,16 @@ export abstract class VirtualBlockchain<InternalState extends IInternalState = I
         const microblockContainedInCurrentVbInstance = this.microblockByHeight.get(height);
         if (microblockContainedInCurrentVbInstance !== undefined) return microblockContainedInCurrentVbInstance;
 
-        // otherwise, the height is within the virtual blockchain range, we can safely retrieve the microblock
-        const microblockHash = this.microblockHashByHeight.get(height);
-        if (microblockHash === undefined) throw new MicroBlockNotFoundInVirtualBlockchainAtHeightError(this.getIdentifier(), height);
-
         // load the header and the body of the microblock from the provider
-        const microblockHeader = await this.provider.getMicroblockHeader(Hash.from(microblockHash));
-        if (microblockHeader === null) {
+        const serializedContent = await this.provider.getSerializedMicroblockByHeight(this.getId(), height);
+        if (serializedContent === null) {
             const encoder = EncoderFactory.bytesToHexEncoder();
-            throw new Error(`Unable to load microblock information from hash ${encoder.encode(microblockHash)} (height ${height})`);
+            throw new Error(`Unable to load microblock at height ${height}`);
         }
-        const microblockBody = await this.provider.getMicroblockBody(Hash.from(microblockHash));
-        if (microblockBody === null) throw new Error('Unable to load the microblock body')
 
         // instantiate the microblock and check that the provided microblock corresponds to the expected one
-        const microblock = Microblock.loadFromHeaderAndBody(microblockHeader, microblockBody, this.type )
-        if (microblock.getHeight() !== height) throw new Error(`Received microblock contains an unexpected height: expected ${height}, defined ${microblock.getHeight()} `)
-        if (!Utils.binaryIsEqual(microblock.getHash().toBytes(), microblockHash)) {
-            const errMsg = `Mismatch between microblock hash ${microblock.getHash().encode()} and expected hash ${Utils.binaryToHexa(microblockHash)}`
-            this.logger.error(microblock.toString())
-            throw new Error(errMsg)
-        }
+        const microblock = Microblock.loadFromSerializedMicroblock(serializedContent, this.type)
+        if (microblock.getHeight() !== height) throw new Error(`Received microblock contains an unexpected height: expected ${height}, got ${microblock.getHeight()} `)
 
         // we store the microblock in the map
         this.microblockByHeight.set(height, microblock);

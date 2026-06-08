@@ -1,10 +1,9 @@
 import {BlockchainUtils} from "../utils/BlockchainUtils";
 import {Utils} from "../utils/utils";
-import {CryptographicHash, Sha256CryptographicHash} from "../crypto/hash/hash-interface";
-import {CryptoSchemeFactory} from "../crypto/CryptoSchemeFactory";
+import {Sha256CryptographicHash} from "../crypto/hash/hash-interface";
 import {Hash} from "../entities/Hash";
 import {PublicSignatureKey} from "../crypto/signature/PublicSignatureKey";
-import {IllegalStateError, MicroBlockNotFoundError} from "../errors/carmentis-error";
+import {MicroBlockNotFoundError} from "../errors/carmentis-error";
 import {Logger} from "../utils/Logger";
 import {VirtualBlockchainType} from "../type/VirtualBlockchainType";
 import {Microblock} from "../blockchain/microblock/Microblock";
@@ -15,7 +14,7 @@ import {ProtocolInternalState} from "../blockchain/internalStates/ProtocolIntern
 import {VirtualBlockchainState} from "../type/valibot/blockchain/virtualBlockchain/virtualBlockchains";
 import {MicroblockBody} from "../type/valibot/blockchain/microblock/MicroblockBody";
 import {MicroblockHeader} from "../type/valibot/blockchain/microblock/MicroblockHeader";
-import {VirtualBlockchainStatus} from "../type/valibot/provider/VirtualBlockchainStatus";
+import {MicroblockStruct} from "../type/valibot/blockchain/microblock/MicroblockStruct";
 import {MicroblockInformation} from "../type/valibot/provider/MicroblockInformationSchema";
 import {
     AccountHistoryAbciResponse,
@@ -27,13 +26,11 @@ import {
     ObjectListAbciResponse
 } from "../type/valibot/provider/abci/AbciResponse";
 import {Crypto} from "../crypto/crypto";
-import {VirtualBlockchain} from "../blockchain/virtualBlockchains/VirtualBlockchain";
 import {NetworkProvider} from "./NetworkProvider";
 import {RPCNodeStatusResponseType} from "./nodeRpc/RPCNodeStatusResponseSchema";
-import {CometBFTPublicKey} from "../cometbft/CometBFTPublicKey";
 import {CometBFTPublicKeyConverter} from "../utils/CometBFTPublicKeyConverter";
 import {EncoderFactory} from "../utils/encoder";
-import {FeesCalculationFormulaFactory} from "../blockchain/feesCalculator/FeesCalculationFormulaFactory";
+import {CryptoSchemeFactory} from "../crypto/CryptoSchemeFactory";
 
 /**
  * Represents a provider class that interacts with both internal and external providers for managing blockchain states and microblocks.
@@ -102,7 +99,7 @@ export class Provider extends AbstractProvider {
         } else {
             const receivedSerializedVirtualBlockchainState = await this.externalProvider.getSerializedVirtualBlockchainState(virtualBlockchainId);
             if (receivedSerializedVirtualBlockchainState) {
-                this.logger.info(`State for virtual blockchain ${Utils.binaryToHexa(virtualBlockchainId)} found online`);
+                this.logger.info(`State for virtual blockchain ${Utils.binaryToHexa(virtualBlockchainId)} found remotely`);
                 await this.internalProvider.setSerializedVirtualBlockchainState(virtualBlockchainId, receivedSerializedVirtualBlockchainState);
                 return BlockchainUtils.decodeVirtualBlockchainState(receivedSerializedVirtualBlockchainState);
             } else {
@@ -251,7 +248,7 @@ export class Provider extends AbstractProvider {
                 const bodyResponse = externalData.list[0];
                 const microblockBody = bodyResponse.microblockBody;
                 await this.internalProvider.setMicroblockBody(microblockHash.toBytes(), microblockBody);
-                this.logger.info(`Body for microblock ${microblockHash.encode()} found online`)
+                this.logger.info(`Body for microblock ${microblockHash.encode()} found remotely`)
                 return microblockBody;
             }
         }
@@ -259,6 +256,7 @@ export class Provider extends AbstractProvider {
         this.logger.warning(`Body for microblock ${microblockHash.encode()} not found`)
         return null;
     }
+
     async getMicroblockHeader(microblockHash: Hash): Promise<MicroblockHeader | null> {
         this.logger.info(`Looking for header for microblock ${microblockHash.encode()}`)
         const serializedHeader = await this.internalProvider.getSerializedMicroblockHeader(microblockHash.toBytes());
@@ -272,8 +270,18 @@ export class Provider extends AbstractProvider {
         }
         const receivedSerializedHeader = await this.externalProvider.getMicroblockInformation(microblockHash.toBytes());
         if (receivedSerializedHeader !== null) {
-            this.logger.info(`Header for microblock ${microblockHash.encode()} found online: {header}:`, { header: receivedSerializedHeader.header });
+            this.logger.info(`Header for microblock ${microblockHash.encode()} found remotely: {header}:`, { header: receivedSerializedHeader.header });
             return receivedSerializedHeader.header;
+        } else {
+            throw new MicroBlockNotFoundError();
+        }
+    }
+
+    async getSerializedMicroblockByHeight(virtualBlockchainId: Uint8Array, height: number): Promise<Uint8Array | null> {
+        const receivedMicroblock = await this.externalProvider.getSerializedMicroblockByHeight(virtualBlockchainId, height);
+        if (receivedMicroblock !== null) {
+            this.logger.info(`Microblock found remotely`);
+            return receivedMicroblock;
         } else {
             throw new MicroBlockNotFoundError();
         }
@@ -294,141 +302,41 @@ export class Provider extends AbstractProvider {
         }
     }
 
-    async getVirtualBlockchainHashes( virtualBlockchainId: Uint8Array ): Promise<Uint8Array[]> {
-        const content = await this.getVirtualBlockchainStatus(virtualBlockchainId);
-        if (content === undefined || content?.microblockHashes === undefined) throw new Error('Cannot access the virtual blockchain')
-        return content.microblockHashes;
-    }
-
-    async getVirtualBlockchainHeaders(virtualBlockchainId: Uint8Array, knownHeight: number) {
-        // we first search on the internal provider for the state of this VB
-        const stateData = await this.internalProvider.getSerializedVirtualBlockchainState(virtualBlockchainId);
-        if (stateData instanceof Uint8Array) {
-            // recover the state of the virtual blockchain
-            const state = BlockchainUtils.decodeVirtualBlockchainState(stateData);
-            let height = state.height;
-            let microblockHash = state.lastMicroblockHash;
-
-            // load all the headers from the known height to the initial block
-            const headers = [];
-            while (height > knownHeight) {
-                const header = await this.internalProvider.getSerializedMicroblockHeader(microblockHash);
-                if (header instanceof Uint8Array) {
-                    headers.push(header);
-                    microblockHash = BlockchainUtils.previousHashFromHeader(header);
-                    height--;
-                } else {
-                    throw new IllegalStateError(`Cannot get the headers of a non-existing microblock ${Utils.binaryToHexa(microblockHash)}`);
-                }
-            }
-
-            return headers;
-        } else {
-            throw new IllegalStateError("Cannot get the headers of a non-existing VB");
-        }
-    }
-
     /**
-     * Returns the virtual blockchain content (state and hashes) from the internal and external providers.
+     * Returns the virtual blockchain state from the internal and external providers.
      *
      * @param virtualBlockchainId The identifier of the virtual blockchain.
      */
-    async getVirtualBlockchainStatus(virtualBlockchainId: Uint8Array): Promise<VirtualBlockchainStatus | null> {
-        let microblockHashes: Uint8Array[] = [];
+    async getVirtualBlockchainStatus(virtualBlockchainId: Uint8Array): Promise<VirtualBlockchainState | null> {
         let vbState: VirtualBlockchainState | null = null;
+        let knownStateHash: Uint8Array = Utils.getNullHash();
 
         // We start by retrieving the virtual blockchain state locally.
-        // If found, we make sure that we still have all the microblock headers up to the height associated to this state
-        // and that they are consistent
-        const serializedState = await this.internalProvider.getSerializedVirtualBlockchainState(virtualBlockchainId);
+        const serializedState = await this.internalProvider.getSerializedVirtualBlockchainState(
+            virtualBlockchainId,
+        );
         if (serializedState !== null) {
             vbState = BlockchainUtils.decodeVirtualBlockchainState(serializedState);
-            let height = vbState.height;
-            let microblockHash = vbState.lastMicroblockHash;
-            const headers = [];
-
-            while(height) {
-                const header = await this.internalProvider.getSerializedMicroblockHeader(microblockHash);
-                if (!header) {
-                    break;
-                }
-                headers.push(header);
-                microblockHash = BlockchainUtils.previousHashFromHeader(header);
-                height--;
-            }
-
-            if (height == 0) {
-                const check = BlockchainUtils.checkHeaderList(headers);
-                if (check.valid) {
-                    check.hashes.reverse();
-                    if(Utils.binaryIsEqual(check.hashes[0], virtualBlockchainId)) {
-                        microblockHashes = check.hashes;
-                    } else {
-                        this.logger.warning("WARNING - genesis microblock hash from internal storage does not match VB identifier");
-                    }
-                } else {
-                    this.logger.warning("WARNING - inconsistent hash chain in internal storage");
-                }
-            } else {
-                // TODO: we can do a check, even for incomplete hashes
-            }
+            const sha256= CryptoSchemeFactory.createDefaultCryptographicHash();
+            knownStateHash = sha256.hash(serializedState);
         }
 
         // query our external provider for state update and new headers, starting at the known height
-        const knownHeight = microblockHashes.length;
         const vbUpdate = await this.externalProvider.getVirtualBlockchainUpdate(
             virtualBlockchainId,
-            knownHeight
+            knownStateHash,
         );
 
-        if (!vbUpdate.exists) return null;
+        if (!vbUpdate.exists) {
+            return null;
+        }
         if (vbUpdate.changed) {
-            // check the consistency of the new headers
-            const check = BlockchainUtils.checkHeaderList(vbUpdate.serializedHeaders);
-
-            if (!check.valid) {
-                throw new Error(`received headers are inconsistent`);
-            }
-
-            // make sure that the 'previous hash' field of the first new microblock matches the last known hash
-            if (knownHeight) {
-                const numberOfHeadersReturned = vbUpdate.serializedHeaders.length;
-                const firstNewHeader = vbUpdate.serializedHeaders[numberOfHeadersReturned - 1];
-                const linkedHash = BlockchainUtils.previousHashFromHeader(firstNewHeader);
-
-                if(!Utils.binaryIsEqual(linkedHash, microblockHashes[knownHeight - 1])) {
-                    throw new Error(`received headers do not link properly to the last known header`);
-                }
-            }
-
             // update the VB state in our internal provider
             await this.internalProvider.setSerializedVirtualBlockchainState(virtualBlockchainId, vbUpdate.serializedVirtualBlockchainState);
-
             vbState = BlockchainUtils.decodeVirtualBlockchainState(vbUpdate.serializedVirtualBlockchainState);
-
-            // update the microblock information and header in our internal provider
-            for(let n = 0; n < vbUpdate.serializedHeaders.length; n++) {
-                await this.internalProvider.setMicroblockVbInformation(
-                    check.hashes[n],
-                    BlockchainUtils.encodeVirtualBlockchainInfo({
-                        virtualBlockchainType: vbState.type,
-                        virtualBlockchainId
-                    })
-                );
-                await this.internalProvider.setSerializedMicroblockHeader(
-                    check.hashes[n],
-                    vbUpdate.serializedHeaders[n]
-                );
-            }
-
-            // add the new hashes to the hash list
-            microblockHashes = [ ...microblockHashes, ...check.hashes.reverse() ];
         }
 
-        //
-        if (vbState === null) return null;
-
-        return { state: vbState, microblockHashes };
+        return vbState;
     }
 
     async getAccountIdFromPublicKey(publicKey: PublicSignatureKey) {
@@ -440,7 +348,7 @@ export class Provider extends AbstractProvider {
     }
 
     async publishMicroblock(microblockToPublish: Microblock): Promise<Hash> {
-        this.logger.info(`Publishing microblock ${microblockToPublish.getHash().encode()}`)
+        this.logger.info(`Publishing microblock ${microblockToPublish.getHash().encode()}`);
         const {microblockData} = microblockToPublish.serialize();
         await this.externalProvider.sendSerializedMicroblock(microblockData)
         return microblockToPublish.getHash();

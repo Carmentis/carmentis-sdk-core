@@ -47,7 +47,8 @@ export class OrganizationVb extends VirtualBlockchain<OrganizationInternalState>
             height: height,
             internalState: this.internalState.toObject(),
             lastMicroblockHash: lastMicroblockHash,
-            type: this.getType()
+            type: this.getType(),
+            merkleRootHash: this.getMerkleRootHash(),
         };
     }
 
