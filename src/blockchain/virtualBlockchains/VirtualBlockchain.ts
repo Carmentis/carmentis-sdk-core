@@ -352,11 +352,21 @@ export abstract class VirtualBlockchain<InternalState extends IInternalState = I
         // raise internal error when invalid states are triggered; in practice, these cases should not happen
         // and are written for debugging purpose only
 
-        // Case 1: the virtual blockchain is empty but contains an identifier
+        // Case 0: reject if the provided microblock is null or undefined or not a Microblock instance
+        if (!microblock || !(microblock instanceof Microblock)) {
+            throw new Error("Microblock cannot be null or undefined");
+        }
+
+        // Case 1: reject if the provided microblock type does not match the expected type
+        if (microblock.getType() !== this.type) {
+            throw new Error("Invalid microblock type for append operation");
+        }
+
+        // Case 2: the virtual blockchain is empty but contains an identifier
         if (this.isEmpty() && this.identifier instanceof Uint8Array)
             throw new Error("Virtual blockchain is empty but is initialized: should not happen");
 
-        // Case 2: the virtual blockchain is not empty but do not contain an identifier
+        // Case 3: the virtual blockchain is not empty but do not contain an identifier
         if (!this.isEmpty() && !(this.identifier instanceof Uint8Array))
             throw new Error("Virtual blockchain is empty but has an identifier: should not happen");
 
