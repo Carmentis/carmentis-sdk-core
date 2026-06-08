@@ -107,7 +107,7 @@ export class Microblock {
      * @returns {Microblock} A new genesis microblock instance
      */
     static createGenesisApplicationLedgerMicroblock(): Microblock {
-        return new Microblock(VirtualBlockchainType.APPLICATION_VIRTUAL_BLOCKCHAIN)
+        return new Microblock(VirtualBlockchainType.APP_LEDGER_VIRTUAL_BLOCKCHAIN)
     };
 
     static loadFromSerializedMicroblock(serializedMicroblock: Uint8Array, expectedMbType?: VirtualBlockchainType) {
