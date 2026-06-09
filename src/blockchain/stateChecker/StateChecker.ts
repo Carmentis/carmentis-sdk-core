@@ -48,7 +48,7 @@ export class StateChecker {
             proof.account.virtualBlockchainId,
             accountStateHash,
             proof.account.radixProof,
-            proof.block.vbRadixHash,
+            proof.block.tokenRadixHash,
         );
 
         return StateChecker.verifyAppHash(proof.block);
@@ -79,7 +79,6 @@ export class StateChecker {
         let currentHash = proof.microblock.hash;
 
         if (witnesses.length !== merkleTreeHeight - 1) {
-            console.log(witnesses, merkleTreeHeight);
             throw new Error("State proof failure: inconsistent list of Merkle witnesses");
         }
 

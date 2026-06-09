@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest'
-import { JsonMicroblockProof, StateChecker } from "./StateChecker";
+import { JsonMicroblockProof, JsonAccountProof, StateChecker } from "./StateChecker";
 
 const validMicroblockProof: JsonMicroblockProof = {
    "block":{
@@ -28,7 +28,30 @@ const validMicroblockProof: JsonMicroblockProof = {
    }
 };
 
+const validAccountProof: JsonAccountProof = {
+    "block": {
+        "height": 36,
+        "vbRadixHash": "C971E408564E3613BEB0A9AD183202ABECB05B6C368B73D04527B77CC9ACE51D",
+        "tokenRadixHash": "7396BC2BB06A42CC888601BF02E12750AA911C6E0FDA8718B2C21A63024709C1",
+        "storageHash": "22798FDADA538CBFB081042C34BBD12D48C9AE06AC34A503977AF9489CE79105",
+        "appHash": "06C65F26D07AC5BC29B07D53F6D180DE778AD4F9531A615C5DFC0C59B46ACF08"
+    },
+    "account": {
+        "virtualBlockchainId": "50869DCD96BF3B1C2E77D63D476CAB3FDCB1C7060070DCDB823534208057B6E9",
+        "serializedState": "2d//hhngAIRmaGVpZ2h0Z2JhbGFuY2VvbGFzdEhpc3RvcnlIYXNoZWxvY2tzCftC1pP2Z8eAAFggbIvCo7gSKyl72uOUaUdYXtHQHU+PSZ92eivk8/JNKBOA",
+        "radixProof": [
+            "9883817235225991F41E3108D526EC1991ABCFA7F096364F72967134E88E8C8FD9DC8A9B6C0DD77C750EEE7B464F445276F051FBAC7BCA466C627E99EBD02928807BB519581B677445F3001539092589BC43D39A8056D9EA192BE48CA6D8C451E5C1AE29154164AFBACB11D8F69B052E534C047120DB06F84FD4F3AE2EE9B62F966D41613ED66178668BB978FF3D373EA6EAC551AE66AE14F21E78B7AE37C5083C7E8CDC81D7830D7F7FE15A4CEF6086313AF09055814249AB2CE339E673BB24EAEE",
+            "002198CE42DEEF51D40269D542F5314BEF2C7468D401AD5D85168BFAB4C0108F75F7441CF3D54CE268B14BC88B0C6C01B4E34DBE258400F501A24BF07F18824D9883",
+            "0000869DCD96BF3B1C2E77D63D476CAB3FDCB1C7060070DCDB823534208057B6E90C7FA66076BAB7CFECABD272D6173CC3210BAFB2AF2919D8459427849B6A96F3"
+        ]
+    }
+};
+
 function cloneMicroblockProof(proof: JsonMicroblockProof): JsonMicroblockProof {
+    return JSON.parse(JSON.stringify(proof));
+}
+
+function cloneAccountProof(proof: JsonAccountProof): JsonAccountProof {
     return JSON.parse(JSON.stringify(proof));
 }
 
@@ -36,10 +59,10 @@ function alterHex(str: string) {
     const pos = Math.floor(Math.random() * str.length);
     const nibble = parseInt(str[pos], 16);
     const updatedNibble = nibble ^ Math.random() * 15 + 1;
-    return str.slice(0, pos) + updatedNibble.toString(16) + str.slice(pos + 1);
+    return str.slice(0, pos) + updatedNibble.toString(16).toUpperCase() + str.slice(pos + 1);
 }
 
-describe("StateChecker test", () => {
+describe("Testing microblock proofs", () => {
     it("Should accept valid microblock proof", async () => {
         expect(() => StateChecker.verifyMicroblockProofFromJson(validMicroblockProof)).not.toThrow();
     });
@@ -82,5 +105,41 @@ describe("StateChecker test", () => {
         const badProof = cloneMicroblockProof(validMicroblockProof);
         badProof.virtualBlockchain.radixProof[0] = alterHex(badProof.virtualBlockchain.radixProof[0]);
         expect(() => StateChecker.verifyMicroblockProofFromJson(badProof)).toThrow();
+    });
+});
+
+describe("Testing account proofs", () => {
+    it("Should accept valid account proof", async () => {
+        expect(() => StateChecker.verifyAccountProofFromJson(validAccountProof)).not.toThrow();
+    });
+    it("Should reject account proof with bad vbRadixHash", async () => {
+        const badProof = cloneAccountProof(validAccountProof);
+        badProof.block.vbRadixHash = alterHex(badProof.block.vbRadixHash);
+        expect(() => StateChecker.verifyAccountProofFromJson(badProof)).toThrow();
+    });
+    it("Should reject account proof with bad tokenRadixHash", async () => {
+        const badProof = cloneAccountProof(validAccountProof);
+        badProof.block.tokenRadixHash = alterHex(badProof.block.tokenRadixHash);
+        expect(() => StateChecker.verifyAccountProofFromJson(badProof)).toThrow();
+    });
+    it("Should reject account proof with bad storageHash", async () => {
+        const badProof = cloneAccountProof(validAccountProof);
+        badProof.block.storageHash = alterHex(badProof.block.storageHash);
+        expect(() => StateChecker.verifyAccountProofFromJson(badProof)).toThrow();
+    });
+    it("Should reject account proof with bad appHash", async () => {
+        const badProof = cloneAccountProof(validAccountProof);
+        badProof.block.appHash = alterHex(badProof.block.appHash);
+        expect(() => StateChecker.verifyAccountProofFromJson(badProof)).toThrow();
+    });
+    it("Should reject account proof with bad account ID", async () => {
+        const badProof = cloneAccountProof(validAccountProof);
+        badProof.account.virtualBlockchainId = alterHex(badProof.account.virtualBlockchainId);
+        expect(() => StateChecker.verifyAccountProofFromJson(badProof)).toThrow();
+    });
+    it("Should reject account proof with bad radix proof", async () => {
+        const badProof = cloneAccountProof(validAccountProof);
+        badProof.account.radixProof[0] = alterHex(badProof.account.radixProof[0]);
+        expect(() => StateChecker.verifyAccountProofFromJson(badProof)).toThrow();
     });
 });
