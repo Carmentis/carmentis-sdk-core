@@ -26,6 +26,7 @@ export enum AbciRequestType {
     GET_MICROBLOCK_INFORMATION_BY_HEIGHT = 35,
     GET_SERIALIZED_MICROBLOCK_BY_HEIGHT = 37,
     GET_MICROBLOCK_PROOF = 39,
+    GET_ACCOUNT_PROOF = 41,
 }
 
 // ============================================================================================================================ //
@@ -154,6 +155,12 @@ export const GetMicroblockProofAbciRequestSchema = v.object({
     hash: bin256(),
 });
 
+// MSG_GET_ACCOUNT_PROOF (0x29)
+export const GetAccountProofAbciRequestSchema = v.object({
+    requestType: v.literal(AbciRequestType.GET_ACCOUNT_PROOF),
+    accountId: bin256(),
+});
+
 // ============================================================================================================================ //
 //  ABCI AbciRequest Variant Schema                                                                                                //
 // ============================================================================================================================ //
@@ -178,6 +185,7 @@ export const AbciRequestSchema = v.variant('requestType', [
     GetMicroblockInformationByHeightAbciRequestSchema,
     GetSerializedMicroblockByHeightAbciRequestSchema,
     GetMicroblockProofAbciRequestSchema,
+    GetAccountProofAbciRequestSchema,
 ]);
 
 // ============================================================================================================================ //
@@ -204,3 +212,4 @@ export type GetBlockModifiedAccountsAbciRequest = v.InferOutput<typeof GetBlockM
 export type GetAccountUpdatesAbciRequest = v.InferOutput<typeof GetAccountUpdatesAbciRequestSchema>;
 export type GetSerializedMicroblockByHeightAbciRequest = v.InferOutput<typeof GetSerializedMicroblockByHeightAbciRequestSchema>;
 export type GetMicroblockProofAbciRequest = v.InferOutput<typeof GetMicroblockProofAbciRequestSchema>;
+export type GetAccountProofAbciRequest = v.InferOutput<typeof GetAccountProofAbciRequestSchema>;

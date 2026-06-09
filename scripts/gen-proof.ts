@@ -9,10 +9,6 @@ import {SectionType} from "../src/type/valibot/blockchain/section/SectionType";
 import {Utils} from "../src/utils/utils";
 import {VirtualBlockchainType} from "../src/type/VirtualBlockchainType";
 import * as fs from 'fs';
-
-const NODE_URL = "http://localhost:26657";
-import * as v from 'valibot';
-import {ProtocolVariablesSchema} from "../src/type/valibot/blockchain/protocol/ProtocolVariables";
 import {WalletCrypto} from "../src/wallet/WalletCrypto";
 import {ApplicationLedgerVb} from "../src/blockchain/virtualBlockchains/ApplicationLedgerVb";
 import {
@@ -24,6 +20,7 @@ import {
     PublicKeyEncryptionSchemeId
 } from "../src/crypto/encryption/public-key-encryption/PublicKeyEncryptionSchemeId";
 
+const NODE_URL = "http://localhost:26657";
 const nodeUrl = NODE_URL;
 const provider = ProviderFactory.createInMemoryProviderWithExternalProvider(nodeUrl);
 const sigEncoder = CryptoEncoderFactory.defaultStringSignatureEncoder();
@@ -32,20 +29,12 @@ const encodedSk = 'SIG:SECP256K1:SK{cd42ad5f7a7823f3ab4da368ea4f807fa8246526ea4e
 // set up the logger
 Logger.enableLogs();
 
-async function getProtocolVariables() {
-    const protocolParams = await provider.getProtocolState();
-    const parseResult = v.safeParse(ProtocolVariablesSchema, protocolParams.getProtocolVariables());
-    return protocolParams.getProtocolVariables()
-}
-
 test();
 
 async function test() {
     const sellerSk = await sigEncoder.decodePrivateKey(encodedSk);
     const sellerPk = await sellerSk.getPublicKey();
     const sellerAccountId = await provider.getAccountIdFromPublicKey(sellerPk);
-    const protocolVariables = await getProtocolVariables();
-    const feesFormulaVersion = protocolVariables.feesCalculationVersion;
 
     const sk = Secp256k1PrivateSignatureKey.gen();
     const pk = await sk.getPublicKey();

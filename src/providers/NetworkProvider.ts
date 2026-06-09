@@ -4,10 +4,8 @@ import * as v from 'valibot';
 import {
     IllegalParameterError,
     NodeConnectionRefusedError,
-    NodeEndpointClosedWhileCatchingUpError,
     NodeError
 } from "../errors/carmentis-error";
-import {CometBFTErrorCode} from "../errors/CometBFTErrorCode";
 import {RPCNodeStatusResponseSchema} from "./nodeRpc/RPCNodeStatusResponseSchema";
 import {Logger} from "../utils/Logger";
 import {IExternalProvider} from "./IExternalProvider";
@@ -35,9 +33,6 @@ import {
 } from "../type/valibot/provider/abci/AbciResponse";
 import {AbciQueryEncoder} from "../utils/AbciQueryEncoder";
 import {EncoderFactory} from "../utils/encoder";
-import {MicroblockHeaderSchema} from "../type/valibot/blockchain/microblock/MicroblockHeader";
-import {MicroblockBodySchema} from "../type/valibot/blockchain/microblock/MicroblockBody";
-import {MicroblockStruct} from "../type/valibot/blockchain/microblock/MicroblockStruct";
 
 export class NetworkProvider implements IExternalProvider {
     private static staticLogger = Logger.getNetworkProviderLogger();

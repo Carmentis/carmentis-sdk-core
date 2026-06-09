@@ -2,7 +2,8 @@ import * as v from 'valibot';
 import {MicroblockInformationSchema} from "../MicroblockInformationSchema";
 import {bin256, uint8array} from "../../primitives";
 import {MicroblockBodySchema} from "../../blockchain/microblock/MicroblockBody";
-import {MicroblockProofSchema} from "../../blockchain/microblock/MicroblockProof";
+import {MicroblockProofSchema} from "../../stateProofs/MicroblockProof";
+import {AccountProofSchema} from "../../stateProofs/AccountProof";
 import {
     LockSchema,
     AccountHistorySchema,
@@ -33,6 +34,7 @@ export enum AbciResponseType {
     ACCOUNT_UPDATES = 34,
     SERIALIAZED_MICROBLOCK_BY_HEIGHT = 38,
     MICROBLOCK_PROOF = 40,
+    ACCOUNT_PROOF = 42,
 }
 // ============================================================================================================================ //
 //  ABCI AbciResponse Schemas                                                                                                   //
@@ -187,6 +189,11 @@ export const MicroblockProofAbciResponseSchema = v.object({
     proof: MicroblockProofSchema,
 });
 
+export const AccountProofAbciResponseSchema = v.object({
+    responseType: v.literal(AbciResponseType.ACCOUNT_PROOF),
+    proof: AccountProofSchema,
+});
+
 // ============================================================================================================================ //
 //  ABCI AbciResponse Variant Schema                                                                                               //
 // ============================================================================================================================ //
@@ -211,6 +218,7 @@ export const AbciResponseSchema = v.variant('responseType', [
     AccountUpdatesAbciResponseSchema,
     SerializedMicroblockByHeightAbciResponseSchema,
     MicroblockProofAbciResponseSchema,
+    AccountProofAbciResponseSchema,
 ]);
 
 // ============================================================================================================================ //
@@ -237,3 +245,4 @@ export type BlockModifiedAccountsAbciResponse = v.InferOutput<typeof BlockModifi
 export type AccountUpdatesAbciResponse = v.InferOutput<typeof AccountUpdatesAbciResponseSchema>;
 export type SerializedMicroblockByHeightAbciResponse = v.InferOutput<typeof SerializedMicroblockByHeightAbciResponseSchema>;
 export type MicroblockProofAbciResponse = v.InferOutput<typeof MicroblockProofAbciResponseSchema>;
+export type AccountProofAbciResponse = v.InferOutput<typeof AccountProofAbciResponseSchema>;
