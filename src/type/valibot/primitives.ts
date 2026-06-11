@@ -126,3 +126,11 @@ export function height() {
         val.minValue(0)
     )
 }
+
+export function positiveInt() {
+    return val.pipe(
+        val.number(),
+        val.integer(),
+        val.minValue(1)
+    );
+}

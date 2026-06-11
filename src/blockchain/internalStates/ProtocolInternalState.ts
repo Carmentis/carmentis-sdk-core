@@ -60,6 +60,7 @@ export class ProtocolInternalState implements IInternalState {
                 maxBlockSizeInBytes: 4_194_304,
                 retentionPolicy,
                 abciVersion: 1,
+                maxMicroblocksPerBlock: 200,
             },
             protocolUpdates: []
         });
