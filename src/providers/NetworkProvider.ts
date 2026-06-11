@@ -26,7 +26,6 @@ import {
     MicroblockBodysAbciResponse,
     MicroblockBodysAbciResponseSchema, SerializedMicroblockByHeightAbciResponseSchema,
     MicroblockInformationAbciResponseSchema,
-    ObjectListAbciResponseSchema,
     ValidatorNodeByAddressAbciResponseSchema,
     VirtualBlockchainStateAbciResponseSchema,
     VirtualBlockchainUpdateAbciResponseSchema
@@ -177,19 +176,6 @@ export class NetworkProvider implements IExternalProvider {
         this.responseLogger.info(`Received account hash {accountHash}`, () => ({
             accountHash: Utils.binaryToHexa(response.accountHash)
         }));
-        return response;
-    }
-
-    async getObjectList(type: number) {
-        this.requestLogger.info(`Requesting list of objects of type ${type}`);
-
-        const answer = await this.abciQuery({
-            requestType: AbciRequestType.GET_OBJECT_LIST,
-            type: type
-        });
-
-        const response = v.parse(ObjectListAbciResponseSchema, answer);
-        this.responseLogger.info(`Receiving object lists with ${response.list.length} elements)`);
         return response;
     }
 

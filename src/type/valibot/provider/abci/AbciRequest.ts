@@ -108,10 +108,7 @@ export const GetValidatorNodeByAddressAbciRequestSchema = v.object({
 });
 
 // MSG_GET_OBJECT_LIST (0x19)
-export const GetObjectListAbciRequestSchema = v.object({
-    requestType: v.literal(AbciRequestType.GET_OBJECT_LIST),
-    type: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(255)),
-});
+// not implemented anymore
 
 // MSG_GET_GENESIS_SNAPSHOT (0x1B)
 export const GetGenesisSnapshotAbciRequestSchema = v.object({
@@ -177,7 +174,6 @@ export const AbciRequestSchema = v.variant('requestType', [
     GetAccountHistoryAbciRequestSchema,
     GetAccountByPublicKeyHashAbciRequestSchema,
     GetValidatorNodeByAddressAbciRequestSchema,
-    GetObjectListAbciRequestSchema,
     GetGenesisSnapshotAbciRequestSchema,
     GetRawBlockContentAbciRequestSchema,
     GetBlockModifiedAccountsAbciRequestSchema,
@@ -205,7 +201,6 @@ export type GetAccountStateAbciRequest = v.InferOutput<typeof GetAccountStateAbc
 export type GetAccountHistoryAbciRequest = v.InferOutput<typeof GetAccountHistoryAbciRequestSchema>;
 export type GetAccountByPublicKeyHashAbciRequest = v.InferOutput<typeof GetAccountByPublicKeyHashAbciRequestSchema>;
 export type GetValidatorNodeByAddressAbciRequest = v.InferOutput<typeof GetValidatorNodeByAddressAbciRequestSchema>;
-export type GetObjectListAbciRequest = v.InferOutput<typeof GetObjectListAbciRequestSchema>;
 export type GetGenesisSnapshotAbciRequest = v.InferOutput<typeof GetGenesisSnapshotAbciRequestSchema>;
 export type GetRawBlockContentAbciRequest = v.InferOutput<typeof GetRawBlockContentAbciRequestSchema>;
 export type GetBlockModifiedAccountsAbciRequest = v.InferOutput<typeof GetBlockModifiedAccountsAbciRequestSchema>;

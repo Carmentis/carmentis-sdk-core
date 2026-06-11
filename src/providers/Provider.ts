@@ -23,7 +23,6 @@ import {
     BlockInformationAbciResponse,
     ChainInformationAbciResponse,
     GenesisSnapshotAbciResponse,
-    ObjectListAbciResponse
 } from "../type/valibot/provider/abci/AbciResponse";
 import {Crypto} from "../crypto/crypto";
 import {NetworkProvider} from "./NetworkProvider";
@@ -129,45 +128,8 @@ export class Provider extends AbstractProvider {
     }
 
     async getProtocolVirtualBlockchainId(): Promise<Hash> {
-        const list = await this.getObjectList(VirtualBlockchainType.PROTOCOL_VIRTUAL_BLOCKCHAIN);
-        const foundVirtualBlockchainCount = list.list.length;
-        if (foundVirtualBlockchainCount === 0) {
-            this.logger.error('No protocol virtual blockchain found: Expecting exactly one protocol virtual blockchain.')
-            throw new Error("No protocol virtual blockchain found");
-        }
-        if (foundVirtualBlockchainCount !== 1) {
-            this.logger.warning("Found " + foundVirtualBlockchainCount + " protocol virtual blockchains, expecting exactly one");
-        }
-        return Hash.from(list.list[0])
-    }
-
-    async getAllAccounts(): Promise<Hash[]> {
-        const list = await this.getObjectList(VirtualBlockchainType.ACCOUNT_VIRTUAL_BLOCKCHAIN);
-        return list.list.map(Hash.from)
-    }
-
-    /**
-     * Returns the list of validator node identifiers.
-     *
-     * Note: to recover more data from the validator node, load the node virtual blockchain.
-     */
-    async getAllValidatorNodes(): Promise<Hash[]> {
-        const list = await this.getObjectList(VirtualBlockchainType.NODE_VIRTUAL_BLOCKCHAIN);
-        return list.list.map(Hash.from)
-    }
-
-    async getAllOrganizationIds(): Promise<Hash[]> {
-        const list = await this.getObjectList(VirtualBlockchainType.ORGANIZATION_VIRTUAL_BLOCKCHAIN);
-        return list.list.map(Hash.from)
-    }
-
-    async getAllApplicationIds(): Promise<Hash[]> {
-        const list = await this.getObjectList(VirtualBlockchainType.APPLICATION_VIRTUAL_BLOCKCHAIN);
-        return list.list.map(Hash.from)
-    }
-
-    async getObjectList(type: VirtualBlockchainType): Promise<ObjectListAbciResponse> {
-        return await this.externalProvider.getObjectList(type);
+        const chainInformation = await this.getChainInformation();
+        return Hash.from(chainInformation.protocolVirtualBlockchainId);
     }
 
     async getMicroblockInformation(hash: Uint8Array): Promise<MicroblockInformation|null> {

@@ -53,6 +53,7 @@ export const ChainInformationAbciResponseSchema = v.object({
     lastBlockTimestamp: v.pipe(v.number(), v.integer(), v.minValue(0)),
     microblockCount: v.pipe(v.number(), v.integer(), v.minValue(0)),
     objectCounts: v.array(v.pipe(v.number(), v.integer(), v.minValue(0))),
+    protocolVirtualBlockchainId: uint8array(),
 });
 
 // MSG_BLOCK_INFORMATION (0x04)
@@ -151,10 +152,7 @@ export const ValidatorNodeByAddressAbciResponseSchema = v.object({
 });
 
 // MSG_OBJECT_LIST (0x1A)
-export const ObjectListAbciResponseSchema = v.object({
-    responseType: v.literal(AbciResponseType.OBJECT_LIST),
-    list: v.array(bin256()),
-});
+// not implemented anymore
 
 // MSG_GENESIS_SNAPSHOT (0x1C)
 export const GenesisSnapshotAbciResponseSchema = v.object({
@@ -212,7 +210,6 @@ export const AbciResponseSchema = v.variant('responseType', [
     AccountHistoryAbciResponseSchema,
     AccountByPublicKeyHashAbciResponseSchema,
     ValidatorNodeByAddressAbciResponseSchema,
-    ObjectListAbciResponseSchema,
     GenesisSnapshotAbciResponseSchema,
     BlockModifiedAccountsAbciResponseSchema,
     AccountUpdatesAbciResponseSchema,
@@ -239,7 +236,6 @@ export type AccountStateAbciResponse = v.InferOutput<typeof AccountStateAbciResp
 export type AccountHistoryAbciResponse = v.InferOutput<typeof AccountHistoryAbciResponseSchema>;
 export type AccountByPublicKeyHashAbciResponse = v.InferOutput<typeof AccountByPublicKeyHashAbciResponseSchema>;
 export type ValidatorNodeByAddressAbciResponse = v.InferOutput<typeof ValidatorNodeByAddressAbciResponseSchema>;
-export type ObjectListAbciResponse = v.InferOutput<typeof ObjectListAbciResponseSchema>;
 export type GenesisSnapshotAbciResponse = v.InferOutput<typeof GenesisSnapshotAbciResponseSchema>;
 export type BlockModifiedAccountsAbciResponse = v.InferOutput<typeof BlockModifiedAccountsAbciResponseSchema>;
 export type AccountUpdatesAbciResponse = v.InferOutput<typeof AccountUpdatesAbciResponseSchema>;

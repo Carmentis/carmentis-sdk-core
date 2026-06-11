@@ -10,7 +10,6 @@ import {
     ChainInformationAbciResponse,
     GenesisSnapshotAbciResponse,
     MicroblockBodysAbciResponse,
-    ObjectListAbciResponse,
     ValidatorNodeByAddressAbciResponse,
     VirtualBlockchainUpdateAbciResponse
 } from "../type/valibot/provider/abci/AbciResponse";
@@ -26,7 +25,6 @@ export interface IExternalProvider {
     getAccountState(accountHash: Uint8Array): Promise<AccountStateAbciResponse>;
     getAccountHistory(accountHash: Uint8Array, lastHistoryHash: Uint8Array, maxRecords: number): Promise<AccountHistoryAbciResponse>;
     getAccountByPublicKeyHash(publicKeyHash: Uint8Array): Promise<AccountByPublicKeyHashAbciResponse>;
-    getObjectList(type: number): Promise<ObjectListAbciResponse>;
     getMicroblockInformation(hash: Uint8Array): Promise<MicroblockInformation | null> ;
     getSerializedMicroblockByHeight(virtualBlockchainId: Uint8Array, height: number): Promise<Uint8Array | null>;
     getMicroblockBodys(hashes: Uint8Array[]): Promise<MicroblockBodysAbciResponse  | null>;

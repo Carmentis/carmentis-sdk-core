@@ -11,7 +11,6 @@ import {
     ChainInformationAbciResponse,
     GenesisSnapshotAbciResponse,
     MicroblockBodysAbciResponse,
-    ObjectListAbciResponse,
     ValidatorNodeByAddressAbciResponse,
     VirtualBlockchainUpdateAbciResponse
 } from "../type/valibot/provider/abci/AbciResponse";
@@ -49,9 +48,6 @@ export class NullNetworkProvider implements IExternalProvider {
         throw new Error("Method not implemented.");
     }
     getAccountByPublicKeyHash(publicKeyHash: Uint8Array): Promise<AccountByPublicKeyHashAbciResponse> {
-        throw new Error("Method not implemented.");
-    }
-    getObjectList(type: number): Promise<ObjectListAbciResponse> {
         throw new Error("Method not implemented.");
     }
     getMicroblockInformation(hash: Uint8Array): Promise<MicroblockInformation | null>  {
