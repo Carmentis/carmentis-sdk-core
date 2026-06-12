@@ -1,4 +1,5 @@
 import {CMTSToken} from "../economics/currencies/token";
+import {ChainReference} from "../type/valibot/blockchain/chainReference/ChainReference";
 import {
     BK_EARNED_BLOCK_FEES,
     BK_EARNED_TX_FEES,
@@ -79,8 +80,8 @@ export class AccountTransaction {
         return CMTSToken.createAtomic(this.transaction.amount * multiplier);
     }
 
-    public getChainReference(): Hash {
-        return Hash.from(this.transaction.chainReference);
+    public getChainReference(): ChainReference {
+        return this.transaction.chainReference;
     }
 
     /**

@@ -199,6 +199,7 @@ export * from "./type/VirtualBlockchainLabel";
 export * from "./type/VirtualBlockchainType";
 export * from "./type/valibot/primitives";
 export * from "./type/valibot/account/Account";
+export * from "./type/valibot/blockchain/chainReference/ChainReference";
 export * from "./type/valibot/blockchain/economics/RetentionPolicy";
 export * from "./type/valibot/blockchain/microblock/MicroblockBody";
 export * from "./type/valibot/blockchain/microblock/MicroblockHeader";

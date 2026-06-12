@@ -1,4 +1,5 @@
 import {AccountHistoryEntry} from "./valibot/account/Account";
+import {ChainReference} from "./valibot/blockchain/chainReference/ChainReference";
 import {Height} from "./Height";
 import {Hash} from "../entities/Hash";
 import {CMTSToken} from "../economics/currencies/token";
@@ -51,8 +52,8 @@ export class Transaction {
         return CMTSToken.createAtomic(this.transaction.amount * multiplier);
     }
 
-    public getChainReference(): Hash {
-        return Hash.from(this.transaction.chainReference);
+    public getChainReference(): ChainReference {
+        return this.transaction.chainReference;
     }
 
     /**

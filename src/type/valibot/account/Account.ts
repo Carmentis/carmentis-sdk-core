@@ -1,5 +1,6 @@
 import * as v from "valibot";
-import {bin256, uint8array} from "../primitives";
+import { bin256, uint8array } from "../primitives";
+import { ChainReferenceSchema } from "../blockchain/chainReference/ChainReference";
 
 export const LOCK_TYPE_COUNT = 3;
 export enum LockType {
@@ -104,7 +105,7 @@ export const AccountHistoryEntrySchema = v.object({
     timestamp: v.pipe(v.number(), v.integer(), v.minValue(0)),
     linkedAccount: bin256(),
     amount: v.pipe(v.number(), v.integer(), v.minValue(0)),
-    chainReference: uint8array(),
+    chainReference: ChainReferenceSchema,
 });
 export type AccountHistoryEntry = v.InferOutput<typeof AccountHistoryEntrySchema>;
 
