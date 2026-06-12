@@ -523,4 +523,8 @@ export class BalanceAvailability {
     getStaked() {
         return CMTSToken.createAtomic(this.getBreakdown().staked);
     }
+
+    getEscrowed() {
+        return CMTSToken.createAtomic(this.getBreakdown().escrowed);
+    }
 }
