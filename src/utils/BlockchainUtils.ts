@@ -32,8 +32,12 @@ import {
     VestingLock,
     VestingLockSchema,
     VestingParameters,
-    VestingParametersSchema
+    VestingParametersSchema,
 } from "../type/valibot/account/Account";
+import {
+    ChainReferenceSchema,
+    ChainReference,
+} from "../type/valibot/blockchain/chainReference/ChainReference";
 import {Logger} from "./Logger";
 import {CryptoEncoderFactory} from "../crypto/encoder/CryptoEncoderFactory";
 
@@ -90,6 +94,14 @@ export class BlockchainUtils {
         return header.previousHash;
     }
 
+
+    static encodeChainReference(chainReference: ChainReference): Uint8Array {
+        return this.encodeObjectToBinary(v.parse(ChainReferenceSchema, chainReference));
+    }
+
+    static decodeChainReference(serializedInfo: Uint8Array): ChainReference {
+        return v.parse(ChainReferenceSchema, this.decodeObjectFromBinary(serializedInfo));
+    }
 
     static encodeVirtualBlockchainInfo(virtualBlockchainInfo: VirtualBlockchainInfo): Uint8Array {
         return this.encodeObjectToBinary(v.parse(VirtualBlockchainInfoSchema, virtualBlockchainInfo));
