@@ -22,7 +22,7 @@ export type MicroblockReference = v.InferOutput<typeof MicroblockReferenceSchema
 export const SectionReferenceSchema = v.object({
     type: v.literal(ChainReferenceType.SECTION),
     microblockHash: bin256(),
-    sectionIdex: v.number(),
+    sectionIndex: v.number(),
 });
 export type SectionReference = v.InferOutput<typeof SectionReferenceSchema>;
 
