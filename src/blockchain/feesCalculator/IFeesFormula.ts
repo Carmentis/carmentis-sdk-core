@@ -1,8 +1,6 @@
 import {Microblock} from "../microblock/Microblock";
 import {CMTSToken} from "../../economics/currencies/token";
 import {SignatureSchemeId} from "../../crypto/signature/SignatureSchemeId";
-import {IProvider} from "../../providers/IProvider";
-import {Utils} from "../../utils/utils";
 
 export interface IFeesFormula {
     /**

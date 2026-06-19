@@ -13,17 +13,10 @@ export class FeesCalculationFormulaFactory {
         return new FirstFeesFormula(provider);
     }
 
-    static getSecondFeesCalculationFormula(provider: IProvider): IFeesFormula {
-        return new FirstFeesFormula(provider);
-    }
-
     static async getFeesCalculationFormulaByVersion(provider: IProvider, feesCalculationVersion: number): Promise<IFeesFormula> {
         switch (feesCalculationVersion) {
             case 1: {
                 return this.getGenesisFeesCalculationFormula(provider);
-            }
-            case 2: {
-                return this.getSecondFeesCalculationFormula(provider);
             }
         }
         throw new Error(`No fees formula for feesCalculationVersion = ${feesCalculationVersion}`);
