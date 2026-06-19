@@ -134,3 +134,11 @@ export function positiveInt() {
         val.minValue(1)
     );
 }
+
+export function nonNegativeInt() {
+    return val.pipe(
+        val.number(),
+        val.integer(),
+        val.minValue(0)
+    );
+}

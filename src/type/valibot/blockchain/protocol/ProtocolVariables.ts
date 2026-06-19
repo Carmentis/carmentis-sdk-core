@@ -1,15 +1,15 @@
 import * as v from 'valibot';
 import {RetentionPolicySchema} from "../economics/RetentionPolicy";
-import {positiveInt} from "../../primitives";
+import {positiveInt, nonNegativeInt} from "../../primitives";
 
 export const ProtocolVariablesSchema = v.object({
     protocolVersionName: v.string(),
     protocolVersion: positiveInt(),
     feesCalculationVersion: positiveInt(),
-    fixedGasCost: positiveInt(),
-    secp256k1SignatureGasCost: positiveInt(),
-    mlDsa65SignatureGasCost: positiveInt(),
-    pkmsSecp256k1SignatureGasCost: positiveInt(),
+    fixedGasCost: nonNegativeInt(),
+    secp256k1SignatureGasCost: nonNegativeInt(),
+    mlDsa65SignatureGasCost: nonNegativeInt(),
+    pkmsSecp256k1SignatureGasCost: nonNegativeInt(),
     globalStateUpdaterVersion: positiveInt(),
     applicationLedgerInternalStateUpdaterVersion: positiveInt(),
     applicationInternalStateUpdaterVersion: positiveInt(),
@@ -19,7 +19,7 @@ export const ProtocolVariablesSchema = v.object({
     protocolInternalStateUpdaterVersion: positiveInt(),
     minimumNodeStakingAmountInAtomics: positiveInt(),
     maximumNodeStakingAmountInAtomics: positiveInt(),
-    unstakingDelayInDays: positiveInt(),
+    unstakingDelayInDays: nonNegativeInt(),
     maxBlockSizeInBytes: positiveInt(),
     retentionPolicy: RetentionPolicySchema,
     abciVersion: positiveInt(),
