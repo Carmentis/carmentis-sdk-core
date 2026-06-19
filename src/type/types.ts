@@ -7,7 +7,6 @@ export interface ImportedProof {
 
 export interface MicroblockHeaderObject {
     magicString: string;
-    protocolVersion: number;
     microblockType: number;
     height: number;
     previousHash: Uint8Array;

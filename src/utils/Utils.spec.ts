@@ -72,13 +72,12 @@ describe("BlockchainUtils", () => {
         const header: MicroblockHeader = {
             bodyHash: Utils.getNullHash(),
             feesPayerAccount: Utils.getNullHash(),
-            maxFees: 0,
+            gas: 0,
             gasPrice: 0,
             height: 0,
             magicString: "CMTS",
             microblockType: 0,
             previousHash: Utils.getNullHash(),
-            protocolVersion: 0,
             timestamp: 0
         }
         expect(BlockchainUtils.decodeMicroblockHeader(BlockchainUtils.encodeMicroblockHeader(header)))
@@ -108,6 +107,7 @@ describe("BlockchainUtils", () => {
         const state: VirtualBlockchainState = {
             expirationDay: 1,
             height: 1,
+            merkleRootHash: new Uint8Array(32),
             internalState: {
                 signatureSchemeId: 1,
                 publicKeyHeight: 1,
@@ -141,12 +141,11 @@ describe("BlockchainUtils", () => {
         const microblock: MicroblockStruct = {
             header: {
                 magicString: "CMTS",
-                protocolVersion: 0,
                 microblockType: 0,
                 height: 0,
                 previousHash: Utils.getNullHash(),
                 timestamp: 0,
-                maxFees: 0,
+                gas: 0,
                 gasPrice: 0,
                 bodyHash: Utils.getNullHash(),
                 feesPayerAccount: Utils.getNullHash()
