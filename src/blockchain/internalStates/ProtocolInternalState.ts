@@ -28,11 +28,12 @@ export class ProtocolInternalState implements IInternalState {
     }
 
     static createInitialState() {
-        // Retention ratios:
-        // - 1.0 for the first year
-        // - 4 * 0.5 = 2.0 for the next 4 years (total: 3.0 for 5 years)
-        // - 5 * 0.2 = 1.0 for the next 5 years (total: 4.0 for 10 years)
-        // - 1.0 for any number of days beyond (total: 5.0, in particular for infinite storage)
+        // Retention ratios are expressed in per thousand.
+        // The current values give:
+        // - 0.1 for the first year
+        // - 4 * 0.05 = 0.2 for the next 4 years (total: 0.3 for 5 years)
+        // - 5 * 0.02 = 0.1 for the next 5 years (total: 0.4 for 10 years)
+        // - 0.1 for any number of days beyond (total: 0.5, in particular for infinite storage)
         const daysInYear = 366;
         const retentionPolicy: RetentionPolicy = [
             { retentionRatio: 100, maximumNumberOfDays: daysInYear, dayDivisor: daysInYear },
@@ -47,6 +48,10 @@ export class ProtocolInternalState implements IInternalState {
                 protocolVersionName: ProtocolName.INITIAL_PROTOCOL_VERSION_NAME,
                 protocolVersion: 1,
                 feesCalculationVersion: 1,
+                fixedGasCost: 1_000,
+                secp256k1SignatureGasCost: 1_000,
+                mlDsa65SignatureGasCost: 5_000,
+                pkmsSecp256k1SignatureGasCost: 0,
                 globalStateUpdaterVersion: 1,
                 applicationLedgerInternalStateUpdaterVersion: 1,
                 applicationInternalStateUpdaterVersion: 1,
@@ -132,6 +137,22 @@ export class ProtocolInternalState implements IInternalState {
 
     getFeesCalculationVersion() {
         return this.internalState.currentProtocolVariables.feesCalculationVersion;
+    }
+
+    getFixedGasCost() {
+        return this.internalState.currentProtocolVariables.fixedGasCost;
+    }
+
+    getSecp256k1SignatureGasCost() {
+        return this.internalState.currentProtocolVariables.secp256k1SignatureGasCost;
+    }
+
+    getMlDsa65SignatureGasCost() {
+        return this.internalState.currentProtocolVariables.mlDsa65SignatureGasCost;
+    }
+
+    getPkmsSecp256k1SignatureGasCost() {
+        return this.internalState.currentProtocolVariables.pkmsSecp256k1SignatureGasCost;
     }
 
     setProtocolVersion(protocolVersion: number) {

@@ -1,8 +1,13 @@
 import * as v from 'valibot';
 
 export const RetentionTierSchema = v.object({
+    // retentionRatio is expressed as an integer in per thousand
     retentionRatio: v.number(),
+    // maximum number of days for which this ratio applies
     maximumNumberOfDays: v.number(),
+    // the day divisor is typically 366, except for the 'infinite' range where it's set to 1
+    // (so that the 'infinite storage' pricing applies when the maximum standard retention time
+    // is exceeded by just one day)
     dayDivisor: v.number(),
 });
 export type RetentionTier = v.InferOutput<typeof RetentionTierSchema>;

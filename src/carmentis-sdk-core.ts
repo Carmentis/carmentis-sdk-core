@@ -6,6 +6,7 @@ export * from "./blockchain/feesCalculator/FeesCalculationFormulaFactory";
 export * from "./blockchain/feesCalculator/FirstFeesFormula";
 export * from "./blockchain/feesCalculator/IFeesFormula";
 export * from "./blockchain/feesCalculator/RetentionCostCalculator";
+export * from "./blockchain/feesCalculator/SecondFeesFormula";
 export * from "./blockchain/internalStates/AccountInternalState";
 export * from "./blockchain/internalStates/ApplicationInternalState";
 export * from "./blockchain/internalStates/ApplicationLedgerInternalState";

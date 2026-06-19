@@ -89,8 +89,8 @@ export abstract class AbstractProvider implements IProvider {
 
     async getCurrentFeesFormula() {
         const protocolState = await this.getProtocolState();
-        const feesVersion = protocolState.getFeesCalculationVersion();
-        return FeesCalculationFormulaFactory.getFeesCalculationFormulaByVersion(this, feesVersion);
+        const feesCalculationVersion = protocolState.getFeesCalculationVersion();
+        return FeesCalculationFormulaFactory.getFeesCalculationFormulaByVersion(this, feesCalculationVersion);
     }
 
     async computeMicroblockGas(

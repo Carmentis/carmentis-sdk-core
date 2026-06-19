@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { RetentionCostCalculator } from './RetentionCostCalculator';
 import { CMTSToken } from "../../economics/currencies/token";
 import { RetentionPolicy } from "../../type/valibot/blockchain/economics/RetentionPolicy";
+import { ECO } from "../../constants/constants";
 
 describe("storage price manager", () => {
     it("Should compute correct prices", () => {
@@ -16,11 +17,12 @@ describe("storage price manager", () => {
 
         const storagePriceManager = new RetentionCostCalculator(retentionPolicy);
 
-        const cost30 = Math.floor(30 * 100000 / 366);
-        const cost366 = Math.floor(366 * 100000 / 366);
-        const oneDayBeyondOneYear = Math.floor(0.5 * 100000 / 366);
-        const fourYears = Math.floor(366 * 4 * 0.5 * 100000 / 366);
-        const fiveYears = Math.floor(366 * 5 * 0.2 * 100000 / 366);
+        const cost30 = Math.floor(30 * 0.1 * ECO.GAS_ATOMS_PER_GAS / 366);
+        const cost366 = Math.floor(366 * 0.1 * ECO.GAS_ATOMS_PER_GAS / 366);
+        const oneDayBeyondOneYear = Math.floor(0.05 * ECO.GAS_ATOMS_PER_GAS / 366);
+        const fourYears = Math.floor(366 * 4 * 0.05 * ECO.GAS_ATOMS_PER_GAS / 366);
+        const fiveYears = Math.floor(366 * 5 * 0.02 * ECO.GAS_ATOMS_PER_GAS / 366);
+        const infinite = 0.1 * ECO.GAS_ATOMS_PER_GAS;
 
         const tests = [
             [  30, cost30 ],
@@ -28,18 +30,17 @@ describe("storage price manager", () => {
             [  367, cost366 + oneDayBeyondOneYear ],
             [  366 * 5, cost366 + fourYears ],
             [  366 * 10, cost366 + fourYears + fiveYears ],
-            [  366 * 10 + 1, cost366 + fourYears + fiveYears + 100000 ],
-            [  366 * 10 + 1000, cost366 + fourYears + fiveYears + 100000 ],
+            [  366 * 10 + 1, cost366 + fourYears + fiveYears + infinite ],
+            [  366 * 10 + 1000, cost366 + fourYears + fiveYears + infinite ],
         ];
 
-        tests.forEach(([ days, expectedPriceInAtomics ]) => {
-            const baseFee = CMTSToken.createCMTS(1);
-            const computedPrice = storagePriceManager.getStorageCost(baseFee, days);
-            const computedPriceInAtomics = computedPrice.getAmountAsAtomic();
+        tests.forEach(([ days, expectedCostInGasAtoms ]) => {
+            const baseFee = CMTSToken.createCMTS(1).getAmountAsAtomic();
+            const costInGasAtoms = storagePriceManager.getStorageCost(baseFee, days);
 
             console.log(days, storagePriceManager.getBreakdown(baseFee, days));
-            console.log(days, computedPriceInAtomics);
-            expect(computedPriceInAtomics).toEqual(expectedPriceInAtomics);
+            console.log(days, costInGasAtoms);
+            expect(costInGasAtoms).toEqual(expectedCostInGasAtoms);
         });
     })
 })

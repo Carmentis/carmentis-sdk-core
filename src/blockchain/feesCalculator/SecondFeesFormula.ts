@@ -12,11 +12,10 @@ import {RetentionCostCalculator} from "./RetentionCostCalculator";
 import {Utils} from "../../utils/utils";
 
 /**
- * FirstFeesFormula is a concrete implementation of the IFeesFormula interface.
- * It provides a mechanism to compute the fees for a transaction based on
- * the size of a given microblock and a fixed gas fee formula.
+ * SecondFeesFormula is similar to FirstFeesFormula, with the fixed gas cost ignored.
+ * It was created solely for testing a protocol update.
  */
-export class FirstFeesFormula implements IFeesFormula {
+export class SecondFeesFormula implements IFeesFormula {
     private static DEFAULT_GAS_PRICE = CMTSToken.createAtomic(1);
 
     constructor(private provider: IProvider) {
@@ -32,7 +31,7 @@ export class FirstFeesFormula implements IFeesFormula {
 
         // we start by computing the base gas price
         const definedGasPrice = microblock.getGasPrice();
-        const usedGasPrice = definedGasPrice.isZero() ? FirstFeesFormula.DEFAULT_GAS_PRICE : definedGasPrice;
+        const usedGasPrice = definedGasPrice.isZero() ? SecondFeesFormula.DEFAULT_GAS_PRICE : definedGasPrice;
         const gas = await this.computeGas(
             signatureSchemeId,
             microblock,
@@ -87,7 +86,7 @@ export class FirstFeesFormula implements IFeesFormula {
                 break;
             }
         }
-        return signatureGasCost + protocolState.getFixedGasCost();
+        return signatureGasCost;
     }
 
     /**

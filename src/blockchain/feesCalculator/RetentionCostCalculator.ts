@@ -44,7 +44,7 @@ export class RetentionCostCalculator {
                 dayDivisor = policy.dayDivisor;
             }
             const costInGasAtoms = Math.floor(
-                baseCostInGasAtoms * policyDays * retentionRatio / 100 / dayDivisor
+                baseCostInGasAtoms * policyDays * retentionRatio / 1000 / dayDivisor
             );
             breakdown.push({
                 numberOfDays: policyDays,

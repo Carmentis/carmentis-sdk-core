@@ -7,11 +7,6 @@ export const MicroblockHeaderSchema = val.object({
     magicString: val.literal(MAGIC_STRING),
 
     /**
-     * The version of the protocol.
-     */
-    protocolVersion: val.number(),
-
-    /**
      * The type of the microblock.
      */
     microblockType: val.number(),

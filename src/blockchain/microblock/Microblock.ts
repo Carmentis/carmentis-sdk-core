@@ -258,7 +258,6 @@ export class Microblock {
         const defaultGasPrice = CMTSToken.zero().getAmountAsAtomic();
         const initialHeader : MicroblockHeader = {
             magicString: CHAIN.MAGIC_STRING,
-            protocolVersion: CHAIN.PROTOCOL_VERSION,
             microblockType: type,
             height: 1,
             previousHash: Microblock.generatePreviousHashForGenesisMicroblock(type, defaultExpirationDay),
@@ -292,7 +291,6 @@ export class Microblock {
 
         this.header = {
             magicString: CHAIN.MAGIC_STRING,
-            protocolVersion: CHAIN.PROTOCOL_VERSION,
             microblockType: this.type,
             height: height,
             previousHash: previousHash,
@@ -859,7 +857,6 @@ export class Microblock {
         output += `  Header:\n`;
         output += `    Microblock type: ${this.header.microblockType} or ${this.type}\n`;
         output += `    Magic String: ${this.header.magicString}\n`;
-        output += `    Protocol Version: ${this.header.protocolVersion}\n`;
         output += `    Fees payer account: ${encoder.encode(this.header.feesPayerAccount)}\n`;
         output += `    Height: ${this.header.height}\n`;
         output += `    Previous Hash: ${encoder.encode(this.header.previousHash)}\n`;
