@@ -46,7 +46,7 @@ export class PkmsSecp256k1PrivateSignatureKey implements PrivateSignatureKey {
         const base64EncodedPublicKey = body.publicKey;
         if (base64EncodedPublicKey === undefined) throw new Error(`Failed to fetch public key: no "publicKey" field found in response body.`)
         const publicKey = new Uint8Array(Buffer.from(base64EncodedPublicKey, 'base64'));
-        return new PkmsSecp256k1PublicSignatureKey(publicKey)
+        return new Secp256k1PublicSignatureKey(publicKey)
     }
 
     getScheme(): SignatureScheme {
