@@ -115,6 +115,7 @@ export type AccountHistory = v.InferOutput<typeof AccountHistorySchema>;
 export const RequestedAccountUpdateSchema = v.object({
     accountHash: uint8array(),
     lastKnownHistoryHash: uint8array(),
+    firstHistoryHash: v.optional(uint8array()),
 });
 export type RequestedAccountUpdate = v.InferOutput<typeof RequestedAccountUpdateSchema>;
 
