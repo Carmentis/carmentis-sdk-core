@@ -127,6 +127,28 @@ export function height() {
     )
 }
 
+/**
+ * Models every positive number (including float)
+ */
+export function positiveNumber() {
+    return val.pipe(
+        val.number(),
+        val.minValue(0)
+    );
+}
+
+/**
+ * Models integers higher or equal to 0.
+ */
+export function naturalInt() {
+    return val.pipe(
+        val.number(),
+        val.integer(),
+        val.minValue(0)
+    );
+}
+
+
 export function positiveInt() {
     return val.pipe(
         val.number(),

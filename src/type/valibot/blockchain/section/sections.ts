@@ -1,9 +1,8 @@
 // This file contains all the sections contained in a microblock
 import * as val from 'valibot';
-import {accountId, boolean, number, string, uint8, uint8array} from "../../primitives";
+import {accountId, boolean, naturalInt, number, positiveInt, string, uint8, uint8array} from "../../primitives";
 import {SectionType} from "./SectionType";
 import {ProtocolUpdateSchema} from "../protocol/ProtocolUpdate";
-
 // ---------------------------------------------------------------------------
 // All virtual blockchain purpose
 // ---------------------------------------------------------------------------
@@ -71,21 +70,21 @@ export type AccountPublicKeySection = val.InferOutput<typeof AccountPublicKeySec
 
 export const AccountTokenIssuanceSectionSchema = val.object({
     type: val.literal(SectionType.ACCOUNT_TOKEN_ISSUANCE),
-    amount: number(),
+    amount: naturalInt(),
 })
 export type AccountTokenIssuanceSection = val.InferOutput<typeof AccountTokenIssuanceSectionSchema>;
 
 export const AccountCreationSectionSchema = val.object({
     type: val.literal(SectionType.ACCOUNT_CREATION),
     sellerAccount: accountId(),
-    amount: number(),
+    amount: naturalInt(),
 })
 export type AccountCreationSection = val.InferOutput<typeof AccountCreationSectionSchema>;
 
 export const AccountTransferSectionSchema = val.object({
     type: val.literal(SectionType.ACCOUNT_TRANSFER),
     account: accountId(),
-    amount: number(),
+    amount: naturalInt(), //number(),
     publicReference: string(),
     privateReference: string(),
 })
@@ -94,23 +93,23 @@ export type AccountTransferSection = val.InferOutput<typeof AccountTransferSecti
 export const AccountVestingTransferSectionSchema = val.object({
     type: val.literal(SectionType.ACCOUNT_VESTING_TRANSFER),
     account: accountId(),
-    amount: number(),
+    amount: naturalInt(),
     publicReference: string(),
     privateReference: string(),
-    cliffDurationDays: number(),
-    vestingDurationDays: number(),
+    cliffDurationDays: naturalInt(),
+    vestingDurationDays: naturalInt(),
 })
 export type AccountVestingTransferSection = val.InferOutput<typeof AccountVestingTransferSectionSchema>;
 
 export const AccountEscrowTransferSectionSchema = val.object({
     type: val.literal(SectionType.ACCOUNT_ESCROW_TRANSFER),
     account: accountId(),
-    amount: number(),
+    amount: naturalInt(),
     publicReference: string(),
     privateReference: string(),
     escrowIdentifier: accountId(),
     agentAccount: accountId(),
-    durationDays: number(),
+    durationDays: naturalInt(),
 })
 export type AccountEscrowTransferSection = val.InferOutput<typeof AccountEscrowTransferSectionSchema>;
 
@@ -123,16 +122,16 @@ export type AccountEscrowSettlementSection = val.InferOutput<typeof AccountEscro
 
 export const AccountStakeSectionSchema = val.object({
     type: val.literal(SectionType.ACCOUNT_STAKE),
-    amount: number(),
-    objectType: number(),
+    amount: naturalInt(),
+    objectType: naturalInt(),
     objectIdentifier: accountId(),
 })
 export type AccountStakeSection = val.InferOutput<typeof AccountStakeSectionSchema>;
 
 export const AccountUnstakeSectionSchema = val.object({
     type: val.literal(SectionType.ACCOUNT_UNSTAKE),
-    amount: number(),
-    objectType: number(),
+    amount: naturalInt(),
+    objectType: naturalInt(),
     objectIdentifier: accountId(),
 })
 export type AccountUnstakeSection = val.InferOutput<typeof AccountUnstakeSectionSchema>;
@@ -236,42 +235,42 @@ export type ApplicationLedgerCreationSection = val.InferOutput<typeof Applicatio
 
 export const ApplicationLedgerActorCreationSectionSchema = val.object({
     type: val.literal(SectionType.APP_LEDGER_ACTOR_CREATION),
-    id: number(),
-    actorType: number(),
+    id: naturalInt(),
+    actorType: naturalInt(),
     name: string(),
 })
 export type ApplicationLedgerActorCreationSection = val.InferOutput<typeof ApplicationLedgerActorCreationSectionSchema>;
 
 export const ApplicationLedgerChannelCreationSectionSchema = val.object({
     type: val.literal(SectionType.APP_LEDGER_CHANNEL_CREATION),
-    id: number(),
+    id: naturalInt(),
     isPrivate: boolean(),
-    creatorId: number(),
+    creatorId: naturalInt(),
     name: string(),
 })
 export type ApplicationLedgerChannelCreationSection = val.InferOutput<typeof ApplicationLedgerChannelCreationSectionSchema>;
 
 export const ApplicationLedgerSharedSecretSectionSchema = val.object({
     type: val.literal(SectionType.APP_LEDGER_SHARED_SECRET),
-    hostId: number(),
-    guestId: number(),
+    hostId: naturalInt(),
+    guestId: naturalInt(),
     encryptedSharedKey: uint8array(),
 })
 export type ApplicationLedgerSharedSecretSection = val.InferOutput<typeof ApplicationLedgerSharedSecretSectionSchema>;
 
 export const ApplicationLedgerChannelInvitationSectionSchema = val.object({
     type: val.literal(SectionType.APP_LEDGER_CHANNEL_INVITATION),
-    channelId: number(),
-    hostId: number(),
-    guestId: number(),
+    channelId: naturalInt(),
+    hostId: naturalInt(),
+    guestId: naturalInt(),
     encryptedChannelKey: uint8array(),
 })
 export type ApplicationLedgerChannelInvitationSection = val.InferOutput<typeof ApplicationLedgerChannelInvitationSectionSchema>;
 
 export const ApplicationLedgerActorSubscriptionSectionSchema = val.object({
     type: val.literal(SectionType.APP_LEDGER_ACTOR_SUBSCRIPTION),
-    actorId: number(),
-    actorType: number(),
+    actorId: naturalInt(),
+    actorType: naturalInt(),
     organizationId: accountId(),
     signatureSchemeId: uint8(),
     signaturePublicKey: uint8array(),
@@ -282,14 +281,14 @@ export type ApplicationLedgerActorSubscriptionSection = val.InferOutput<typeof A
 
 export const ApplicationLedgerPublicChannelDataSectionSchema = val.object({
     type: val.literal(SectionType.APP_LEDGER_PUBLIC_CHANNEL_DATA),
-    channelId: number(),
+    channelId: naturalInt(),
     data: uint8array(),
 })
 export type ApplicationLedgerPublicChannelDataSection = val.InferOutput<typeof ApplicationLedgerPublicChannelDataSectionSchema>;
 
 export const ApplicationLedgerPrivateChannelDataSectionSchema = val.object({
     type: val.literal(SectionType.APP_LEDGER_PRIVATE_CHANNEL_DATA),
-    channelId: number(),
+    channelId: naturalInt(),
     merkleRootHash: accountId(),
     encryptedData: uint8array(),
 })
@@ -297,13 +296,13 @@ export type ApplicationLedgerPrivateChannelDataSection = val.InferOutput<typeof 
 
 export const ApplicationLedgerAuthorSectionSchema = val.object({
     type: val.literal(SectionType.APP_LEDGER_AUTHOR),
-    authorId: number(),
+    authorId: naturalInt(),
 })
 export type ApplicationLedgerAuthorSection = val.InferOutput<typeof ApplicationLedgerAuthorSectionSchema>;
 
 export const ApplicationLedgerEndorsementRequestSectionSchema = val.object({
     type: val.literal(SectionType.APP_LEDGER_ENDORSEMENT_REQUEST),
-    endorserId: number(),
+    endorserId: naturalInt(),
     message: string(),
 })
 export type ApplicationLedgerEndorsementRequestSection = val.InferOutput<typeof ApplicationLedgerEndorsementRequestSectionSchema>;
