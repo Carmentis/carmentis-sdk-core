@@ -120,21 +120,11 @@ export function accountId() {
     return uint8array();
 }
 
-export function height() {
-    return val.pipe(
-        val.number(),
-        val.minValue(0)
-    )
-}
-
 /**
- * Models every positive number (including float)
+ * Models a height in a blockchain.
  */
-export function positiveNumber() {
-    return val.pipe(
-        val.number(),
-        val.minValue(0)
-    );
+export function height() {
+    return naturalInt()
 }
 
 /**
