@@ -1,9 +1,9 @@
 import {
     ApplicationCreationSection, OrganizationDescriptionSection,
     OrganizationDescriptionSectionSchema, SignatureSection
-} from "./sections";
-import {SectionType} from "./SectionType";
-import {Utils} from "../../../../utils/utils";
+} from "../../src/type/valibot/blockchain/section/sections";
+import {SectionType} from "../../src/type/valibot/blockchain/section/SectionType";
+import {Utils} from "../../src/utils/utils";
 import * as val from 'valibot';
 import {describe, it, expect} from 'vitest';
 describe("Section encoding and decoding", () => {

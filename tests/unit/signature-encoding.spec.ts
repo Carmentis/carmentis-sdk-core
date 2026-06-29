@@ -1,9 +1,9 @@
-import {HandlerBasedSignatureEncoder} from "./HandlerBasedSignatureEncoder";
-import {PrivateSignatureKey} from "../../signature/PrivateSignatureKey";
-import {PublicSignatureKey} from "../../signature/PublicSignatureKey";
-import {MLDSA65PrivateSignatureKey} from "../../signature/ml-dsa-65";
-import {PkmsSecp256k1PrivateSignatureKey} from "../../signature/pkms/PkmsSecp256k1PrivateSignatureKey";
-import {Secp256k1PrivateSignatureKey} from "../../signature/secp256k1/Secp256k1PrivateSignatureKey";
+import {HandlerBasedSignatureEncoder} from "../../src/crypto/encoder/signature/HandlerBasedSignatureEncoder";
+import {PrivateSignatureKey} from "../../src/crypto/signature/PrivateSignatureKey";
+import {PublicSignatureKey} from "../../src/crypto/signature/PublicSignatureKey";
+import {MLDSA65PrivateSignatureKey} from "../../src/crypto/signature/ml-dsa-65";
+import {PkmsSecp256k1PrivateSignatureKey} from "../../src/crypto/signature/pkms/PkmsSecp256k1PrivateSignatureKey";
+import {Secp256k1PrivateSignatureKey} from "../../src/crypto/signature/secp256k1/Secp256k1PrivateSignatureKey";
 import {describe, it, expect} from 'vitest';
 describe("Encoding", () => {
     const encoder = new HandlerBasedSignatureEncoder();

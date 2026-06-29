@@ -1,12 +1,12 @@
 import * as fs from 'fs';
-import {Utils} from '../utils/utils';
-import {Record} from "./Record";
-import {RecordByChannels} from "./RecordByChannels";
-import {MerkleRecord} from "./MerkleRecord";
-import {ProofRecord} from "./ProofRecord";
-import {OnChainRecord} from "./OnChainRecord";
-import {ProofDocument} from "./ProofDocument";
-import {ProofDocumentVB} from "./ProofDocumentVB";
+import {Utils} from '../../src/utils/utils';
+import {Record} from "../../src/records/Record";
+import {RecordByChannels} from "../../src/records/RecordByChannels";
+import {MerkleRecord} from "../../src/records/MerkleRecord";
+import {ProofRecord} from "../../src/records/ProofRecord";
+import {OnChainRecord} from "../../src/records/OnChainRecord";
+import {ProofDocument} from "../../src/records/ProofDocument";
+import {ProofDocumentVB} from "../../src/records/ProofDocumentVB";
 import { describe, it, expect } from 'vitest'
 
 const initialJson = {

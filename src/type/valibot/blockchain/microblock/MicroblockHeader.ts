@@ -1,5 +1,5 @@
 import * as val from 'valibot';
-import {uint8array} from "../../primitives";
+import {naturalInt, uint8array} from "../../primitives";
 import {MAGIC_STRING} from "../../../../constants/chain";
 
 
@@ -9,12 +9,12 @@ export const MicroblockHeaderSchema = val.object({
     /**
      * The type of the microblock.
      */
-    microblockType: val.number(),
+    microblockType: naturalInt(),
 
     /**
      * The height of the microblock in the virtual blockchain.
      */
-    height: val.number(),
+    height: naturalInt(),
 
     /**
      * Hash of the previous microblock.
@@ -30,17 +30,17 @@ export const MicroblockHeaderSchema = val.object({
     /**
      * Timestamp of the microblock.
      */
-    timestamp: val.number(),
+    timestamp: naturalInt(),
 
     /**
      * The computed gas for this microblock.
      */
-    gas: val.number(),
+    gas: naturalInt(),
 
     /**
      * The gas price is used to convert gas to fees by multiplying it with the gas.
      */
-    gasPrice: val.number(),
+    gasPrice: naturalInt(),
 
     /**
      * The body hash is the hash of the body of the microblock.

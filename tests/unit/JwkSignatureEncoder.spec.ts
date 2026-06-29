@@ -1,7 +1,7 @@
 import {describe, expect, it} from "vitest";
-import {Ed25519PublicSignatureKey} from "../../signature/ed25519/Ed25519PublicSignatureKey";
-import {JwkSignatureEncoder} from "./JwkSignatureEncoder";
-import {Ed25519PrivateSignatureKey} from "../../signature/ed25519/Ed25519PrivateSignatureKey";
+import {Ed25519PublicSignatureKey} from "../../src/crypto/signature/ed25519/Ed25519PublicSignatureKey";
+import {JwkSignatureEncoder} from "../../src/crypto/encoder/signature/JwkSignatureEncoder";
+import {Ed25519PrivateSignatureKey} from "../../src/crypto/signature/ed25519/Ed25519PrivateSignatureKey";
 import * as jose from 'jose';
 
 describe('JoseSignatureEncoder', () => {

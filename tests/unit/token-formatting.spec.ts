@@ -1,4 +1,4 @@
-import {CMTSToken, TokenUnit} from "./token";
+import {CMTSToken, TokenUnit} from "../../src/economics/currencies/token";
 import {describe, it, expect} from 'vitest';
 
 describe('CMTS tokens formatting', () => {
