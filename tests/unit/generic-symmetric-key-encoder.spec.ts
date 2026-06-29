@@ -1,7 +1,7 @@
 // generic-symmetric-key-encoder.spec.ts
-import {GenericSymmetricKeyEncoder} from './generic-symmetric-key-encoder';
-import {AES256GCMSymmetricEncryptionKey, SymmetricEncryptionSchemeId} from "./encryption-interface";
-import {describe, it, expect} from 'vitest';
+import {GenericSymmetricKeyEncoder} from '../../src/crypto/encryption/symmetric-encryption/generic-symmetric-key-encoder';
+import {AES256GCMSymmetricEncryptionKey, SymmetricEncryptionSchemeId} from "../../src/crypto/encryption/symmetric-encryption/encryption-interface";
+import {describe, it, expect, beforeEach} from 'vitest';
 describe('GenericSymmetricKeyEncoder', () => {
     let encoder: GenericSymmetricKeyEncoder;
 

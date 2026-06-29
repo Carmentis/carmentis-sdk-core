@@ -1,33 +1,33 @@
 import { describe, it, expect, beforeAll } from 'vitest'
-import {Hash} from "../entities/Hash";
-import {MlKemPrivateDecryptionKey} from "../crypto/encryption/public-key-encryption/MlKemPrivateDecryptionKey";
-import {CryptoEncoderFactory} from "../crypto/encoder/CryptoEncoderFactory";
-import {ProviderFactory} from "../providers/ProviderFactory";
-import {Logger} from "../utils/Logger";
-import {Microblock} from "../blockchain/microblock/Microblock";
-import {CMTSToken} from "../economics/currencies/token";
-import {Secp256k1PrivateSignatureKey} from "../crypto/signature/secp256k1/Secp256k1PrivateSignatureKey";
-import {SectionType} from "../type/valibot/blockchain/section/SectionType";
-import {Utils} from "../utils/utils";
-import {VirtualBlockchainType} from "../type/VirtualBlockchainType";
+import {Hash} from "../../src/entities/Hash";
+import {MlKemPrivateDecryptionKey} from "../../src/crypto/encryption/public-key-encryption/MlKemPrivateDecryptionKey";
+import {CryptoEncoderFactory} from "../../src/crypto/encoder/CryptoEncoderFactory";
+import {ProviderFactory} from "../../src/providers/ProviderFactory";
+import {Logger} from "../../src/utils/Logger";
+import {Microblock} from "../../src/blockchain/microblock/Microblock";
+import {CMTSToken} from "../../src/economics/currencies/token";
+import {Secp256k1PrivateSignatureKey} from "../../src/crypto/signature/secp256k1/Secp256k1PrivateSignatureKey";
+import {SectionType} from "../../src/type/valibot/blockchain/section/SectionType";
+import {Utils} from "../../src/utils/utils";
+import {VirtualBlockchainType} from "../../src/type/VirtualBlockchainType";
 //import * as fs from 'fs';
 
 const NODE_URL = "http://localhost:26657";
 import * as v from 'valibot';
-import {ProtocolVariablesSchema} from "../type/valibot/blockchain/protocol/ProtocolVariables";
-import {FeesCalculationFormulaFactory} from "../blockchain/feesCalculator/FeesCalculationFormulaFactory";
-import {WalletCrypto} from "../wallet/WalletCrypto";
-import {ApplicationLedgerVb} from "../blockchain/virtualBlockchains/ApplicationLedgerVb";
+import {ProtocolVariablesSchema} from "../../src/type/valibot/blockchain/protocol/ProtocolVariables";
+import {FeesCalculationFormulaFactory} from "../../src/blockchain/feesCalculator/FeesCalculationFormulaFactory";
+import {WalletCrypto} from "../../src/wallet/WalletCrypto";
+import {ApplicationLedgerVb} from "../../src/blockchain/virtualBlockchains/ApplicationLedgerVb";
 import {
     WalletRequestBasedApplicationLedgerMicroblockBuilder
-} from "../blockchain/virtualBlockchains/WalletRequestBasedApplicationLedgerMicroblockBuilder";
-import {AppLedgerMicroblockBuildRequest} from "../type/AppLedgerStateUpdateRequest";
-import {SignatureAlgorithmId} from "../crypto/signature/SignatureAlgorithmId";
-import {SignatureSchemeId} from "../crypto/signature/SignatureSchemeId";
+} from "../../src/blockchain/virtualBlockchains/WalletRequestBasedApplicationLedgerMicroblockBuilder";
+import {AppLedgerMicroblockBuildRequest} from "../../src/type/AppLedgerStateUpdateRequest";
+import {SignatureAlgorithmId} from "../../src/crypto/signature/SignatureAlgorithmId";
+import {SignatureSchemeId} from "../../src/crypto/signature/SignatureSchemeId";
 import {
     PublicKeyEncryptionSchemeId
-} from "../crypto/encryption/public-key-encryption/PublicKeyEncryptionSchemeId";
-import {ProofWrapper} from "../records/types";
+} from "../../src/crypto/encryption/public-key-encryption/PublicKeyEncryptionSchemeId";
+import {ProofWrapper} from "../../src/records/types";
 
 describe('Chain test', () => {
     const TEST_TIMEOUT = 45000;

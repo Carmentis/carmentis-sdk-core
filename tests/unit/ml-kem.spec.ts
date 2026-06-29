@@ -1,8 +1,9 @@
-import {MlKemPrivateDecryptionKey} from "./MlKemPrivateDecryptionKey";
-import {MlKemPublicEncryptionKey} from "./MlKemPublicEncryptionKey";
-import {PublicKeyEncryptionSchemeId} from "./PublicKeyEncryptionSchemeId";
-import {AES256GCMSymmetricEncryptionKey} from "../symmetric-encryption/encryption-interface";
-import {DecryptionError} from "../../../errors/carmentis-error";
+import {MlKemPrivateDecryptionKey} from "../../src/crypto/encryption/public-key-encryption/MlKemPrivateDecryptionKey";
+import {MlKemPublicEncryptionKey} from "../../src/crypto/encryption/public-key-encryption/MlKemPublicEncryptionKey";
+import {PublicKeyEncryptionSchemeId} from "../../src/crypto/encryption/public-key-encryption/PublicKeyEncryptionSchemeId";
+import {AES256GCMSymmetricEncryptionKey} from "../../src/crypto/encryption/symmetric-encryption/encryption-interface";
+import {DecryptionError} from "../../src/errors/carmentis-error";
+import { describe, it, expect, beforeAll } from 'vitest'
 
 function u8(arr: number[] | number, len?: number): Uint8Array {
   if (typeof arr === 'number') {

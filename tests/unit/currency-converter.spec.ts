@@ -1,7 +1,7 @@
 // currency-converter.spec.ts
-import {EurosToCMTSConverter} from './currency-converter';
-import {Euros} from "./euros";
-import {CMTSToken} from "./token";
+import {EurosToCMTSConverter} from '../../src/economics/currencies/currency-converter';
+import {Euros} from "../../src/economics/currencies/euros";
+import {CMTSToken} from "../../src/economics/currencies/token";
 import {describe, it, expect, beforeEach} from 'vitest';
 describe('EurosToCMTSConverter', () => {
     let converter: EurosToCMTSConverter;

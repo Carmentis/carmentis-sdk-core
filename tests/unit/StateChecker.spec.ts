@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest'
-import { JsonMicroblockProof, JsonAccountProof, StateChecker } from "./StateChecker";
+import { JsonMicroblockProof, JsonAccountProof, StateChecker } from "../../src/blockchain/stateChecker/StateChecker";
 
 const validMicroblockProof: JsonMicroblockProof = {
    "block":{

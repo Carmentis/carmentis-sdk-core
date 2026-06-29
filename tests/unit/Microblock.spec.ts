@@ -1,15 +1,15 @@
-import {Microblock} from './Microblock';
-import {VirtualBlockchainType} from "../../type/VirtualBlockchainType";
-import {Hash} from "../../entities/Hash";
-import {Utils} from "../../utils/utils";
-import {CryptoSchemeFactory} from "../../crypto/CryptoSchemeFactory";
+import {Microblock} from '../../src/blockchain/microblock/Microblock';
+import {VirtualBlockchainType} from "../../src/type/VirtualBlockchainType";
+import {Hash} from "../../src/entities/Hash";
+import {Utils} from "../../src/utils/utils";
+import {CryptoSchemeFactory} from "../../src/crypto/CryptoSchemeFactory";
 
-import {Secp256k1PrivateSignatureKey} from "../../crypto/signature/secp256k1/Secp256k1PrivateSignatureKey";
-import {SectionType} from "../../type/valibot/blockchain/section/SectionType";
-import {CMTSToken} from "../../economics/currencies/token";
-import {Section} from "../../type/valibot/blockchain/section/sections";
-import {BlockchainUtils} from "../../utils/BlockchainUtils";
-import {Logger} from "../../utils/Logger";
+import {Secp256k1PrivateSignatureKey} from "../../src/crypto/signature/secp256k1/Secp256k1PrivateSignatureKey";
+import {SectionType} from "../../src/type/valibot/blockchain/section/SectionType";
+import {CMTSToken} from "../../src/economics/currencies/token";
+import {Section} from "../../src/type/valibot/blockchain/section/sections";
+import {BlockchainUtils} from "../../src/utils/BlockchainUtils";
+import {Logger} from "../../src/utils/Logger";
 import { describe, it, expect } from 'vitest'
 
 describe('Microblock.createGenesisAccountMicroblock', () => {
@@ -26,7 +26,7 @@ describe('Microblock.createGenesisAccountMicroblock', () => {
         expect(microblock.getHeight()).toBe(1);
         expect(microblock.getTimestamp()).toBeGreaterThan(0);
         expect(microblock.getGasPrice().getAmountAsAtomic()).toBe(0);
-        expect(microblock.getGas().getAmountAsAtomic()).toBe(0);
+        expect(microblock.getGas()).toBe(0);
         expect(microblock.getNumberOfSections()).toBe(0);
         expect(microblock.isFeesPayerAccountDefined()).toBe(false);
     });
@@ -154,7 +154,7 @@ describe('Microblock.verifySignature', () => {
             publicKey: await pk.getPublicKeyAsBytes(),
             schemeId: pk.getSignatureSchemeId(),
         });
-        mb.setGas(CMTSToken.createAtomic(19))
+        mb.setGas(19)
         await mb.seal(sk, { includeGas: false });
         expect(await mb.verify(pk, { includeGas: false })).toBe(true)
         expect(mb.getNumberOfSections()).toBe(2)
@@ -246,7 +246,7 @@ describe('Microblock.verifySignature', () => {
             publicKey: await pk.getPublicKeyAsBytes(),
             schemeId: pk.getSignatureSchemeId(),
         });
-        mb.setGas(CMTSToken.createAtomic(19))
+        mb.setGas(19)
         await mb.seal(sk, { includeGas: false })
 
         // the body hash must be the same with or without the signature
@@ -371,3 +371,109 @@ describe('Microblock.verifySignature', () => {
 
 
 })
+
+
+function executeMicroblockValues(sections: Section[]) {
+    const accountTransferMb = Microblock.createGenesisAccountMicroblock();
+    accountTransferMb.addSections(sections)
+    const encodedMb = accountTransferMb.serialize();
+    Microblock.loadFromSerializedMicroblock(encodedMb.microblockData)
+}
+
+describe('Microblock Decoding Validation', () => {
+
+    it('Should accept only valid account creation', () => {
+
+        function genAccountCreationSections(amount: number) : Section[] {
+            return [
+                {
+                    type: SectionType.ACCOUNT_CREATION,
+                    amount: amount,
+                    sellerAccount: Utils.getNullHash(),
+                }
+            ]
+        }
+
+        // create account transfer microblock
+        const validAmounts = [0, 100, 25, 10000000000];
+        for (const amount of validAmounts) {
+            expect(() => {
+                executeMicroblockValues(genAccountCreationSections(amount))
+            }).not.toThrow();
+        }
+
+        // create account transfer microblock
+        const invalidAmounts = [-1, -100, 6.5, -6.6];
+        for (const amount of invalidAmounts) {
+            expect(() => {
+                executeMicroblockValues(genAccountCreationSections(amount))
+            }).toThrow();
+        }
+
+    });
+    it('Should accept only valid account transfer', () => {
+
+        function genAccountTransferSections(amount: number) : Section[] {
+            return [
+                {
+                    type: SectionType.ACCOUNT_TRANSFER,
+                    account: Utils.getNullHash(),
+                    amount: amount,
+                    publicReference: '',
+                    privateReference: '',
+                }
+            ]
+        }
+
+        // create account transfer microblock
+        const validAmounts = [0, 100, 25, 10000000000];
+        for (const amount of validAmounts) {
+            expect(() => {
+                executeMicroblockValues(genAccountTransferSections(amount))
+            }).not.toThrow();
+        }
+
+        // create account transfer microblock
+        const invalidAmounts = [-1, -100, 6.5, -6.6];
+        for (const amount of invalidAmounts) {
+            expect(() => {
+                executeMicroblockValues(genAccountTransferSections(amount))
+            }).toThrow();
+        }
+
+    });
+
+    it('Should accept only valid account stake and unstake', () => {
+        function genStakeSections(type: SectionType, amount: number, objectType: number) : Section[] {
+            return [
+                {
+                    type: type,
+                    amount: amount,
+                    objectIdentifier: Utils.getNullHash(),
+                    objectType
+
+                }
+            ] as Section[]
+        }
+
+
+        for (const section of [SectionType.ACCOUNT_STAKE, SectionType.ACCOUNT_UNSTAKE]) {
+            // create account transfer microblock
+            const validAmounts = [0, 100, 25, 10000000000];
+            for (const amount of validAmounts) {
+                expect(() => {
+                    executeMicroblockValues(genStakeSections(section, amount, 1))
+                }).not.toThrow();
+            }
+
+            // create account transfer microblock
+            const invalidAmounts = [-1, -100, 6.5, -6.6];
+            for (const amount of invalidAmounts) {
+                expect(() => {
+                    executeMicroblockValues(genStakeSections(section, amount, 1))
+                }).toThrow();
+            }
+        }
+    });
+
+});
