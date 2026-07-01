@@ -1,12 +1,11 @@
-import * as fs from 'fs';
 import {Utils} from '../../src/utils/utils';
 import {Record} from "../../src/records/Record";
 import {RecordByChannels} from "../../src/records/RecordByChannels";
 import {MerkleRecord} from "../../src/records/MerkleRecord";
 import {ProofRecord} from "../../src/records/ProofRecord";
 import {OnChainRecord} from "../../src/records/OnChainRecord";
-import {ProofDocument} from "../../src/records/ProofDocument";
-import {ProofDocumentVB} from "../../src/records/ProofDocumentVB";
+import {AppLedgerProofVB} from "../../src/proofs/AppLedgerProofVB";
+import {AppLedgerProofWrapper} from "../../src/proofs/AppLedgerProofWrapper";
 import { describe, it, expect } from 'vitest'
 
 const initialJson = {
@@ -83,19 +82,19 @@ describe('Record', () => {
         expect(proofRootHashAsHex0).toEqual(onChainRootHashAsHex);
         const proofChannels0 = proofRecord0.toProofChannels();
 
-        // build a ProofDocument from proofChannels0 and export it to an object
-        // then attempt to build a new ProofDocument with and without an expected error
-        const proofDocumentVB = new ProofDocumentVB();
-        proofDocumentVB.setIdentifier(Utils.binaryToHexa(Utils.getNullHash()));
-        proofDocumentVB.addMicroblock(1, proofChannels0);
-        const proofDocument = new ProofDocument();
-        proofDocument.addVirtualBlockchain(proofDocumentVB);
-        proofDocument.sign();
-        const proofDocumentObject = proofDocument.getObject();
-        console.log(JSON.stringify(proofDocumentObject, null, 2));
-        expect(() => ProofDocument.fromObject(proofDocumentObject)).not.toThrow();
-        delete (proofDocumentObject as any).info.author;
-        expect(() => ProofDocument.fromObject(proofDocumentObject)).toThrow();
+        // build an AppLedgerProofWrapper from proofChannels0 and export it to an object
+        // then attempt to build a new AppLedgerProofWrapper with and without an expected error
+        const appLedgerProofVB = new AppLedgerProofVB();
+        appLedgerProofVB.setIdentifier(Utils.binaryToHexa(Utils.getNullHash()));
+        appLedgerProofVB.addMicroblock(1, proofChannels0);
+        const appLedgerProof = AppLedgerProofWrapper.createEmptyProof();
+        appLedgerProof.addVirtualBlockchain(appLedgerProofVB);
+        appLedgerProof.sign();
+        const appLedgerProofObject = appLedgerProof.getObject();
+        console.log(JSON.stringify(appLedgerProofObject, null, 2));
+        expect(() => AppLedgerProofWrapper.fromObject(appLedgerProofObject)).not.toThrow();
+        delete (appLedgerProofObject as any).info.author;
+        expect(() => AppLedgerProofWrapper.fromObject(appLedgerProofObject)).toThrow();
 
         // build a 2nd proof from the 1st proof
         const proofRecord1 = ProofRecord.fromProofChannels(proofChannels0);

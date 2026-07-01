@@ -1,45 +1,14 @@
-import { ProofBlock } from "../../type/valibot/stateProofs/ProofBlock";
-import { AccountProof } from "../../type/valibot/stateProofs/AccountProof";
-import { MicroblockProof } from "../../type/valibot/stateProofs/MicroblockProof";
+import { ProofBlockObject, ProofBlock } from "../../type/valibot/proofs/ProofBlock";
+import { AccountProofObject, AccountProofEntry } from "../../type/valibot/proofs/AccountProof";
+import { MicroblockProofObject, MicroblockProofEntry } from "../../type/valibot/proofs/MicroblockProof";
 import { Crypto } from "../../crypto/crypto";
 import { Utils } from "../../utils/utils";
 import { BlockchainUtils } from "../../utils/BlockchainUtils";
 import { Base64 } from "../../data/base64";
 import { verifyRadixProof } from "../../trees/radixChecker";
 
-export interface JsonProofBlock {
-    height: number,
-    vbRadixHash: string,
-    tokenRadixHash: string,
-    storageHash: string,
-    appHash: string,
-}
-
-export interface JsonAccountProof {
-    block: JsonProofBlock,
-    account: {
-        virtualBlockchainId: string,
-        serializedState: string,
-        radixProof: string[],
-    },
-}
-
-export interface JsonMicroblockProof {
-    block: JsonProofBlock,
-    microblock: {
-        virtualBlockchainId: string,
-        height: number,
-        hash: string,
-    },
-    virtualBlockchain: {
-        serializedState: string,
-        merkleWitnesses: string[],
-        radixProof: string[],
-    },
-}
-
 export class StateChecker {
-    static verifyAccountProofFromObject(proof: AccountProof): Uint8Array {
+    static verifyAccountProofFromObject(proof: AccountProofObject): Uint8Array {
         const accountState = proof.account.state;
         const encodedAccountState = BlockchainUtils.encodeAccountState(accountState);
         const accountStateHash = Crypto.Hashes.sha256AsBinary(encodedAccountState);
@@ -54,14 +23,14 @@ export class StateChecker {
         return StateChecker.verifyAppHash(proof.block);
     }
 
-    static verifyAccountProofFromJson(jsonProof: JsonAccountProof): Uint8Array {
+    static verifyAccountProofFromJson(jsonProof: AccountProofEntry): Uint8Array {
         const { block, account } = jsonProof;
         const radixProof = account.radixProof.map((hex) =>
             Utils.binaryFromHexa(hex)
         );
         const encodedState = Base64.decodeBinary(account.serializedState, Base64.BASE64);
         const state = BlockchainUtils.decodeAccountState(encodedState);
-        const proof: AccountProof = {
+        const proof: AccountProofObject = {
             block: StateChecker.decodeJsonBlock(block),
             account: {
                 virtualBlockchainId: Utils.binaryFromHexa(account.virtualBlockchainId),
@@ -72,7 +41,7 @@ export class StateChecker {
         return StateChecker.verifyAccountProofFromObject(proof);
     }
 
-    static verifyMicroblockProofFromObject(proof: MicroblockProof): Uint8Array {
+    static verifyMicroblockProofFromObject(proof: MicroblockProofObject): Uint8Array {
         const merkleTreeHeight = 33 - Math.clz32(proof.virtualBlockchain.state.height - 1);
         const witnesses = proof.virtualBlockchain.merkleWitnesses;
         const leafIndex = proof.microblock.height - 1;
@@ -111,7 +80,7 @@ export class StateChecker {
         return StateChecker.verifyAppHash(proof.block);
     }
 
-    static verifyMicroblockProofFromJson(jsonProof: JsonMicroblockProof): Uint8Array {
+    static verifyMicroblockProofFromJson(jsonProof: MicroblockProofEntry): Uint8Array {
         const { block, microblock, virtualBlockchain } = jsonProof;
         const merkleWitnesses = virtualBlockchain.merkleWitnesses.map((hex) =>
             Utils.binaryFromHexa(hex)
@@ -121,7 +90,7 @@ export class StateChecker {
         );
         const encodedState = Base64.decodeBinary(virtualBlockchain.serializedState, Base64.BASE64);
         const state = BlockchainUtils.decodeVirtualBlockchainState(encodedState);
-        const proof: MicroblockProof = {
+        const proof: MicroblockProofObject = {
             block: StateChecker.decodeJsonBlock(block),
             microblock: {
                 virtualBlockchainId: Utils.binaryFromHexa(microblock.virtualBlockchainId),
@@ -137,7 +106,7 @@ export class StateChecker {
         return StateChecker.verifyMicroblockProofFromObject(proof);
     }
 
-    private static decodeJsonBlock(block: JsonProofBlock) {
+    private static decodeJsonBlock(block: ProofBlock) {
         return {
             height: block.height,
             vbRadixHash: Utils.binaryFromHexa(block.vbRadixHash),
@@ -165,7 +134,7 @@ export class StateChecker {
         }
     }
 
-    private static verifyAppHash(block: ProofBlock): Uint8Array {
+    private static verifyAppHash(block: ProofBlockObject): Uint8Array {
         const radixHash = Crypto.Hashes.sha256AsBinary(
             Utils.binaryFrom(block.vbRadixHash, block.tokenRadixHash),
         );

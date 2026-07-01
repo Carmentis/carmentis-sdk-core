@@ -2,13 +2,13 @@ import {Utils} from '../utils/utils';
 import {MerkleTree} from "../trees/merkleTree";
 import {MerkleLeaf} from "./MerkleLeaf";
 import {MerkleRecord} from "./MerkleRecord";
+import {JsonData} from "../type/valibot/json/Json";
 import {
     Path,
     ProofField,
     ProofChannel,
     ProofFieldTypeEnum,
-    JsonData,
-} from './types';
+} from '../type/valibot/proofs/AppLedgerProof';
 import {PositionedLeaf} from "./PositionedLeaf";
 
 type ChannelMapEntry = {
@@ -75,13 +75,13 @@ export class ProofRecord {
             const witnesses = witnessesHexList.map((hex) =>
                 Utils.binaryFromHexa(hex)
             );
-            if (proofChannel.is_public) {
+            if (proofChannel.isPublic) {
                 this.publicChannels.add(proofChannel.id);
             }
             this.channelMap.set(
                 proofChannel.id,
                 {
-                    nLeaves: proofChannel.n_leaves,
+                    nLeaves: proofChannel.nLeaves,
                     leaves,
                     tree: new MerkleTree,
                     witnesses,
@@ -251,8 +251,8 @@ export class ProofRecord {
             );
             proofChannels.push({
                 id: channelId,
-                is_public: isPublic,
-                n_leaves: channel.nLeaves,
+                isPublic,
+                nLeaves: channel.nLeaves,
                 fields,
                 witnesses,
             });

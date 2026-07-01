@@ -18,5 +18,4 @@ export interface IInternalProvider {
     setMicroblockHeader(identifier: Uint8Array, header: MicroblockHeader): Promise<void>;
     setMicroblockBody(identifier: Uint8Array, body: MicroblockBody): Promise<void>;
     setSerializedVirtualBlockchainState(identifier: Uint8Array, data: Uint8Array): Promise<void>;
-
 }

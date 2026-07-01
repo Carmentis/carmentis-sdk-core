@@ -2,9 +2,9 @@ import {
     ProofChannel,
     ProofMicroblock,
     ProofVirtualBlockchain,
-} from "./types";
+} from "../type/valibot/proofs/AppLedgerProof";
 
-export class ProofDocumentVB {
+export class AppLedgerProofVB {
     private identifier: string;
     private microblocks: ProofMicroblock[];
 
@@ -14,7 +14,7 @@ export class ProofDocumentVB {
     }
 
     static fromObject(object: ProofVirtualBlockchain) {
-        const vb = new ProofDocumentVB();
+        const vb = new AppLedgerProofVB();
         vb.setIdentifier(object.id);
         for (const mb of object.microblocks) {
             vb.addMicroblock(mb.height, mb.channels);

@@ -38,7 +38,7 @@ import {
     AppLedgerMicroblockBuildRequest,
     AppLedgerMicroblockBuildRequestValidation
 } from "../../type/AppLedgerStateUpdateRequest";
-import {MaskPart} from "../../records/types";
+import {MaskPart} from "../../type/valibot/proofs/AppLedgerProof";
 
 export class WalletRequestBasedApplicationLedgerMicroblockBuilder extends ApplicationLedgerMicroblockBuilder {
 

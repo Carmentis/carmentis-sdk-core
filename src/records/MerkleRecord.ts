@@ -9,7 +9,7 @@ import {
     TransformationTypeEnum,
     FlatItem,
     Item,
-} from './types';
+} from '../type/valibot/proofs/AppLedgerProof';
 
 type ChannelMapEntry = {
     pepper: Uint8Array,

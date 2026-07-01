@@ -16,6 +16,7 @@ import {
 import {MicroblockStruct} from "../type/valibot/blockchain/microblock/MicroblockStruct";
 
 export interface IExternalProvider {
+    getChainId(): Promise<string>;
     sendSerializedMicroblock(serializedMicroblock: Uint8Array): Promise<any>;
     awaitMicroblockAnchoring(hash: Uint8Array): Promise<MicroblockInformation>;
     getChainInformation(): Promise<ChainInformationAbciResponse>;
