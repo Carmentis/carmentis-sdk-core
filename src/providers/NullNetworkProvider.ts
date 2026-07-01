@@ -23,6 +23,9 @@ export class NullNetworkProvider implements IExternalProvider {
     constructor() {
     }
 
+    getChainId(): Promise<string> {
+        throw new Error("Method not implemented.");
+    }
     sendSerializedMicroblock(serializedMicroblock: Uint8Array): Promise<any> {
         throw new Error("Method not implemented.");
     }

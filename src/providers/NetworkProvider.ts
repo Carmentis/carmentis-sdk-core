@@ -38,6 +38,7 @@ export class NetworkProvider implements IExternalProvider {
     private logger = NetworkProvider.staticLogger;
     private requestLogger = NetworkProvider.staticLogger.getChild("request");
     private responseLogger = NetworkProvider.staticLogger.getChild("response");
+    private chainId = "";
 
     static createFromUrl(url: string): NetworkProvider {
         const logger = NetworkProvider.staticLogger;
@@ -51,6 +52,17 @@ export class NetworkProvider implements IExternalProvider {
     }
 
     constructor(private readonly nodeUrl: string) {
+    }
+
+    async getChainId(): Promise<string> {
+        if (this.chainId === "") {
+            const urlObject = new URL(this.nodeUrl);
+            urlObject.pathname = "status";
+            const responseData = await NetworkProvider.query(urlObject);
+            // @ts-ignore
+            this.chainId = responseData?.result?.node_info?.network ?? "";
+        }
+        return this.chainId;
     }
 
     async sendSerializedMicroblock(serializedMicroblock: Uint8Array) {
