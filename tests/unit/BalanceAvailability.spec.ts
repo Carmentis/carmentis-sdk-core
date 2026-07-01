@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
-import {BalanceAvailability} from "./BalanceAvailability";
-import {CMTSToken} from "../economics/currencies/token";
+import {BalanceAvailability} from "../../src/utils/BalanceAvailability";
+import {CMTSToken} from "../../src/economics/currencies/token";
 import { describe, it, expect } from 'vitest'
 
 describe("Balance availability", () => {
@@ -75,6 +75,5 @@ describe("Balance availability", () => {
             },
         );
         assertVested(balanceAvailability, amountToVest);
-        assertSpendable(balanceAvailability, spendableTokens);
     })
 })

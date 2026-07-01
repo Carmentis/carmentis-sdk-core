@@ -1,16 +1,16 @@
 import {configure, getConsoleSink} from "@logtape/logtape";
-import {ProviderFactory} from "../../providers/ProviderFactory";
+import {ProviderFactory} from "../../src/providers/ProviderFactory";
 import {
     WalletRequestBasedApplicationLedgerMicroblockBuilder
-} from "./WalletRequestBasedApplicationLedgerMicroblockBuilder";
-import {ApplicationLedgerVb} from "./ApplicationLedgerVb";
-import {WalletCrypto} from "../../wallet/WalletCrypto";
-import {Utils} from "../../utils/utils";
-import {CMTSToken} from "../../economics/currencies/token";
-import {Secp256k1PrivateSignatureKey} from "../../crypto/signature/secp256k1/Secp256k1PrivateSignatureKey";
-import {MlKemPrivateDecryptionKey} from "../../crypto/encryption/public-key-encryption/MlKemPrivateDecryptionKey";
-import {ActorNotSubscribedError} from "../../errors/carmentis-error";
-import {Hash} from "../../entities/Hash";
+} from "../../src/blockchain/virtualBlockchains/WalletRequestBasedApplicationLedgerMicroblockBuilder";
+import {ApplicationLedgerVb} from "../../src/blockchain/virtualBlockchains/ApplicationLedgerVb";
+import {WalletCrypto} from "../../src/wallet/WalletCrypto";
+import {Utils} from "../../src/utils/utils";
+import {CMTSToken} from "../../src/economics/currencies/token";
+import {Secp256k1PrivateSignatureKey} from "../../src/crypto/signature/secp256k1/Secp256k1PrivateSignatureKey";
+import {MlKemPrivateDecryptionKey} from "../../src/crypto/encryption/public-key-encryption/MlKemPrivateDecryptionKey";
+import {ActorNotSubscribedError} from "../../src/errors/carmentis-error";
+import {Hash} from "../../src/entities/Hash";
 import { describe, it, expect, beforeAll } from 'vitest'
 
 beforeAll(async () => {

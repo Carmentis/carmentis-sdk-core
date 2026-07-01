@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { RetentionCostCalculator } from './RetentionCostCalculator';
-import { CMTSToken } from "../../economics/currencies/token";
-import { RetentionPolicy } from "../../type/valibot/blockchain/economics/RetentionPolicy";
-import { ECO } from "../../constants/constants";
+import { RetentionCostCalculator } from '../../src/blockchain/feesCalculator/RetentionCostCalculator';
+import { CMTSToken } from "../../src/economics/currencies/token";
+import { RetentionPolicy } from "../../src/type/valibot/blockchain/economics/RetentionPolicy";
+import { ECO } from "../../src/constants/constants";
 
 describe("storage price manager", () => {
     it("Should compute correct prices", () => {

@@ -1,5 +1,5 @@
-import {CMTSToken, TokenUnit, TokenUnitLabel} from './currencies/token';
-import {EconomicsError, InvalidTokenUnitError} from '../errors/carmentis-error';
+import {CMTSToken, TokenUnit, TokenUnitLabel} from '../../src/economics/currencies/token';
+import {EconomicsError, InvalidTokenUnitError} from '../../src/errors/carmentis-error';
 import Decimal from "decimal.js";
 import { describe, it, expect } from 'vitest'
 

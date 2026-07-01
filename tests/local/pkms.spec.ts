@@ -1,8 +1,8 @@
-import {Utils} from "../../../utils/utils";
-import {PkmsSecp256k1PrivateSignatureKey} from "./PkmsSecp256k1PrivateSignatureKey";
+import {Utils} from "../../src/utils/utils";
+import {PkmsSecp256k1PrivateSignatureKey} from "../../src/crypto/signature/pkms/PkmsSecp256k1PrivateSignatureKey";
 import {
     SelfProvidedApiKeyPkmsCredentialProvider
-} from "./pkmsCredentialProvider/SelfProvidedApiKeyPkmsCredentialProvider";
+} from "../../src/crypto/signature/pkms/pkmsCredentialProvider/SelfProvidedApiKeyPkmsCredentialProvider";
 
 const keyId = "35e6250c-790b-4442-9efa-5883352a39e1";
 const apiKey = "REPLACE WITH YOUR API KEY"

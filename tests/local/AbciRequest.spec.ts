@@ -1,5 +1,5 @@
-import {AbciResponse, AbciResponseType} from "./AbciResponse";
-import {AbciQueryEncoder} from "../../../../utils/AbciQueryEncoder";
+import {AbciResponse, AbciResponseType} from "../../src/type/valibot/provider/abci/AbciResponse";
+import {AbciQueryEncoder} from "../../src/utils/AbciQueryEncoder";
 import { describe, it, expect } from 'vitest'
 
 describe("Abci request", () => {

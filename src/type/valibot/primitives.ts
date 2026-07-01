@@ -120,12 +120,24 @@ export function accountId() {
     return uint8array();
 }
 
+/**
+ * Models a height in a blockchain.
+ */
 export function height() {
+    return naturalInt()
+}
+
+/**
+ * Models integers higher or equal to 0.
+ */
+export function naturalInt() {
     return val.pipe(
         val.number(),
+        val.integer(),
         val.minValue(0)
-    )
+    );
 }
+
 
 export function positiveInt() {
     return val.pipe(
