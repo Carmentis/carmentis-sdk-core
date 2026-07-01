@@ -12,7 +12,7 @@ import {
     MerkleLeafCommitment,
     ProofFieldTypeEnum,
     ProofField,
-} from './types';
+} from '../type/valibot/proofs/AppLedgerProof';
 import {CBORCryptoBinaryEncoder} from "../crypto/encoder/CryptoEncoderFactory";
 
 export class MerkleLeaf {
@@ -184,18 +184,18 @@ export class MerkleLeaf {
             }
             case ProofFieldTypeEnum.MaskableAsAllParts: {
                 this.setMaskedDataFromAllParts(
-                    Utils.binaryFromHexa(field.v_salt),
-                    field.v_parts,
-                    Utils.binaryFromHexa(field.h_salt),
-                    field.h_parts
+                    Utils.binaryFromHexa(field.vSalt),
+                    field.vParts,
+                    Utils.binaryFromHexa(field.hSalt),
+                    field.hParts
                 );
                 break;
             }
             case ProofFieldTypeEnum.MaskableAsVisibleParts: {
                 this.setMaskedDataFromVisibleParts(
-                    Utils.binaryFromHexa(field.v_salt),
-                    field.v_parts,
-                    Utils.binaryFromHexa(field.h_hash)
+                    Utils.binaryFromHexa(field.vSalt),
+                    field.vParts,
+                    Utils.binaryFromHexa(field.hHash)
                 );
                 break;
             }
@@ -245,10 +245,10 @@ export class MerkleLeaf {
                     path,
                     index,
                     type: ProofFieldTypeEnum.MaskableAsAllParts,
-                    v_salt: Utils.binaryToHexa(data.visible.salt),
-                    v_parts: data.visible.parts,
-                    h_salt: Utils.binaryToHexa(data.hidden.salt),
-                    h_parts: data.hidden.parts,
+                    vSalt: Utils.binaryToHexa(data.visible.salt),
+                    vParts: data.visible.parts,
+                    hSalt: Utils.binaryToHexa(data.hidden.salt),
+                    hParts: data.hidden.parts,
                 };
             }
             case MerkleLeafTypeEnum.MaskableFromVisibleParts: {
@@ -256,9 +256,9 @@ export class MerkleLeaf {
                     path,
                     index,
                     type: ProofFieldTypeEnum.MaskableAsVisibleParts,
-                    v_salt: Utils.binaryToHexa(data.visible.salt),
-                    v_parts: data.visible.parts,
-                    h_hash: Utils.binaryToHexa(data.hiddenHash),
+                    vSalt: Utils.binaryToHexa(data.visible.salt),
+                    vParts: data.visible.parts,
+                    hHash: Utils.binaryToHexa(data.hiddenHash),
                 };
             }
             default: {

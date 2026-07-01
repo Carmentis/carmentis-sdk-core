@@ -1,7 +1,7 @@
 import {Record} from './Record';
 import {
     FlatItem,
-} from './types';
+} from '../type/valibot/proofs/AppLedgerProof';
 
 export class RecordByChannels {
     private channelMap: Map<number, FlatItem[]>;

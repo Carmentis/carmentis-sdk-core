@@ -1,5 +1,5 @@
 import {MerkleLeaf} from "./MerkleLeaf";
-import {Path} from "./types";
+import {Path} from "../type/valibot/proofs/AppLedgerProof";
 
 export type PositionedLeaf = {
     leaf: MerkleLeaf,

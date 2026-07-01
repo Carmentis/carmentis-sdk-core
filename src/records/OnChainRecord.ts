@@ -9,7 +9,7 @@ import {
     FlatItem,
     OnChainChannelSchema,
     OnChainItemListSchema,
-} from "./types";
+} from "../type/valibot/proofs/AppLedgerProof";
 import {Logger} from "../utils/Logger";
 import {CBORCryptoBinaryEncoder} from "../crypto/encoder/CryptoEncoderFactory";
 

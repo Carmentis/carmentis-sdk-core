@@ -1,26 +1,5 @@
 import * as v from 'valibot';
-import {uint8array} from "../type/valibot/primitives";
-
-export type JsonData =
-    | string
-    | number
-    | boolean
-    | null
-    | JsonData[]
-    | { [key: string]: JsonData };
-
-export const JsonSchema: v.GenericSchema<JsonData> = v.lazy(() =>
-    v.union([
-        v.string(),
-        v.number(),
-        v.boolean(),
-        v.null(),
-        v.array(JsonSchema),
-        v.record(v.string(), JsonSchema),
-    ])
-);
-
-export type Json = v.InferOutput<typeof JsonSchema>;
+import {uint8array} from "../primitives";
 
 const PathSchema = v.array(v.union([ v.string(), v.number() ]));
 
@@ -302,18 +281,18 @@ const ProofFieldHashableAsHashSchema = v.object({
 const ProofFieldMaskableAsAllPartsSchema = v.object({
     ...ProofPrivateFieldCommonProperties,
     type: v.literal(ProofFieldTypeEnum.MaskableAsAllParts),
-    v_salt: v.string(),
-    v_parts: v.array(v.string()),
-    h_salt: v.string(),
-    h_parts: v.array(v.string()),
+    vSalt: v.string(),
+    vParts: v.array(v.string()),
+    hSalt: v.string(),
+    hParts: v.array(v.string()),
 });
 
 const ProofFieldMaskableAsVisiblePartsSchema = v.object({
     ...ProofPrivateFieldCommonProperties,
     type: v.literal(ProofFieldTypeEnum.MaskableAsVisibleParts),
-    v_salt: v.string(),
-    v_parts: v.array(v.string()),
-    h_hash: v.string(),
+    vSalt: v.string(),
+    vParts: v.array(v.string()),
+    hHash: v.string(),
 });
 
 const ProofFieldSchema = v.variant(
@@ -330,17 +309,10 @@ const ProofFieldSchema = v.variant(
 
 export type ProofField = v.InferOutput<typeof ProofFieldSchema>;
 
-const ProofInfoSchema = v.object({
-    title: v.string(),
-    date: v.string(),
-    description: v.string(),
-    author: v.string(),
-});
-
 const ProofChannelSchema = v.object({
     id: v.number(),
-    is_public: v.boolean(),
-    n_leaves: v.number(),
+    isPublic: v.boolean(),
+    nLeaves: v.number(),
     fields: v.array(ProofFieldSchema),
     witnesses: v.array(v.string()),
 });
@@ -361,31 +333,11 @@ const ProofVirtualBlockchainSchema = v.object({
 
 export type ProofVirtualBlockchain = v.InferOutput<typeof ProofVirtualBlockchainSchema>;
 
-const ProofSignatureCommitmentSchema = v.object({
-    issued_at: v.optional(v.string()),
-    digest_alg: v.optional(v.picklist(['sha256'])),
-    digest_target: v.optional(v.picklist(['cbor_proof'])),
-    digest: v.optional(v.string()),
+export const AppLedgerProofSchema = v.object({
+    virtualBlockchains: v.array(ProofVirtualBlockchainSchema),
 });
 
-export type ProofSignatureCommitment = v.InferOutput<typeof ProofSignatureCommitmentSchema>;
-
-const ProofSignatureSchema = v.object({
-    commitment: ProofSignatureCommitmentSchema,
-    signer: v.string(),
-    pubkey: v.string(),
-    alg: v.picklist(['ecdsa-secp256k1','ml-dsa-65']),
-    sig: v.string(),
-});
-
-export const ProofWrapperSchema = v.object({
-    version: v.number(),
-    info: ProofInfoSchema,
-    virtual_blockchains: v.array(ProofVirtualBlockchainSchema),
-    signature: v.optional(ProofSignatureSchema),
-});
-
-export type ProofWrapper = v.InferOutput<typeof ProofWrapperSchema>;
+export type AppLedgerProof = v.InferOutput<typeof AppLedgerProofSchema>;
 
 const TypedPrimitiveValueSchema = v.object({
     disclosure: v.picklist(['plain', 'hashed', 'masked']),

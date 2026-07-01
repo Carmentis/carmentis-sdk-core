@@ -1,4 +1,4 @@
-import {JsonData} from '../records/types';
+import {JsonData} from './valibot/json/Json';
 
 export interface ImportedProof {
     height: number;

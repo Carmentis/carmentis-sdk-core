@@ -1,7 +1,6 @@
 import {VirtualBlockchain} from "./VirtualBlockchain";
 import {HKDF} from "../../crypto/kdf/HKDF";
 import {Utils} from "../../utils/utils";
-
 import {
     ActorNotInvitedError,
     ActorNotSubscribedError,
@@ -18,7 +17,6 @@ import {
     AbstractPrivateDecryptionKey,
     AbstractPublicEncryptionKey
 } from "../../crypto/encryption/public-key-encryption/PublicKeyEncryptionSchemeInterface";
-import {AES256GCMSymmetricEncryptionKey} from "../../crypto/encryption/symmetric-encryption/encryption-interface";
 import {Logger} from "../../utils/Logger";
 import {Crypto} from "../../crypto/crypto";
 import {Assertion} from "../../utils/Assertion";
@@ -26,7 +24,6 @@ import {PublicSignatureKey} from "../../crypto/signature/PublicSignatureKey";
 import {
     ApplicationLedgerMicroblockStructureChecker
 } from "../structureCheckers/ApplicationLedgerMicroblockStructureChecker";
-
 import {VirtualBlockchainType} from "../../type/VirtualBlockchainType";
 import {Hash} from "../../entities/Hash";
 import {Height} from "../../type/Height";
@@ -40,27 +37,18 @@ import {SignatureSchemeId} from "../../crypto/signature/SignatureSchemeId";
 import {PublicKeyEncryptionSchemeId} from "../../crypto/encryption/public-key-encryption/PublicKeyEncryptionSchemeId";
 import {ProtocolInternalState} from "../internalStates/ProtocolInternalState";
 import {ApplicationLedgerChannelInvitationSection} from "../../type/valibot/blockchain/section/sections";
-import {SeedEncoder} from "../../utils/SeedEncoder";
-import {ProofDocumentVB} from "../../records/ProofDocumentVB";
-import {ProofDocument} from "../../records/ProofDocument";
-import {ProofWrapper, JsonData} from "../../records/types";
+import {AppLedgerProofVB} from "../../proofs/AppLedgerProofVB";
+import {AppLedgerProofWrapper} from "../../proofs/AppLedgerProofWrapper";
+import {WrappedAppLedgerProof} from "../../type/valibot/proofs/CarmentisProof";
+import {JsonData} from "../../type/valibot/json/Json";
 import {ImportedProof} from "../../type/types";
 import {ProofRecord} from "../../records/ProofRecord";
 import {OnChainRecord} from "../../records/OnChainRecord";
 
 export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInternalState> {
-
-    // ------------------------------------------
-    // Static methods
-    // ------------------------------------------
     static createApplicationLedgerVirtualBlockchain(provider: IProvider) {
         return new ApplicationLedgerVb(provider);
     }
-
-
-    // ------------------------------------------
-    // Instance implementation
-    // ------------------------------------------
 
     /**
      * The draft mode allows to write unchecked microblock to the virtual blockchain
@@ -75,7 +63,6 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
     async isAccountIdAllowedToWrite(accountId:Hash) {
         // when the virtual blockchain is empty, any account can write to it
         if (this.getHeight() === 0) return true;
-
 
         // otherwise, we check that the account ID is contained in the set of allowed writers.
         const owner = await this.getVirtualBlockchainOwnerId();
@@ -102,7 +89,6 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
         };
     }
 
-
     async getVirtualBlockchainOwnerId() {
         const appId = this.internalState.getApplicationId();
         const applicationVb = await this.provider.loadApplicationVirtualBlockchain(appId);
@@ -126,15 +112,14 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
     enableDraftMode() {
         this.draftModeEnabled = true;
     }
+
     disableDraftMode() {
         this.draftModeEnabled = false;
     }
 
-
     setInternalState(state: ApplicationLedgerInternalState) {
         this.internalState = state;
     }
-
 
     isActorDefined(name: string) {
         return this.internalState.isActorDefinedByName(name)
@@ -148,7 +133,6 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
     getInternalState() {
         return this.internalState;
     }
-
 
     /**
      * Retrieves the public encryption key of an actor by its identifier.
@@ -228,7 +212,6 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
                 const isMatchingActorId = section.actorId == actorId
                 if (!isMatchingActorId) continue;
 
-
                 // reconstruct the public encryption key
                 const rawPkePublicKey = section.pkePublicKey;
                 const pkeSchemeId = section.pkeSchemeId;
@@ -261,7 +244,6 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
                 if (section.type !== SectionType.APP_LEDGER_ACTOR_SUBSCRIPTION) continue;
                 const isMatchingActorId = section.actorId == actorId
                 if (!isMatchingActorId) continue;
-
 
                 // reconstruct the public signature key
                 const rawSigKey = section.signaturePublicKey;
@@ -296,7 +278,6 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
             if (section.hostId !== hostId || section.guestId !== guestId) continue;
             return section.encryptedSharedKey;
         }
-
 
         // At this step, there is a shared secret section in the vb declaring
         // a shared secret between guest and host but no shared key is included in the section: very very bad!
@@ -439,7 +420,6 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
                         });
                     } catch (e) {
                         if (e instanceof DecryptionError || e instanceof ActorNotInvitedError) {
-                            //console.warn(`Not allowed to access channel ${channelId}`)
                             logger.debug(`Access to private channel {channelName} forbidden (channel id={channelId}): {e}`, () => ({
                                 e,
                                 channelName: this.getChannelNameById(channelId),
@@ -585,72 +565,13 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
             if (section.type !== SectionType.APP_LEDGER_CHANNEL_INVITATION) continue;
             if (section.guestId !== actorId || section.channelId !== channelId) continue;
             invitationSection = section;
-            /*
-            const invitationSection = invitationMicroblock.getSection<ApplicationLedgerChannelInvitationSection>((section: Section<ApplicationLedgerChannelInvitationSection>) =>
-                section.type == SECTIONS.APP_LEDGER_CHANNEL_INVITATION &&
-                section.object.channelId == channelId &&
-                section.object.guestId == actorId
-            );
-
-             */
         }
         // raise an error if the actor is not invited to the channel
         if (invitationSection === undefined) throw new ActorNotInvitedError(actorId, channelId);
         const encryptedChannelKey = invitationSection.encryptedChannelKey;
         return await actorPrivateDecryptionKey.decrypt(encryptedChannelKey);
-        /*
-
-
-        // look for the shared secret between actorId and hostId
-        const hostId = invitationSection.hostId;
-
-        const sharedSecret = actor.sharedSecrets.find(
-            (sharedSecret) => sharedSecret.peerActorId == hostId
-        );
-        if (!sharedSecret) {
-            throw new NoSharedSecretError(actorId, hostId);
-        }
-
-        const sharedSecretMicroblock = await this.getMicroblock(sharedSecret.height);
-        for (const section of sharedSecretMicroblock.getAllSections()) {
-            if (section.type !== SectionType.APP_LEDGER_SHARED_SECRET) continue;
-            if (section.hostId !== hostId || section.guestId !== actorId) continue;
-            const encryptedSharedKey = section.encryptedSharedKey;
-            const hostGuestSharedKey = AES256GCMSymmetricEncryptionKey.createFromBytes(
-                await actorPrivateDecryptionKey.decrypt(encryptedSharedKey)
-            );
-            const channelKey = hostGuestSharedKey.decrypt(encryptedChannelKey);
-            return channelKey;
-
-        }
-        // at this point, no shared key has been found
-        throw new NoSharedSecretError(actorId, hostId);
-
-         */
-
     }
 
-    /**
-     * Returns an instance of an intermediate representation defining only the channels.
-     */
-/*
-    getChannelSpecializedIntermediateRepresentationInstance() {
-        const ir = new IntermediateRepresentation;
-
-        const numberOfChannels = this.internalState.getNumberOfChannels();
-
-        for (let channelId = 0; channelId < numberOfChannels; channelId++) {
-            const channel = this.internalState.getChannelFromChannelId(channelId);
-
-            if (channel.isPrivate) {
-                ir.addPrivateChannel(channelId);
-            } else {
-                ir.addPublicChannel(channelId);
-            }
-        }
-        return ir;
-    }
-*/
     /**
      * Exports a proof containing intermediate representations for all microblocks up to the current height of the virtual blockchain.
      *
@@ -671,25 +592,22 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
     async exportProof(
         customInfo: { author: string },
         hostIdentity: ICryptoKeyHandler
-    ): Promise<ProofWrapper> {
-        const proofDocumentVB = new ProofDocumentVB();
-        proofDocumentVB.setIdentifier(Utils.binaryToHexa(this.getIdentifier().toBytes()))
+    ): Promise<WrappedAppLedgerProof> {
+        const appLedgerProofVB = new AppLedgerProofVB();
+        appLedgerProofVB.setIdentifier(Utils.binaryToHexa(this.getIdentifier().toBytes()))
 
         for (let height = 1; height <= this.getHeight(); height++) {
             const merkleRecord = await this.getMicroblockMerkleRecord(height, hostIdentity);
-            console.log(`Merkle record at height ${height}:`, merkleRecord)
             const proofRecord = ProofRecord.fromMerkleRecord(merkleRecord);
-            console.log(`Proof record at height ${height}:`, proofRecord)
             const proofChannels = proofRecord.toProofChannels();
-            console.log(`Proof channels at height ${height}:`, proofChannels)
-            proofDocumentVB.addMicroblock(height, proofChannels);
+            appLedgerProofVB.addMicroblock(height, proofChannels);
         }
 
-        const proofDocument = new ProofDocument();
-        proofDocument.setAuthor(customInfo.author);
-        proofDocument.addVirtualBlockchain(proofDocumentVB);
+        const appLedgerProof = AppLedgerProofWrapper.createEmptyProof();
+        appLedgerProof.setAuthor(customInfo.author);
+        appLedgerProof.addVirtualBlockchain(appLedgerProofVB);
 
-        return proofDocument.getObject();
+        return appLedgerProof.getObject();
     }
 
     /**
@@ -700,11 +618,11 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
      * @throws ProofVerificationFailedError Occurs when the provided proof is not verified.
      */
     async importProof(
-        proofWrapper: ProofWrapper,
+        proofWrapper: WrappedAppLedgerProof,
     ): Promise<ImportedProof[]> {
         const data: ImportedProof[] = [];
-        const proofDocument = ProofDocument.fromObject(proofWrapper);
-        const proofVirtualBlockchain = proofDocument.getSingleVirtualBlockchainOrFail();
+        const appLedgerProof = AppLedgerProofWrapper.fromObject(proofWrapper);
+        const proofVirtualBlockchain = appLedgerProof.getSingleVirtualBlockchainOrFail();
         const proofMicroblocks = proofVirtualBlockchain.getMicroblocks();
 
         for (const proofMicroblock of proofMicroblocks) {
@@ -732,13 +650,11 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
             }
 
             // extract the channels from the proof microblock and compare all Merkle root hashes
-            console.log("ProofMicroblock.channels=", proofMicroblock.channels)
             const proofRecord = ProofRecord.fromProofChannels(proofMicroblock.channels);
 
             for (const channel of listOfChannels) {
                 const computedMerkleRootHash = proofRecord.getRootHashAsBinary(channel.channelId);
                 if (!Utils.binaryIsEqual(channel.merkleRootHash, computedMerkleRootHash)) {
-                    console.log(computedMerkleRootHash, channel)
                     const computedHash = Utils.binaryToHexa(computedMerkleRootHash);
                     const onChainHash = Utils.binaryToHexa(channel.merkleRootHash);
                     throw new ProofVerificationFailedError(channel.channelId, computedHash, onChainHash);
@@ -771,157 +687,6 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
         const proofRecord = ProofRecord.fromMerkleRecord(merkleRecord);
         return proofRecord.toJson();
     }
-
-    /**
-     Section callbacks
-     */
-
-    /*
-    async allowedSignatureSchemesCallback(microblock: any, section: any) {
-        this.getState().allowedSignatureSchemeIds = section.object.schemeIds;
-    }
-
-    async allowedPkeSchemesCallback(microblock: any, section: any) {
-        this.getState().allowedPkeSchemeIds = section.object.schemeIds;
-    }
-
-    async declarationCallback(microblock: Microblock, section: Section<ApplicationLedgerDeclarationSection>) {
-        this.getState().applicationId = section.object.applicationId;
-    }
-
-    async actorCreationCallback(microblock: Microblock, section: Section<ApplicationLedgerActorCreationSection>) {
-        const state = this.getState();
-
-        if (section.object.id != state.actors.length) {
-            throw new InvalidActorError(section.object.id, state.actors.length);
-        }
-        if (state.actors.some((obj: any) => obj.name == section.object.name)) {
-            throw new ActorAlreadyDefinedError(section.object.name);
-        }
-        state.actors.push({
-            name: section.object.name,
-            subscribed: false,
-            signatureKeyHeight: 0,
-            pkeKeyHeight: 0,
-            sharedSecrets: [],
-            invitations: []
-        });
-    }
-
-    async actorSubscriptionCallback(microblock: any, section: any) {
-        const state = this.getState();
-        const actor = state.actors[section.object.actorId]; // I have remove - 1 because it causes invalid actorId
-
-        if (actor === undefined) {
-            throw new CannotSubscribeError(section.object.actorId);
-        }
-        if (actor.subscribed) {
-            throw new AlreadySubscribedError(section.object.actorId);
-        }
-
-        // we check that the provided public signature scheme is allowed
-        const checkedSignatureSchemeId = section.object.signatureSchemeId;
-        const allowedSignatureSchemeIds = state.allowedSignatureSchemeIds;
-        const isAllowingAllSignatureSchemes = allowedSignatureSchemeIds.length == 0;
-        const isExplicitlyAllowedSignatureScheme = allowedSignatureSchemeIds.includes(checkedSignatureSchemeId);
-        const isNotAllowedSignatureScheme = !isAllowingAllSignatureSchemes && !isExplicitlyAllowedSignatureScheme;
-        if (isNotAllowedSignatureScheme) {
-            throw new NotAllowedSignatureSchemeError(section.object.signatureSchemeId);
-        }
-
-        // we check that the provided public key encryption scheme is allowed
-        const checkedPkeSchemeId = section.object.pkeSchemeId;
-        const allowedPkeSchemeIds = state.allowedPkeSchemeIds;
-        const isAllowingAllPkeSchemes = allowedPkeSchemeIds.length == 0;
-        const isExplicitlyAllowedPkeScheme = allowedPkeSchemeIds.includes(checkedPkeSchemeId);
-        const isNotAllowedPkeScheme = !isAllowingAllPkeSchemes && !isExplicitlyAllowedPkeScheme;
-        if (isNotAllowedPkeScheme) {
-            throw new NotAllowedPkeSchemeError(section.object.pkeSchemeId);
-        }
-
-        actor.subscribed = true;
-        actor.signatureKeyHeight = microblock.header.height;
-        actor.pkeKeyHeight = microblock.header.height;
-    }
-
-    async channelCreationCallback(microblock: any, section: any) {
-        const state = this.getState();
-        if (section.object.id != state.channels.length) {
-            throw new InvalidChannelError(section.object.id);
-        }
-        if (state.channels.some((obj: any) => obj.name == section.object.name)) {
-            throw new ChannelAlreadyDefinedError(section.object.name);
-        }
-        state.channels.push({
-            name: section.object.name,
-            isPrivate: section.object.isPrivate,
-            creatorId: section.object.creatorId
-        });
-    }
-
-    async sharedSecretCallback(microblock: Microblock, section: Section<ApplicationLedgerSharedKeySection>) {
-        // TODO: check that there is no shared secret yet
-        // TODO: check that there host and guest already exists
-        // Here
-
-        // we update the local state with the shared secret section
-        const { hostId, guestId } = section.object;
-        const state = this.getState();
-
-        // update first the actor
-        const hostActor = state.actors[hostId];
-        hostActor.sharedSecrets.push({
-            height: microblock.getHeight(), peerActorId: guestId
-        });
-
-        // then update the guest
-        const guestActor = state.actors[guestId];
-        guestActor.sharedSecrets.push({
-            height: microblock.getHeight(), peerActorId: hostId
-        })
-    }
-
-    async invitationCallback(microblock: Microblock, section: Section<ApplicationLedgerChannelInvitationSection>) {
-        // TODO: check that the actor is not already in the channel
-        // Here
-
-        // we update the local state with the invitation section
-        const {guestId, channelId} = section.object;
-        const state = this.getState();
-        const guestActor = state.actors[guestId];
-        guestActor.invitations.push({
-            channelId,
-            height: microblock.getHeight()
-        })
-        const logger = Logger.getLogger();
-        logger.debug("Updated state after channel invitation callback: {state}", {state: this.localState})
-    }
-
-    async publicChannelDataCallback(microblock: Microblock, section: any) {
-        if (!this.getState().channels[section.object.channelId]) {
-            throw `invalid channel ID ${section.object.channelId}`;
-        }
-    }
-
-    async privateChannelDataCallback(microblock: Microblock, section: any) {
-        if (!this.getState().channels[section.object.channelId]) {
-            throw `invalid channel ID ${section.object.channelId}`;
-        }
-    }
-
-    async endorserSignatureCallback(microblock: Microblock, section: any) {
-    }
-
-    async authorSignatureCallback(microblock: Microblock, section: any) {
-        const application = new Application({provider: this.provider});
-        await application._load(this.getState().applicationId);
-        const publicKey = await application.getOrganizationPublicKey();
-        const feesPayerAccount = await this.provider.getAccountHashByPublicKey(publicKey);
-        microblock.setFeesPayerAccount(feesPayerAccount);
-    }
-
-     */
-
 
     async isActorInChannel(channelId: number, actorId: number) {
         const actor = this.internalState.getActorById(actorId);

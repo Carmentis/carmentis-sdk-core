@@ -1,9 +1,8 @@
 import * as v from 'valibot';
+import { JsonSchema, Json } from '../type/valibot/json/Json';
 import {
     Path,
     MaskPart,
-    JsonSchema,
-    Json,
     TransformationTypeEnum,
     TypeEnum,
     Item,
@@ -12,7 +11,7 @@ import {
     NumberItem,
     BooleanItem,
     NullItem,
-} from './types';
+} from '../type/valibot/proofs/AppLedgerProof';
 
 export class Record {
     private itemList: FlatItem[];
