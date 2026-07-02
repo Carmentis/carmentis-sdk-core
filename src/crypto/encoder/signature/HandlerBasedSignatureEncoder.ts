@@ -4,13 +4,11 @@ import {PrivateSignatureKey} from "../../signature/PrivateSignatureKey";
 import {PublicSignatureKey} from "../../signature/PublicSignatureKey";
 import {BinaryToStringEncoderInterface} from "../../../utils/BinaryToStringEncoderInterface";
 import {EncoderFactory} from "../../../utils/encoder";
-import {Secp256k1HCVSignatureEncoder} from "./hcv/Secp256k1HCVSignatureEncoder";
-import {MLDSA65HCVSignatureEncoder} from "./hcv/MLDSA65HCVSignatureEncoder";
-import {PkmsSecp256k1SignatureEncoder} from "./hcv/PkmsSecp256k1SignatureEncoder";
+import {DckfSignatureEncoder} from "./dckf/DckfSignatureEncoder";
 import {Secp256k1HCVSignatureDecoder} from "./hcv/Secp256k1HCVSignatureDecoder";
 import {MLDSA65HCVSignatureDecoder} from "./hcv/MLDSA65HCVSignatureDecoder";
 import {PkmsSecp256k1SignatureDecoder} from "./hcv/PkmsSecp256k1SignatureDecoder";
-
+import {DckfSignatureDecoder} from "./dckf/DckfSignatureDecoder";
 
 /**
  * A class responsible for encoding and decoding signatures, keys, and messages using a pluggable architecture.
@@ -18,23 +16,19 @@ import {PkmsSecp256k1SignatureDecoder} from "./hcv/PkmsSecp256k1SignatureDecoder
  */
 export class HandlerBasedSignatureEncoder implements SignatureEncoderInterface<string> {
     private encoders: ISignatureEncoderHandler[] = [
-        new Secp256k1HCVSignatureEncoder(),
-        new MLDSA65HCVSignatureEncoder(),
-        new PkmsSecp256k1SignatureEncoder(),
+        new DckfSignatureEncoder(),
     ];
 
     private decoders: ISignatureDecodeHandler[] = [
+        new DckfSignatureDecoder(),
         new Secp256k1HCVSignatureDecoder(),
         new MLDSA65HCVSignatureDecoder(),
         new PkmsSecp256k1SignatureDecoder()
     ];
 
-
-
     constructor(
         private bytesEncoder: BinaryToStringEncoderInterface = EncoderFactory.bytesToHexEncoder()
     ) {}
-
 
     registerEncoder(encoder: ISignatureEncoderHandler) {
         this.encoders.push(encoder);

@@ -26,10 +26,6 @@ export class PkmsSecp256k1PrivateSignatureKey implements PrivateSignatureKey {
         return this.keyId;
     }
 
-
-
-
-
     getPrivateKeyAsBytes(): Uint8Array {
         throw new Error("Private key material cannot be exported.")
     }
