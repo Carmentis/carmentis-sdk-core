@@ -38,7 +38,6 @@ describe("Encoding", () => {
         const sk = await new PkmsSecp256k1PrivateSignatureKey("Key Id");
         const encodedSk = await encoder.encodePrivateKey(sk);
         expect(typeof encodedSk === 'string').toBeTruthy();
-        console.log(encodedSk)
         const decodedSk = await encoder.decodePrivateKey(encodedSk);
         expect(decodedSk).toEqual(sk);
 
