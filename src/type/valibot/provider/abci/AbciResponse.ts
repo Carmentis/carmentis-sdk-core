@@ -2,8 +2,8 @@ import * as v from 'valibot';
 import {MicroblockInformationSchema} from "../MicroblockInformationSchema";
 import {bin256, uint8array} from "../../primitives";
 import {MicroblockBodySchema} from "../../blockchain/microblock/MicroblockBody";
-import {MicroblockProofEntrySchema} from "../../proofs/MicroblockProof";
-import {AccountProofSchema} from "../../proofs/AccountProof";
+import {MicroblockProofObjectSchema} from "../../proofs/MicroblockProof";
+import {AccountProofObjectSchema} from "../../proofs/AccountProof";
 import {
     LockSchema,
     AccountHistorySchema,
@@ -184,12 +184,12 @@ export const SerializedMicroblockByHeightAbciResponseSchema = v.object({
 
 export const MicroblockProofAbciResponseSchema = v.object({
     responseType: v.literal(AbciResponseType.MICROBLOCK_PROOF),
-    proof: MicroblockProofEntrySchema,
+    proof: MicroblockProofObjectSchema,
 });
 
 export const AccountProofAbciResponseSchema = v.object({
     responseType: v.literal(AbciResponseType.ACCOUNT_PROOF),
-    proof: AccountProofSchema,
+    proof: AccountProofObjectSchema,
 });
 
 // ============================================================================================================================ //
