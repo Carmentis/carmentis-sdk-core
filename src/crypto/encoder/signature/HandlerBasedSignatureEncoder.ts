@@ -89,4 +89,27 @@ export class HandlerBasedSignatureEncoder implements SignatureEncoderInterface<s
     encodeSignature(signature: Uint8Array): string {
         return this.bytesEncoder.encode(signature)
     }
+
+    /**
+     * Removes all encoders and decoders.
+     */
+    clear() {
+        this.clearEncoders();
+        this.clearDecoders();
+    }
+
+    /**
+     * Removes all encoders.
+     */
+    clearEncoders() {
+        this.encoders = [];
+    }
+
+
+    /**
+     * Removes all decoders.
+     */
+    clearDecoders() {
+        this.decoders = [];
+    }
 }
