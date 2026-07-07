@@ -7,6 +7,9 @@ import {SeedEncoder} from "../utils/SeedEncoder";
 import {ICryptoKeyHandler} from "./ICryptoKeyHandler";
 
 export class ActorCrypto implements ICryptoKeyHandler {
+    private signatureSchemeId: SignatureSchemeId = SignatureSchemeId.SECP256K1;
+    private pkeSchemeId: PublicKeyEncryptionSchemeId = PublicKeyEncryptionSchemeId.ML_KEM_768_AES_256_GCM;
+
     constructor(private readonly actorSeed: Uint8Array) {}
 
     static createFromAccountSeedAndVbSeed(accountSeed: Uint8Array, vbSeed: Uint8Array) {
@@ -26,7 +29,7 @@ export class ActorCrypto implements ICryptoKeyHandler {
         return this.actorSeed
     }
 
-    async getPrivateSignatureKey(schemeId: SignatureSchemeId) {
+    async getPrivateSignatureKey(schemeId: SignatureSchemeId = this.signatureSchemeId) {
         const kdf = CryptoSchemeFactory.createDefaultKDF();
         const info = this.encoderStringAsBytes("SIG");
         const seed = kdf.deriveKeyNoSalt(
@@ -37,12 +40,12 @@ export class ActorCrypto implements ICryptoKeyHandler {
         return CryptoSchemeFactory.createPrivateSignatureKey( schemeId, seed );
     }
 
-    async getPublicSignatureKey(schemeId: SignatureSchemeId) {
+    async getPublicSignatureKey(schemeId: SignatureSchemeId = this.signatureSchemeId) {
         const privateKey = await this.getPrivateSignatureKey(schemeId);
         return privateKey.getPublicKey();
     }
 
-    getPrivateDecryptionKey(schemeId: PublicKeyEncryptionSchemeId) {
+    getPrivateDecryptionKey(schemeId: PublicKeyEncryptionSchemeId = this.pkeSchemeId) {
         const kdf = CryptoSchemeFactory.createDefaultKDF();
         const info = this.encoderStringAsBytes("PKE");
         const seed = kdf.deriveKeyNoSalt(
@@ -53,7 +56,7 @@ export class ActorCrypto implements ICryptoKeyHandler {
         return CryptoSchemeFactory.createPrivateDecryptionKey( schemeId, seed );
     }
 
-    async getPublicEncryptionKey(schemeId: PublicKeyEncryptionSchemeId) {
+    async getPublicEncryptionKey(schemeId: PublicKeyEncryptionSchemeId = this.pkeSchemeId) {
         const privateDecryptionKey = await this.getPrivateDecryptionKey(schemeId);
         return privateDecryptionKey.getPublicKey();
     }
@@ -62,4 +65,21 @@ export class ActorCrypto implements ICryptoKeyHandler {
         const encoder = new TextEncoder();
         return encoder.encode(data);
     }
+
+    getSignatureSchemeId(): SignatureSchemeId {
+        return this.signatureSchemeId;
+    }
+
+    setSignatureSchemeId(schemeId: SignatureSchemeId): void {
+        this.signatureSchemeId = schemeId;
+    }
+
+    getPkeSchemeId(): PublicKeyEncryptionSchemeId {
+        return this.pkeSchemeId;
+    }
+
+    setPkeSchemeId(schemeId: PublicKeyEncryptionSchemeId): void {
+        this.pkeSchemeId = schemeId;
+    }
+
 }

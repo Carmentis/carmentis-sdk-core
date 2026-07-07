@@ -13,6 +13,8 @@ import {ICryptoKeyHandler} from "./ICryptoKeyHandler";
  * An account is derived from a wallet ('s seed) and a nonce unique for each account.
  */
 export class AccountCrypto implements ICryptoKeyHandler {
+    private signatureSchemeId: SignatureSchemeId = SignatureSchemeId.SECP256K1;
+    private pkeSchemeId: PublicKeyEncryptionSchemeId = PublicKeyEncryptionSchemeId.ML_KEM_768_AES_256_GCM;
 
     static createFromWalletSeedAndNonce(walletSeed: Uint8Array, accountNonce: number) {
         const inputSeed = Utils.binaryFrom(walletSeed, accountNonce);
@@ -40,9 +42,8 @@ export class AccountCrypto implements ICryptoKeyHandler {
         return ActorCrypto.createFromAccountSeedAndVbSeed(this.accountSeed, vbSeed);
     }
 
-    async getPrivateSignatureKey(schemeId: SignatureSchemeId) {
+    async getPrivateSignatureKey(schemeId: SignatureSchemeId = this.signatureSchemeId) {
         const kdf = CryptoSchemeFactory.createDefaultKDF();
-        const scheme = CryptoSchemeFactory.createSignatureScheme(schemeId);
         const info = AccountCrypto.encoderStringAsBytes(`SIG_${schemeId}`);
         const seed = kdf.deriveKeyNoSalt(
             this.accountSeed,
@@ -52,12 +53,12 @@ export class AccountCrypto implements ICryptoKeyHandler {
         return CryptoSchemeFactory.createPrivateSignatureKey( schemeId, seed );
     }
 
-    async getPublicSignatureKey(schemeId: SignatureSchemeId) {
+    async getPublicSignatureKey(schemeId: SignatureSchemeId = this.signatureSchemeId) {
         const privateKey = await this.getPrivateSignatureKey(schemeId);
         return privateKey.getPublicKey();
     }
 
-    async getPrivateDecryptionKey(schemeId: PublicKeyEncryptionSchemeId) {
+    async getPrivateDecryptionKey(schemeId: PublicKeyEncryptionSchemeId = this.pkeSchemeId) {
         const kdf = CryptoSchemeFactory.createDefaultKDF();
         const info = AccountCrypto.encoderStringAsBytes(`PKE_${schemeId}`);
         const seed = kdf.deriveKeyNoSalt(
@@ -68,7 +69,7 @@ export class AccountCrypto implements ICryptoKeyHandler {
         return CryptoSchemeFactory.createPrivateDecryptionKey( schemeId, seed );
     }
 
-    async getPublicEncryptionKey(schemeId: PublicKeyEncryptionSchemeId) {
+    async getPublicEncryptionKey(schemeId: PublicKeyEncryptionSchemeId = this.pkeSchemeId) {
         const privateDecryptionKey = await this.getPrivateDecryptionKey(schemeId);
         return privateDecryptionKey.getPublicKey();
     }
@@ -110,4 +111,22 @@ export class AccountCrypto implements ICryptoKeyHandler {
     getActor(vbSeed: Uint8Array) {
         return ActorCrypto.createFromAccountSeedAndVbSeed(this.accountSeed, vbSeed)
     }
+
+
+    getSignatureSchemeId(): SignatureSchemeId {
+        return this.signatureSchemeId;
+    }
+
+    setSignatureSchemeId(schemeId: SignatureSchemeId): void {
+        this.signatureSchemeId = schemeId;
+    }
+
+    getPkeSchemeId(): PublicKeyEncryptionSchemeId {
+        return this.pkeSchemeId;
+    }
+
+    setPkeSchemeId(schemeId: PublicKeyEncryptionSchemeId): void {
+        this.pkeSchemeId = schemeId;
+    }
+
 }

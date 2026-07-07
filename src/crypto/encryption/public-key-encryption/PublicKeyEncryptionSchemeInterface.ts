@@ -1,5 +1,7 @@
 import {PublicKeyEncryptionSchemeId} from "./PublicKeyEncryptionSchemeId";
 import {EncoderFactory, EncoderInterface} from "../../../utils/encoder";
+import {IDecryptor} from "../../IDecryptor";
+import {IEncryptor} from "../../IEncryptor";
 
 export interface PublicKeyEncryptionScheme {
     /**
@@ -15,9 +17,9 @@ export abstract class AbstractPublicKeyEncryptionScheme implements PublicKeyEncr
     abstract getSchemeId(): PublicKeyEncryptionSchemeId;
 }
 
-export interface PublicEncryptionKey {
+export interface PublicEncryptionKey extends IEncryptor {
     getScheme(): PublicKeyEncryptionScheme;
-    encrypt( message: Uint8Array ): Promise<Uint8Array>;
+    //encrypt( message: Uint8Array ): Promise<Uint8Array>;
     getRawPublicKey(): Promise<Uint8Array>;
     encode(encoder?: EncoderInterface<Uint8Array, string>): Promise<string>;
 }
@@ -36,10 +38,8 @@ export abstract class AbstractPublicEncryptionKey implements PublicEncryptionKey
     }
 }
 
-export interface PrivateDecryptionKey {
+export interface PrivateDecryptionKey extends IDecryptor {
     getScheme(): AbstractPublicKeyEncryptionScheme;
-
-    decrypt(ciphertext: Uint8Array): Promise<Uint8Array>;
 
     getRawPrivateKey(): Uint8Array;
 
