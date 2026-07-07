@@ -6,11 +6,11 @@ import {
     PrivateDecryptionKey,
     PublicEncryptionKey
 } from "../crypto/encryption/public-key-encryption/PublicKeyEncryptionSchemeInterface";
+import {IKeySeedProvider} from "../crypto/IKeySeedProvider";
 
-export interface ICryptoKeyHandler {
-    getPrivateSignatureKey(schemeId: SignatureSchemeId): Promise<PrivateSignatureKey>;
-    getPublicSignatureKey(schemeId: SignatureSchemeId): Promise<PublicSignatureKey>;
-    getPrivateDecryptionKey(schemeId: PublicKeyEncryptionSchemeId): Promise<PrivateDecryptionKey>;
-    getPublicEncryptionKey(schemeId: PublicKeyEncryptionSchemeId): Promise<PublicEncryptionKey>;
-    getSeedAsBytes(): Uint8Array;
+export interface ICryptoKeyHandler extends IKeySeedProvider {
+    getPrivateSignatureKey(schemeId?: SignatureSchemeId): Promise<PrivateSignatureKey>;
+    getPublicSignatureKey(schemeId?: SignatureSchemeId): Promise<PublicSignatureKey>;
+    getPrivateDecryptionKey(schemeId?: PublicKeyEncryptionSchemeId): Promise<PrivateDecryptionKey>;
+    getPublicEncryptionKey(schemeId?: PublicKeyEncryptionSchemeId): Promise<PublicEncryptionKey>;
 }

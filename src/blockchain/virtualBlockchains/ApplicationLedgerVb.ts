@@ -44,6 +44,7 @@ import {JsonData} from "../../type/valibot/json/Json";
 import {ImportedProof} from "../../type/types";
 import {ProofRecord} from "../../records/ProofRecord";
 import {OnChainRecord} from "../../records/OnChainRecord";
+import {IDecryptor} from "../../crypto/IDecryptor";
 
 export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInternalState> {
     static createApplicationLedgerVirtualBlockchain(provider: IProvider) {
@@ -165,9 +166,11 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
 
                     // we now ensure that the public signature key declared in the section and used by the current user are matching
                     const {signaturePublicKey} = section;
-                    const isMatchingPublicKeys = Utils.binaryIsEqual(section.signaturePublicKey, await publicKeyBytes);
-                    logger.debug(`Is public key matching for actor ${actor.name} (id ${actorId})? ${signaturePublicKey} and ${publicKeyBytes}: ${isMatchingPublicKeys}`);
-                    if (!isMatchingPublicKeys) continue
+                    const isMatchingPublicKeys = Utils.binaryIsEqual(signaturePublicKey, await publicKeyBytes);
+                    if (!isMatchingPublicKeys) {
+                        logger.debug(`Public signature key mismatch for actor ${actor.name} (id ${actorId})`, {actor})
+                        continue;
+                    }
 
                     logger.debug(`Matching public signature key: {actor.name} (id ${actorId})`, {actor})
                     return actorId;
@@ -376,7 +379,7 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
         // we now load private channels that might be protected (encrypted)
         const logger = Logger.getLogger([ApplicationLedgerVb.name]);
         if ( hostIdentity !== undefined ) {
-            const hostPrivateSignatureKey = await hostIdentity.getPrivateSignatureKey(SignatureSchemeId.SECP256K1);
+            const hostPrivateSignatureKey = await hostIdentity.getPrivateSignatureKey();
             const hostPublicSignatureKey = await hostPrivateSignatureKey.getPublicKey();
 
             // we attempt to identify the current actor
@@ -404,7 +407,7 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
                         const channelKey = await this.getChannelKey(currentActorId, channelId, hostIdentity);
                         const channelSectionKey = this.deriveChannelSectionKey(channelKey, height, channelId);
                         const channelSectionIv = this.deriveChannelSectionIv(channelKey, height, channelId);
-                        logger.debug(`Channel key ${channelKey} at height ${height} and channel id ${channelId} -> Channel section key: ${channelSectionKey} (iv ${channelSectionIv}) `)
+                        logger.debug(`Channel key for channel id ${channelId} and Channel section key at height ${height} derived `)
                         const data = Crypto.Aes.decryptGcm(channelSectionKey, encryptedData, channelSectionIv);
 
                         logger.debug(`Allowed to access private channel {channelName} (channel id={channelId})`, () => ({
@@ -479,14 +482,13 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
      */
     async getChannelKey(actorId: number, channelId: number, hostIdentity: ICryptoKeyHandler) {
         // defensive programming
-        Assertion.assert(typeof actorId === 'number', 'Expected actor id with type number')
-        Assertion.assert(typeof channelId === 'number', `Expected channel id of type number: got ${typeof channelId}`)
+        Assertion.assert(Number.isInteger(actorId), 'Expected actor id with type number')
+        Assertion.assert(Number.isInteger(channelId), `Expected channel id of type number: got ${typeof channelId}`)
 
 
         // if the actor id is the creator of the channel, then we have to derive the channel key locally...
         const state = this.internalState;
         const creatorId = state.getChannelCreatorIdFromChannelId(channelId);
-        const actorPrivateDecryptionKey = await hostIdentity.getPrivateDecryptionKey(PublicKeyEncryptionSchemeId.ML_KEM_768_AES_256_GCM);
         if (creatorId === actorId) {
             const usedSeed = hostIdentity.getSeedAsBytes();
             const channelKey = await this.deriveChannelKey(
@@ -497,6 +499,7 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
         }
 
         // ... otherwise we have to obtain the (encryption of the) channel key from an invitation section.
+        const actorPrivateDecryptionKey = await hostIdentity.getPrivateDecryptionKey();
         const channelKey = await this.getChannelKeyFromInvitation(actorId, channelId, actorPrivateDecryptionKey);
         return channelKey;
     }
@@ -528,7 +531,7 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
      *
      * @param actorId
      * @param channelId
-     * @param actorPrivateDecryptionKey The (asymmetric) decryption key used to decrypt the shared key, later used to decrypt the channel key.
+     * @param decryptor
      * @private
      *
      * @throws ActorNotInvitedError Occurs when no invitation of the actor has been found.
@@ -538,10 +541,11 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
     private async getChannelKeyFromInvitation(
         actorId: number,
         channelId: number,
-        actorPrivateDecryptionKey: AbstractPrivateDecryptionKey
+        decryptor: IDecryptor
     ) {
-        Assertion.assert(typeof actorId === 'number', `actorId should be a number, got ${typeof actorId}`)
-        Assertion.assert(typeof channelId === 'number', `channelId should be a number, got ${typeof actorId}`)
+        // defensive programming
+        Assertion.assert(Number.isInteger(actorId), 'Expected actor id with type number')
+        Assertion.assert(Number.isInteger(channelId), `Expected channel id of type number: got ${typeof channelId}`)
 
         // look for an invitation of actorId to channelId and extract the encrypted channel key
         const actor = this.internalState.getActorById(actorId);
@@ -569,7 +573,7 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
         // raise an error if the actor is not invited to the channel
         if (invitationSection === undefined) throw new ActorNotInvitedError(actorId, channelId);
         const encryptedChannelKey = invitationSection.encryptedChannelKey;
-        return await actorPrivateDecryptionKey.decrypt(encryptedChannelKey);
+        return await decryptor.decrypt(encryptedChannelKey);
     }
 
     /**
