@@ -606,8 +606,8 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
             const proofChannels = proofRecord.toProofChannels();
             appLedgerProofVB.addMicroblock(height, proofChannels);
         }
-
-        const appLedgerProof = AppLedgerProofWrapper.createEmptyProof();
+        const chainId = await this.provider.getChainId();
+        const appLedgerProof = AppLedgerProofWrapper.createEmptyProof(chainId);
         appLedgerProof.setAuthor(customInfo.author);
         appLedgerProof.addVirtualBlockchain(appLedgerProofVB);
 

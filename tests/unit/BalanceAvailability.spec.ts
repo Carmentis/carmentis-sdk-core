@@ -1,4 +1,3 @@
-import { randomBytes } from 'node:crypto';
 import {BalanceAvailability} from "../../src/utils/BalanceAvailability";
 import {CMTSToken} from "../../src/economics/currencies/token";
 import { describe, it, expect } from 'vitest'
@@ -25,15 +24,15 @@ describe("Balance availability", () => {
         expect(balanceAvailability.getStaked().getAmountAsAtomic()).toEqual(expectedStaked.getAmountAsAtomic());
     }
 
-
-
     function randomAccountId() {
-        return randomBytes(32);
+        // not cryptographically strong, but this is acceptable for this test suite
+        return new Uint8Array(
+            [...Array(32)].map(() => Math.floor(Math.random() * 256))
+        );
     }
 
     it("Should correctly compute the balance and locks", async () => {
         const balanceAvailability = new BalanceAvailability(0);
-
 
         // add spendable tokens
         let spendableTokens = CMTSToken.createCMTS(100);

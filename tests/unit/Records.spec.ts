@@ -87,7 +87,7 @@ describe('Record', () => {
         const appLedgerProofVB = new AppLedgerProofVB();
         appLedgerProofVB.setIdentifier(Utils.binaryToHexa(Utils.getNullHash()));
         appLedgerProofVB.addMicroblock(1, proofChannels0);
-        const appLedgerProof = AppLedgerProofWrapper.createEmptyProof();
+        const appLedgerProof = AppLedgerProofWrapper.createEmptyProof("cmts:devnet");
         appLedgerProof.addVirtualBlockchain(appLedgerProofVB);
         appLedgerProof.sign();
         const appLedgerProofObject = appLedgerProof.getObject();

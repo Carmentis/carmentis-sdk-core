@@ -50,6 +50,10 @@ export class Provider extends AbstractProvider {
         return await this.externalProvider.awaitMicroblockAnchoring(hash);
     }
 
+    async getChainId() {
+        return await this.externalProvider.getChainId();
+    }
+
     async getChainInformation() : Promise<ChainInformationAbciResponse> {
         return await this.externalProvider.getChainInformation();
     }

@@ -117,6 +117,7 @@ export abstract class AbstractProvider implements IProvider {
         return feesFormula.computeGas(sigScheme, mb, expirationDay, referenceTimestampInSeconds);
     }
 
+    abstract getChainId(): Promise<string>;
     abstract getVirtualBlockchainStatus(virtualBlockchainId: Uint8Array): Promise<VirtualBlockchainState | null>
     abstract getAccountIdFromPublicKey(publicKey: PublicSignatureKey): Promise<Hash>;
     abstract getListOfMicroblockBody(microblockHashes: Uint8Array[]): Promise<MicroblockBody[]>
@@ -146,9 +147,4 @@ export abstract class AbstractProvider implements IProvider {
             )
         );
     }
-
-
-
-
-
 }

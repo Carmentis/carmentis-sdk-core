@@ -17,10 +17,10 @@ export abstract class ProofWrapper<T extends WrappedProof = WrappedProof> {
         this.wrapper = wrapper;
     }
 
-    static getDefaultInfo(version: number): ProofInfo {
+    static getDefaultInfo(version: number, chainId: string): ProofInfo {
         return {
             version,
-            chainId: "",
+            chainId,
             description: "This is a Carmentis proof file. Visit www.carmentis.io for more information.",
             author: "",
             date: (new Date()).toISOString(),

@@ -11,10 +11,10 @@ export class AccountProofWrapper extends ProofWrapper<WrappedAccountProof> {
         super(wrapper);
     }
 
-    static createEmptyProof() {
+    static createEmptyProof(chainId: string) {
         const wrapper: WrappedAccountProof = {
             type: "accountProof",
-            info: ProofWrapper.getDefaultInfo(ACCOUNT_PROOF_VERSION),
+            info: ProofWrapper.getDefaultInfo(ACCOUNT_PROOF_VERSION, chainId),
             proof: {
                 accounts: [],
             }

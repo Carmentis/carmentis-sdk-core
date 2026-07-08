@@ -11,10 +11,10 @@ export class MicroblockProofWrapper extends ProofWrapper<WrappedMicroblockProof>
         super(wrapper);
     }
 
-    static createEmptyProof() {
+    static createEmptyProof(chainId: string) {
         const wrapper: WrappedMicroblockProof = {
             type: "microblockProof",
-            info: ProofWrapper.getDefaultInfo(MICROBLOCK_PROOF_VERSION),
+            info: ProofWrapper.getDefaultInfo(MICROBLOCK_PROOF_VERSION, chainId),
             proof: {
                 microblocks: [],
             }

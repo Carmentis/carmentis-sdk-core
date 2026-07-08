@@ -11,10 +11,10 @@ export class AppLedgerProofWrapper extends ProofWrapper<WrappedAppLedgerProof> {
         super(wrapper);
     }
 
-    static createEmptyProof() {
+    static createEmptyProof(chainId: string) {
         const wrapper: WrappedAppLedgerProof = {
             type: "appLedgerProof",
-            info: ProofWrapper.getDefaultInfo(APP_LEDGER_PROOF_VERSION),
+            info: ProofWrapper.getDefaultInfo(APP_LEDGER_PROOF_VERSION, chainId),
             proof: {
                 virtualBlockchains: [],
             }

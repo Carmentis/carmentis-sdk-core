@@ -9,13 +9,12 @@ import {PublicSignatureKey} from "../crypto/signature/PublicSignatureKey";
 import {ProtocolInternalState} from "../blockchain/internalStates/ProtocolInternalState";
 import {MicroblockHeader} from "../type/valibot/blockchain/microblock/MicroblockHeader";
 import {MicroblockBody} from "../type/valibot/blockchain/microblock/MicroblockBody";
-import {MicroblockStruct} from "../type/valibot/blockchain/microblock/MicroblockStruct";
 import {VirtualBlockchainState} from "../type/valibot/blockchain/virtualBlockchain/virtualBlockchains";
-import {VirtualBlockchainStatus} from "../type/valibot/provider/VirtualBlockchainStatus";
 import {Microblock} from "../blockchain/microblock/Microblock";
 import {SignatureSchemeId} from "../crypto/signature/SignatureSchemeId";
 
 export interface IProvider {
+    getChainId(): Promise<string>;
     getVirtualBlockchainIdContainingMicroblock(microblockHash: Hash): Promise<Hash>;
     getMicroblockHeader(microblockHash: Hash): Promise<MicroblockHeader | null>;
     getMicroblockBody(microblockHash: Hash): Promise<MicroblockBody | null>;
