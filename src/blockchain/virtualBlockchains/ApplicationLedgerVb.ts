@@ -455,18 +455,20 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
         return this.deriveChannelSectionMaterial(channelKey, "CHANNEL_SECTION_IV", height, channelId, 12);
     }
 
-    deriveChannelSectionMaterial(channelKey: Uint8Array, prefix: string, height: number, channelId: number, keyLength: number) {
+    private deriveChannelSectionMaterial(channelKey: Uint8Array, prefix: string, height: number, channelId: number, keyLength: number) {
+        // since channel key has high entropy, the salt is not needed
         const salt = new Uint8Array();
-        const encoder = new TextEncoder;
 
+        const encoder = new TextEncoder;
         const info = Utils.binaryFrom(
             encoder.encode(prefix),
-            channelId,
-            new Uint8Array(Utils.intToByteArray(height, 6))
+            encoder.encode("HEIGHT"),
+            new Uint8Array(Utils.intToByteArray(height, 6)),
+            encoder.encode("CHANNEL_ID"),
+            new Uint8Array(Utils.intToByteArray(channelId, 6)),
         );
 
         const hkdf = new HKDF();
-
         return hkdf.deriveKey(channelKey, salt, info, keyLength);
     }
 
@@ -505,22 +507,22 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
     }
 
     /**
-     * Returns a channel key derived directly from the private key of the current actor.
+     * Returns a channel key derived directly from the private seed of the current actor.
+     * @param seed
      * @param channelId
      */
     async deriveChannelKey(seed: Uint8Array, channelId: number) {
         const genesisSeed = await this.getGenesisSeed();
         const encoder = new TextEncoder;
-        const info = Utils.binaryFrom(encoder.encode("CHANNEL_KEY"));
-        const inputKeyMaterial = Utils.binaryFrom(
-            seed,
+        const info = Utils.binaryFrom(
+            encoder.encode("CHANNEL_KEY"),
             encoder.encode("GENESIS_SEED"),
             genesisSeed.toBytes(),
             encoder.encode("CHANNEL_ID"),
-            Utils.binaryFrom(channelId)
+            new Uint8Array(Utils.intToByteArray(channelId, 6))
         );
         const hkdf = new HKDF();
-        return hkdf.deriveKeyNoSalt(inputKeyMaterial, info, 32);
+        return hkdf.deriveKeyNoSalt(seed, info, 32);
     }
 
     /**
@@ -580,8 +582,6 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
      * Exports a proof containing intermediate representations for all microblocks up to the current height of the virtual blockchain.
      *
      * @param {Object} customInfo - Custom information to include in the proof.
-     * @param hostPrivateSignatureKey
-     * @param hostPrivateDecryptionKey
      * @param {string} customInfo.author - The author of the proof file.
      * @return {Promise<Object>} A promise that resolves to an object containing metadata and the exported proof data.
      * @return {Object} return.info - Metadata about the proof.

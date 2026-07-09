@@ -6,6 +6,9 @@ export class MlKemPublicKeyEncryptionScheme extends AbstractPublicKeyEncryptionS
         return PublicKeyEncryptionSchemeId.ML_KEM_768_AES_256_GCM;
     }
 
+    /**
+     * @deprecated Do not use this method. Not relevant.
+     */
     getSupportedSeedLength(): number[] {
         return [32];
     }

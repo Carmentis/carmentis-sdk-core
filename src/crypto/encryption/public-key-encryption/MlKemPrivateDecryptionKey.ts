@@ -30,7 +30,7 @@ export class MlKemPrivateDecryptionKey extends AbstractPrivateDecryptionKey {
     private readonly privateKey: Uint8Array;
     private readonly publicKey: Uint8Array;
 
-    private constructor(private readonly seed: Uint8Array) {
+    private constructor(seed: Uint8Array) {
         super()
         const {secretKey, publicKey} = ml_kem768.keygen(seed);
         this.privateKey = secretKey;
@@ -62,8 +62,7 @@ export class MlKemPrivateDecryptionKey extends AbstractPrivateDecryptionKey {
             } = encoder.decode(ciphertext);
             const sharedSecret = ml_kem768.decapsulate(encryptedSharedSecret, this.privateKey);
             const cipher = AES256GCMSymmetricEncryptionKey.createFromBytes(sharedSecret);
-            const plaintext = cipher.decrypt(encryptedMessage);
-            return plaintext;
+            return cipher.decrypt(encryptedMessage);
         } catch (e) {
             if (CarmentisError.isCarmentisError(e)) {
                 throw new DecryptionError();

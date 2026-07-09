@@ -50,102 +50,12 @@ export class WalletCrypto {
         return AccountCrypto.createFromWalletSeedAndNonce(this.walletSeed, defaultAccountNonce);
     }
 
-    async generateActorPrivateSignatureKey(algoId: SignatureSchemeId, vbSeed: Uint8Array) {
-        // TODO: implement
-        const kdf = CryptoSchemeFactory.createDefaultKDF();
-        const actorSeed = new Uint8Array([...this.walletSeed, ...vbSeed])
-        const encoder = new TextEncoder();
-        const seed = kdf.deriveKeyNoSalt(actorSeed, encoder.encode("SIG"), 32);
-        return CryptoSchemeFactory.createPrivateSignatureKey(algoId, seed);
-    }
 
-    /**
-     * @deprecated Will be removed soon!
-     * @param algoId
-     * @param vbSeed
-     */
-    async generateActorPrivateDecryptionKey(algoId: PublicKeyEncryptionSchemeId, vbSeed: Uint8Array) {
-        const kdf = CryptoSchemeFactory.createDefaultKDF();
-        const actorSeed = new Uint8Array([...this.walletSeed, ...vbSeed])
-        const encoder = new TextEncoder();
-        const seed = kdf.deriveKeyNoSalt(actorSeed, encoder.encode("PKE"), 32);
-        return CryptoSchemeFactory.createPrivateDecryptionKey(algoId, seed);
-    }
-
-    /**
-     * Generate the private signature key associated to the wallet.
-     *
-     * @param schemeId Type of signature scheme to generate.
-     */
-    getPrivateSignatureKey(schemeId: SignatureSchemeId = SignatureSchemeId.SECP256K1): PrivateSignatureKey {
-        const kdf = CryptoSchemeFactory.createDefaultKDF();
-        const scheme = CryptoSchemeFactory.createSignatureScheme(schemeId);
-        const seedLength = scheme.expectedSeedSize();
-        const info = AccountCrypto.encoderStringAsBytes(`SIG_${schemeId}`);
-        const seed = kdf.deriveKeyNoSalt(
-            this.walletSeed,
-            info,
-            seedLength
-        );
-        return CryptoSchemeFactory.createPrivateSignatureKey( schemeId, seed );
-    }
-
-
-
-    /**
-     * Retrieves the decapsulation key for a given cryptographic scheme ID.
-     *
-     * @deprecated Will be removed soon.
-     *
-     * @param {number} schemeId - The identifier of the cryptographic scheme for which the decapsulation key is needed.
-     * @return {*} The generated decapsulation key for the specified scheme ID.
-     */
-    getDecapsulationKey( schemeId: number ) {
-        const factory = new CryptoSchemeFactory();
-        return factory.createDecapsulationKey( schemeId, this.walletSeed );
-    }
-
-    /**
-     * Derived from the wallet seed, unique for each account.
-     * Used to handle different accounts from the same wallet.
-     *
-     * @param accountNonce The index of the account.
-     */
-    getAccountSeed(accountNonce: number) {
-        const account = this.getAccount(accountNonce);
-        return account.getAccountSeed();
-        //return this.concatWalletSeedWith(this.numberToUint8Array(accountNonce));
-    }
 
     getAccount(accountNonce: number) {
         return AccountCrypto.createFromWalletSeedAndNonce(this.walletSeed, accountNonce);
     }
 
-
-    getAccountPrivateSignatureKey( schemeId: SignatureSchemeId,  accountNonce: number ) {
-        const account = AccountCrypto.createFromWalletSeedAndNonce(this.walletSeed, accountNonce);
-        return account.getPrivateSignatureKey(schemeId);
-    }
-
-    getActorPrivateSignatureKey(schemeId: number, vbSeed: Uint8Array, accountNonce: number) {
-        const account = AccountCrypto.createFromWalletSeedAndNonce(this.walletSeed, accountNonce);
-        const actor = account.deriveActorFromVbSeed(vbSeed);
-        return actor.getPrivateSignatureKey(schemeId);
-    }
-
-
-
-    /**
-     * Retrieves the virtual blockchain decapsulation key using the specified scheme ID and virtual blockchain seed.
-     *
-     * @deprecated Will be removed soon.
-     * @param {number} schemeId - The identifier of the cryptographic scheme to be used for generating the key.
-     * @param {Uint8Array} vbSeed - The virtual blockchain seed
-     * */
-    getVirtualBlockchainDecapsulationKey( schemeId: number, vbSeed: Uint8Array ) {
-        const factory = new CryptoSchemeFactory();
-        return factory.createVirtualBlockchainDecapsulationKey( schemeId, this.walletSeed, vbSeed );
-    }
 
     getSeedAsBytes() {
         return this.walletSeed;
