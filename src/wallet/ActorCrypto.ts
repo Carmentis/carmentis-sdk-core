@@ -12,8 +12,25 @@ export class ActorCrypto implements ICryptoKeyHandler {
 
     constructor(private readonly actorSeed: Uint8Array) {}
 
+
+    static encoderStringAsBytes(data: string): Uint8Array {
+        const encoder = new TextEncoder();
+        return encoder.encode(data);
+    }
+
     static createFromAccountSeedAndVbSeed(accountSeed: Uint8Array, vbSeed: Uint8Array) {
-        const actorSeed = Utils.binaryFrom(accountSeed, vbSeed);
+        const inputSeed = accountSeed;
+        const kdf = CryptoSchemeFactory.createDefaultKDF();
+        const info = Utils.binaryFrom(
+            this.encoderStringAsBytes("ACTOR_SEED"),
+            this.encoderStringAsBytes("VB_SEED"),
+            vbSeed
+        );
+        const actorSeed = kdf.deriveKeyNoSalt(
+            inputSeed,
+            info,
+            32
+        );
         return new ActorCrypto(actorSeed);
     }
 
@@ -31,7 +48,10 @@ export class ActorCrypto implements ICryptoKeyHandler {
 
     async getPrivateSignatureKey(schemeId: SignatureSchemeId = this.signatureSchemeId) {
         const kdf = CryptoSchemeFactory.createDefaultKDF();
-        const info = this.encoderStringAsBytes("SIG");
+        const info = Utils.binaryFrom(
+            this.encoderStringAsBytes("SIG"),
+            new Uint8Array(Utils.intToByteArray(schemeId, 6)),
+        );
         const seed = kdf.deriveKeyNoSalt(
             this.actorSeed,
             info,
@@ -47,7 +67,10 @@ export class ActorCrypto implements ICryptoKeyHandler {
 
     getPrivateDecryptionKey(schemeId: PublicKeyEncryptionSchemeId = this.pkeSchemeId) {
         const kdf = CryptoSchemeFactory.createDefaultKDF();
-        const info = this.encoderStringAsBytes("PKE");
+        const info = Utils.binaryFrom(
+            this.encoderStringAsBytes("PKE"),
+            new Uint8Array(Utils.intToByteArray(schemeId, 6)),
+        );
         const seed = kdf.deriveKeyNoSalt(
             this.actorSeed,
             info,
