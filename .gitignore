@@ -20,6 +20,8 @@ dist
 dist-ssr
 *.local
 
+src/carmentis-sdk-core.ts
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
