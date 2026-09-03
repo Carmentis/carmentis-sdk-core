@@ -15,8 +15,12 @@ import {
     PKMS_TAG,
     PUBLIC_KEY_TAG,
     SECRET_KEY_TAG,
+    JWK_TAG,
 } from "../../../../type/Resolver";
 import {EncoderFactory} from "../../../../utils/encoder";
+import {base64url} from "jose";
+import {JwkPublicSignatureKey} from "../../../signature/jwk/JwkPublicSignatureKey";
+import {JwkPrivateSignatureKey} from "../../../signature/jwk/JwkPrivateSignatureKey";
 
 interface DecodedKey {
     schemeTags: string[];
@@ -32,10 +36,14 @@ export class DckfSignatureDecoder implements ISignatureDecodeHandler {
             [ SECP256K1_TAG ],
             [ MLDSA65_TAG ],
             [ PKMS_TAG, SECP256K1_TAG ],
+            [ JWK_TAG ],
         ];
     }
 
     async isAcceptingPublicKeyDecodingRequest(encodedPublicKey: string): Promise<boolean> {
+        if (encodedPublicKey.startsWith('did:jwk')) {
+            return true;
+        }
         const keyParts = this.getKeyParts(encodedPublicKey);
         return keyParts !== null && keyParts.typeTag === PUBLIC_KEY_TAG;
     }
@@ -45,7 +53,28 @@ export class DckfSignatureDecoder implements ISignatureDecodeHandler {
         return keyParts !== null && keyParts.typeTag === SECRET_KEY_TAG;
     }
 
+
+    private didJwkToJwk(did: string): JsonWebKey {
+        const prefix = "did:jwk:";
+        if (!did.startsWith(prefix)) {
+            throw new Error(`Invalid did:jwk identifier: ${did}`);
+        }
+
+        // Retire le préfixe, puis un éventuel fragment/query
+        const encoded = did.slice(prefix.length).split(/[#?]/)[0];
+
+        const bytes = base64url.decode(encoded);
+        const jsonStr = new TextDecoder().decode(bytes);
+
+        return JSON.parse(jsonStr);
+    }
+
     async decodePublicKey(encodedPublicKey: string): Promise<PublicSignatureKey> {
+        if (encodedPublicKey.startsWith('did:jwk')) {
+            const jwk = this.didJwkToJwk(encodedPublicKey);
+            return JwkPublicSignatureKey.fromJwk(jwk);
+        }
+
         const keyParts = this.getKeyParts(encodedPublicKey);
         if (keyParts === null) {
             throw new Error('invalid key format');
@@ -68,6 +97,10 @@ export class DckfSignatureDecoder implements ISignatureDecodeHandler {
                     return new PkmsSecp256k1PublicSignatureKey(publicKeyBytes);
                 }
                 break;
+            }
+            case JWK_TAG: {
+                const publicKeyBytes = this.bytesEncoder.decode(keyParts.payload);
+                return JwkPublicSignatureKey.fromBytes(publicKeyBytes);
             }
         }
         throw new Error('unsupported key format');
@@ -96,6 +129,10 @@ export class DckfSignatureDecoder implements ISignatureDecodeHandler {
                     return new PkmsSecp256k1PrivateSignatureKey(privateKeyId);
                 }
                 break;
+            }
+            case JWK_TAG: {
+                const privateKeyBytes = this.bytesEncoder.decode(keyParts.payload);
+                return JwkPrivateSignatureKey.fromBytes(privateKeyBytes);
             }
         }
         throw new Error('unsupported key format');

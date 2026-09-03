@@ -37,6 +37,7 @@
     "@semantic-release/github": "^12.0.6",
     "@semantic-release/npm": "^13.1.5",
     "@types/jest": "^30.0.0",
+    "@types/lodash": "^4.17.25",
     "@types/node": "^25.5.2",
     "@typescript-eslint/eslint-plugin": "^8.59.4",
     "@typescript-eslint/parser": "^8.59.4",
@@ -58,9 +59,12 @@
     "@noble/hashes": "^1.7.1",
     "@noble/post-quantum": "^0.4.1",
     "@noble/secp256k1": "^2.2.3",
+    "canonical-json": "^0.4.0",
     "cbor-x": "^1.6.0",
     "decimal.js": "^10.6.0",
     "jose": "^6.2.2",
+    "lodash": "^4.18.1",
+    "ts-pattern": "^5.9.0",
     "valibot": "^1.2.0"
   }
 }

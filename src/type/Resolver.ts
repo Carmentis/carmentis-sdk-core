@@ -9,3 +9,7 @@ export const PKMS_TAG = "pkms";
 // key type tags
 export const PUBLIC_KEY_TAG = "pk";
 export const SECRET_KEY_TAG = "sk";
+
+// did and JWK tag
+export const DID_TAG = "did";
+export const JWK_TAG = "jwk";
