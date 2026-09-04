@@ -8,6 +8,7 @@ import {
     SignatureJwk,
 } from "../../src/crypto/signature/jwk/JwkSignatureAlgorithm";
 import {SignatureSchemeId} from "../../src/crypto/signature/SignatureSchemeId";
+import {CryptoSchemeFactory} from "../../src/crypto/CryptoSchemeFactory";
 import {MLDSA65PrivateSignatureKey, MLDSA65PublicSignatureKey} from "../../src/crypto/signature/ml-dsa-65";
 import {CryptoEncoderFactory} from "../../src/crypto/encoder/CryptoEncoderFactory";
 import {decode as cborDecode} from "cbor-x";
@@ -274,6 +275,23 @@ describe("JWK signature keys", () => {
             expect(restored.getPublicJwk()).toEqual(publicKey.getPublicJwk());
             expect(await restored.getPublicKeyAsBytes()).toEqual(await publicKey.getPublicKeyAsBytes());
             await expect(restored.verify(MESSAGE, await privateKey.sign(MESSAGE))).resolves.toBe(true);
+        });
+
+        it.each(ALGORITHMS)("recovers a $alg public key exported to binary through the scheme factory", async ({alg}) => {
+            const privateKey = await JwkPrivateSignatureKey.gen(alg);
+            const publicKey = await privateKey.getPublicKey();
+            const encoder = CryptoEncoderFactory.defaultStringSignatureEncoder();
+
+            const recovered = await CryptoSchemeFactory.createPublicSignatureKey(
+                SignatureSchemeId.JWK,
+                await publicKey.getPublicKeyAsBytes(),
+            );
+
+            // Same DID, and the recovered key verifies what the original key signed:
+            // the binary form carries the whole key across the factory.
+            expect(await encoder.encodePublicKey(recovered))
+                .toEqual(await encoder.encodePublicKey(publicKey));
+            await expect(recovered.verify(MESSAGE, await privateKey.sign(MESSAGE))).resolves.toBe(true);
         });
 
         it.each(ALGORITHMS)("encodes a $alg key as sorted CBOR any decoder reads", async ({alg}) => {
