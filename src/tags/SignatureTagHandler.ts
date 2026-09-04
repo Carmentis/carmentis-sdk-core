@@ -5,7 +5,6 @@ import {CryptoEncoderFactory} from "../crypto/encoder/CryptoEncoderFactory";
 import {PublicSignatureKey} from "../crypto/signature/PublicSignatureKey";
 
 export type SignatureTagMetadata = SignatureTag['metadata'];
-export type SignatureTagData = SignatureTag['data'];
 
 export class SignatureTagHandler {
     static fromObject(obj: unknown): SignatureTagHandler {
@@ -41,7 +40,7 @@ export class SignatureTagHandler {
         return this.signatureTag.metadata.origin;
     }
 
-    getRequestedAt(): string | undefined {
+    getRequestedAt(): string {
         return this.signatureTag.metadata.requestedAt;
     }
 
@@ -80,29 +79,30 @@ export class SignatureTagHandler {
         return this.signatureTag.metadata.latestMicroblockHash;
     }
 
-    getData(): SignatureTagData {
-        return this.signatureTag.data;
-    }
-
+    /**
+     * Whether the tag holds the signed data itself, rather than the path to it.
+     */
     isEmbeddedData(): boolean {
-        return this.signatureTag.data.type === 'embedded';
-    }
-
-    isReferencedData(): boolean {
-        return this.signatureTag.data.type === 'referenced';
+        return this.signatureTag.data !== undefined;
     }
 
     /**
-     * Returns the data carried by the tag itself.
+     * Whether the tag holds the path to the signed data, rather than the data itself.
+     */
+    isReferencedData(): boolean {
+        return this.signatureTag.path !== undefined;
+    }
+
+    /**
+     * Returns the data the tag holds.
      *
      * @throws {Error} If the tag references its data instead of embedding it.
      */
     getEmbeddedData(): unknown {
-        const data = this.signatureTag.data;
-        if (data.type !== 'embedded') {
-            throw new Error(`the signed data is not embedded in the tag, but of type ${data.type}`);
+        if (!this.isEmbeddedData()) {
+            throw new Error('the tag does not embed its data, it references it by its path');
         }
-        return data.data;
+        return this.signatureTag.data;
     }
 
     /**
@@ -111,11 +111,11 @@ export class SignatureTagHandler {
      * @throws {Error} If the tag embeds its data instead of referencing it.
      */
     getReferencedDataPath(): string {
-        const data = this.signatureTag.data;
-        if (data.type !== 'referenced') {
-            throw new Error(`the signed data is not referenced by the tag, but of type ${data.type}`);
+        const path = this.signatureTag.path;
+        if (path === undefined) {
+            throw new Error('the tag does not reference its data by a path, it embeds the data itself');
         }
-        return data.path;
+        return path;
     }
 
     getEncodedPublicKey(): string {
