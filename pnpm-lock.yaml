@@ -41,6 +41,9 @@ importers:
       ts-pattern:
         specifier: ^5.9.0
         version: 5.9.0
+      lodash:
+        specifier: ^4.18.1
+        version: 4.18.1
       valibot:
         specifier: ^1.2.0
         version: 1.3.1(typescript@6.0.2)
@@ -63,6 +66,9 @@ importers:
       '@types/jest':
         specifier: ^30.0.0
         version: 30.0.0
+      '@types/lodash':
+        specifier: ^4.17.25
+        version: 4.17.25
       '@types/node':
         specifier: ^25.5.2
         version: 25.5.2
@@ -640,6 +646,9 @@ packages:
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
+
+  '@types/lodash@4.17.25':
+    resolution: {integrity: sha512-+K1NIO8I+F9/wNulfVvu23QYd0Pe9/OCqRrim4NoYIf1VoEDL90Ve4ClzpyqBLc7NpGGWRvYNCKZ1BE/Jpf8dQ==}
 
   '@types/node@25.5.2':
     resolution: {integrity: sha512-tO4ZIRKNC+MDWV4qKVZe3Ql/woTnmHDr5JD8UI5hn2pwBrHEwOEMZK7WlNb5RKB6EoJ02gwmQS9OrjuFnZYdpg==}
@@ -3586,6 +3595,8 @@ snapshots:
       pretty-format: 30.3.0
 
   '@types/json-schema@7.0.15': {}
+
+  '@types/lodash@4.17.25': {}
 
   '@types/node@25.5.2':
     dependencies:

@@ -1,6 +1,6 @@
 {
   "name": "@cmts-dev/carmentis-sdk-core",
-  "version": "1.4.2",
+  "version": "1.5.0",
   "license": "Apache-2.0",
   "main": "./dist/carmentis-sdk-core.cjs",
   "module": "./dist/carmentis-sdk-core.js",
@@ -37,6 +37,7 @@
     "@semantic-release/github": "^12.0.6",
     "@semantic-release/npm": "^13.1.5",
     "@types/jest": "^30.0.0",
+    "@types/lodash": "^4.17.25",
     "@types/node": "^25.5.2",
     "@typescript-eslint/eslint-plugin": "^8.59.4",
     "@typescript-eslint/parser": "^8.59.4",
@@ -63,6 +64,7 @@
     "jose": "^6.2.2",
     "json-canonicalize": "^3.0.0",
     "ts-pattern": "^5.9.0",
+    "lodash": "^4.18.1",
     "valibot": "^1.2.0"
   }
 }

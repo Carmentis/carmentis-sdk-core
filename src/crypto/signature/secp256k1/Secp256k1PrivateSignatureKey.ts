@@ -1,4 +1,4 @@
-import {etc, getPublicKey, PrivKey, sign as signSecp256k1, utils} from "@noble/secp256k1";
+import {etc, getPublicKey, PrivKey, sign as signSecp256k1, signAsync, utils} from "@noble/secp256k1";
 import {BasePrivateSignatureKey} from "../BasePrivateSignatureKey";
 import {EncoderInterface} from "../../../utils/encoder";
 import {PublicSignatureKey} from "../PublicSignatureKey";
@@ -57,7 +57,7 @@ export class Secp256k1PrivateSignatureKey extends BasePrivateSignatureKey {
 
     async sign(data: Uint8Array): Promise<Uint8Array> {
         const msgHash = sha256(data);
-        return signSecp256k1(msgHash, this.privateKey).toCompactRawBytes();
+        return (await signAsync(msgHash, this.privateKey)).toCompactRawBytes();
     }
 
     getScheme(): SignatureScheme {
