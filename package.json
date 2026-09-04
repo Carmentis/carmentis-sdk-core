@@ -62,6 +62,8 @@
     "cbor-x": "^1.6.0",
     "decimal.js": "^10.6.0",
     "jose": "^6.2.2",
+    "json-canonicalize": "^3.0.0",
+    "ts-pattern": "^5.9.0",
     "lodash": "^4.18.1",
     "valibot": "^1.2.0"
   }
