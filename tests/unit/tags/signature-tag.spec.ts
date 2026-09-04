@@ -49,7 +49,6 @@ describe("SignatureTagHandler", () => {
                 title: "Terms of service",
                 message: "Please sign the terms of service",
                 origin: "https://example.com",
-                requestedAt: "2026-09-04T08:00:00.000Z",
                 signedAt: "2026-09-04T08:01:30.000Z",
             },
             path: "documents/terms.pdf",

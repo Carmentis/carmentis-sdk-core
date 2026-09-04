@@ -6,7 +6,7 @@ export const SignatureTagSchema = v.pipe(
             title: v.string(),
             message: v.string(),
             origin: v.string(),
-            requestedAt: v.string(),
+            requestedAt: v.optional(v.string()),
             signedAt: v.string(),
 
             notValidBefore: v.optional(v.string()),
