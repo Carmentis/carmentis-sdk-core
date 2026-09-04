@@ -14,9 +14,12 @@ import {
     MLDSA65_TAG,
     PKMS_TAG,
     PUBLIC_KEY_TAG,
-    SECRET_KEY_TAG,
+    SECRET_KEY_TAG, JWK_TAG,
 } from "../../../../type/Resolver";
 import {EncoderFactory} from "../../../../utils/encoder";
+import {JwkPublicSignatureKey} from "../../../signature/jwk/JwkPublicSignatureKey";
+import {base64url} from "jose";
+import {JwkPrivateSignatureKey} from "../../../signature/jwk/JwkPrivateSignatureKey";
 
 export class DckfSignatureEncoder implements ISignatureEncoderHandler {
     protected bytesEncoder = EncoderFactory.bytesToHexEncoder();
@@ -32,6 +35,11 @@ export class DckfSignatureEncoder implements ISignatureEncoderHandler {
     async encodePublicKey(publicKey: PublicSignatureKey): Promise<string> {
         if (!this.isAcceptingPublicKeyEncodingRequest(publicKey)) {
             throw new Error('unexpected public key type');
+        }
+        if (publicKey instanceof JwkPublicSignatureKey) {
+            // The JWK is already canonical, members included: `JSON.stringify` walks them
+            // in insertion order, so the identifier is a function of the key alone.
+            return `did:jwk:${base64url.encode(JSON.stringify(publicKey.getPublicJwk()))}`;
         }
         const schemeTags = this.getPublicKeySchemeTags(publicKey);
         const keyPayload = await this.getPublicKeyPayload(publicKey);
@@ -78,6 +86,9 @@ export class DckfSignatureEncoder implements ISignatureEncoderHandler {
         if (publicKey instanceof PkmsSecp256k1PublicSignatureKey) {
             return [ PKMS_TAG, SECP256K1_TAG ];
         }
+        if (publicKey instanceof JwkPublicSignatureKey) {
+            return [ JWK_TAG ];
+        }
         return [];
     }
 
@@ -90,6 +101,9 @@ export class DckfSignatureEncoder implements ISignatureEncoderHandler {
         }
         if (privateKey instanceof PkmsSecp256k1PrivateSignatureKey) {
             return [ PKMS_TAG, SECP256K1_TAG ];
+        }
+        if (privateKey instanceof JwkPrivateSignatureKey) {
+            return [ JWK_TAG ];
         }
         return [];
     }
