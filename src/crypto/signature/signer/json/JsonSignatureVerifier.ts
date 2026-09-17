@@ -89,18 +89,16 @@ export class JsonSignatureVerifier {
             console.warn(`Malformed compact JWS: expected 3 parts, got ${parts.length}`);
             return SignatureVerificationUtils.malformed()
         }
+
         const [encodedHeader, encodedPayload, encodedSignature] = parts;
-
-
         const signingInput = `${encodedHeader}.${encodedPayload}`;
         const signingInputBytes = new TextEncoder().encode(signingInput);
         const rawSignature = base64UrlToBytes(encodedSignature);
         const verified = await pk.verify(signingInputBytes, rawSignature);
         if (!verified) return SignatureVerificationUtils.invalidSignature()
 
-        const header = base64UrlToObject(encodedHeader);
-        const payload = base64UrlToObject(encodedPayload);
-        const context = v.parse(SignatureContextSchema, header.context);
+        const payload = signature.getPayload();
+        const context = signature.getContext();
 
         // check context errors
         const contextErrors = this.checkContext(context, verificationContext)
