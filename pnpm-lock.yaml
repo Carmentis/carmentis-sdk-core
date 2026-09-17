@@ -41,12 +41,12 @@ importers:
       json-canonicalize:
         specifier: ^3.0.0
         version: 3.0.0
-      ts-pattern:
-        specifier: ^5.9.0
-        version: 5.9.0
       lodash:
         specifier: ^4.18.1
         version: 4.18.1
+      ts-pattern:
+        specifier: ^5.9.0
+        version: 5.9.0
       valibot:
         specifier: ^1.2.0
         version: 1.3.1(typescript@6.0.2)
