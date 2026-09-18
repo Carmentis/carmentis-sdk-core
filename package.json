@@ -34,7 +34,7 @@
     "@eslint/js": "^10.0.1",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
-    "@semantic-release/github": "^12.0.6",
+    "@semantic-release/github": "^12.0.9",
     "@semantic-release/npm": "^13.1.5",
     "@types/jest": "^30.0.0",
     "@types/lodash": "^4.17.25",
@@ -64,8 +64,8 @@
     "decimal.js": "^10.6.0",
     "jose": "^6.2.2",
     "json-canonicalize": "^3.0.0",
-    "ts-pattern": "^5.9.0",
     "lodash": "^4.18.1",
+    "ts-pattern": "^5.9.0",
     "valibot": "^1.2.0"
   }
 }
