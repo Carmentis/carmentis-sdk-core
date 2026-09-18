@@ -1,7 +1,7 @@
 {
   "name": "@cmts-dev/carmentis-sdk-core",
   "repository": "github:Carmentis/carmentis-sdk-core",
-  "version": "1.7.2",
+  "version": "1.7.3",
   "license": "Apache-2.0",
   "main": "./dist/carmentis-sdk-core.cjs",
   "module": "./dist/carmentis-sdk-core.js",
