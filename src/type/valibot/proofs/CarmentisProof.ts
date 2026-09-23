@@ -2,6 +2,7 @@ import * as v from 'valibot';
 import {AppLedgerProofSchema} from './AppLedgerProof';
 import {AccountProofSchema} from './AccountProof';
 import {MicroblockProofSchema} from './MicroblockProof';
+import {ResolutionProofSchema} from './ResolutionProof';
 
 export const ProofInfoSchema = v.object({
     version: v.number(),
@@ -13,10 +14,10 @@ export const ProofInfoSchema = v.object({
 export type ProofInfo = v.InferOutput<typeof ProofInfoSchema>;
 
 const ProofSignatureCommitmentSchema = v.object({
-    issuedAt: v.optional(v.string()),
-    digestAlg: v.optional(v.picklist(['sha256'])),
-    digestTarget: v.optional(v.picklist(['cborProof'])),
-    digest: v.optional(v.string()),
+    issuedAt: v.string(),
+    digestAlg: v.picklist(['sha256']),
+    digestTarget: v.picklist(['cborProof']),
+    digest: v.string(),
 });
 export type ProofSignatureCommitment = v.InferOutput<typeof ProofSignatureCommitmentSchema>;
 
@@ -32,12 +33,14 @@ export type ProofSignature = v.InferOutput<typeof ProofSignatureSchema>;
 const AppLedgerPayloadSchema = v.object({ type: v.literal("appLedgerProof"), proof: AppLedgerProofSchema });
 const AccountPayloadSchema = v.object({ type: v.literal("accountProof"), proof: AccountProofSchema });
 const MicroblockPayloadSchema = v.object({ type: v.literal("microblockProof"), proof: MicroblockProofSchema });
+const ResolutionPayloadSchema = v.object({ type: v.literal("resolutionProof"), proof: ResolutionProofSchema });
 
 // generic wrapped proof (e.g. what the proof-checker expects)
 const ProofInnerSchema = v.variant('type', [
     AppLedgerPayloadSchema,
     AccountPayloadSchema,
     MicroblockPayloadSchema,
+    ResolutionPayloadSchema,
 ]);
 
 const WrappedInfoSchema = v.object({ info: ProofInfoSchema });
@@ -69,3 +72,10 @@ export type SignedMicroblockPayload = v.InferOutput<typeof SignedMicroblockPaylo
 
 export const WrappedMicroblockProofSchema = v.intersect([SignedMicroblockPayloadSchema, WrappedSignatureSchema]);
 export type WrappedMicroblockProof = v.InferOutput<typeof WrappedMicroblockProofSchema>;
+
+// resolution wrapped proof
+export const SignedResolutionPayloadSchema = v.intersect([ResolutionPayloadSchema, WrappedInfoSchema]);
+export type SignedResolutionPayload = v.InferOutput<typeof SignedResolutionPayloadSchema>;
+
+export const WrappedResolutionProofSchema = v.intersect([SignedResolutionPayloadSchema, WrappedSignatureSchema]);
+export type WrappedResolutionProof = v.InferOutput<typeof WrappedResolutionProofSchema>;

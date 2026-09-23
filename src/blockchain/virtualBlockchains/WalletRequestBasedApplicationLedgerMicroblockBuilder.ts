@@ -22,6 +22,7 @@ import {Record} from "../../records/Record";
 import {RecordByChannels} from "../../records/RecordByChannels";
 import {MerkleRecord} from "../../records/MerkleRecord";
 import {OnChainRecord} from "../../records/OnChainRecord";
+import {JsonData} from "../../type/valibot/json/Json";
 import {
     ApplicationLedgerActorCreationSection,
     ApplicationLedgerActorSubscriptionSection,
@@ -41,8 +42,8 @@ import {
 import {MaskPart} from "../../type/valibot/proofs/AppLedgerProof";
 
 export class WalletRequestBasedApplicationLedgerMicroblockBuilder extends ApplicationLedgerMicroblockBuilder {
-
     private logger = Logger.getLogger([WalletRequestBasedApplicationLedgerMicroblockBuilder.name]);
+
     static async createFromVirtualBlockchain(applicationId: Hash, vb: ApplicationLedgerVb) {
         const mb = await vb.createMicroblock();
         const builder = new WalletRequestBasedApplicationLedgerMicroblockBuilder(mb, vb)
@@ -60,12 +61,14 @@ export class WalletRequestBasedApplicationLedgerMicroblockBuilder extends Applic
 
     private usedSignatureSchemeId: SignatureSchemeId = SignatureSchemeId.SECP256K1;
     private usedPkeSchemeId: PublicKeyEncryptionSchemeId = PublicKeyEncryptionSchemeId.ML_KEM_768_AES_256_GCM;
+    private offchainDictionary: Map<string, JsonData>;
 
     constructor(
         mbUnderConstruction: Microblock,
         vb: ApplicationLedgerVb,
     ) {
         super(mbUnderConstruction, vb, vb.getProvider());
+        this.offchainDictionary = new Map;
     }
 
     private get state() {
@@ -78,6 +81,10 @@ export class WalletRequestBasedApplicationLedgerMicroblockBuilder extends Applic
 
     private getActorPrivateDecryptionKey(actorIdentity: ICryptoKeyHandler) {
         return actorIdentity.getPrivateDecryptionKey(this.usedPkeSchemeId);
+    }
+
+    getOffchainDictionary() {
+        return this.offchainDictionary;
     }
 
     async createMicroblockFromStateUpdateRequest(
@@ -132,6 +139,9 @@ export class WalletRequestBasedApplicationLedgerMicroblockBuilder extends Applic
 
         // initialize a Record object from the JSON object
         const record = Record.fromObject(object.data);
+
+        // store the offchain dictionary
+        this.offchainDictionary = record.getOffchainDictionary();
 
         // process field assignations
         for (const def of object.channelAssignations || []) {

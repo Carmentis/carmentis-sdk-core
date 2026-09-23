@@ -20,3 +20,7 @@ export const JsonSchema: v.GenericSchema<JsonData> = v.lazy(() =>
 );
 
 export type Json = v.InferOutput<typeof JsonSchema>;
+
+export const JsonObjectSchema = v.record(v.string(), JsonSchema);
+
+export type JsonObject = v.InferOutput<typeof JsonObjectSchema>;

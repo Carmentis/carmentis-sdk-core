@@ -3,6 +3,7 @@ import { WrappedProof, WrappedProofSchema } from "../type/valibot/proofs/Carment
 import { AccountProofWrapper } from "./AccountProofWrapper";
 import { AppLedgerProofWrapper } from "./AppLedgerProofWrapper";
 import { MicroblockProofWrapper } from "./MicroblockProofWrapper";
+import { ResolutionProofWrapper } from "./ResolutionProofWrapper";
 
 export class ProofFactory {
     static importProof(wrappedProof: WrappedProof) {
@@ -16,6 +17,9 @@ export class ProofFactory {
             }
             case "microblockProof": {
                 return new MicroblockProofWrapper(wrappedProof);
+            }
+            case "resolutionProof": {
+                return new ResolutionProofWrapper(wrappedProof);
             }
         }
     }

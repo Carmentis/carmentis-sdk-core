@@ -29,9 +29,9 @@ const encodedSk = 'sig:secp256k1:sk:cd42ad5f7a7823f3ab4da368ea4f807fa8246526ea4e
 // set up the logger
 Logger.enableLogs();
 
-test();
+run();
 
-async function test() {
+async function run() {
     const sellerSk = await sigEncoder.decodePrivateKey(encodedSk);
     const sellerPk = await sellerSk.getPublicKey();
     const sellerAccountId = await provider.getAccountIdFromPublicKey(sellerPk);

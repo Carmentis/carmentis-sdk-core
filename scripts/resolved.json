@@ -1,0 +1,31 @@
+{
+  "type": "resolutionProof",
+  "info": {
+    "version": 1,
+    "chainId": "cmts:localnet",
+    "description": "This is a Carmentis proof file. Visit www.carmentis.io for more information.",
+    "author": "",
+    "date": "2026-09-18T08:33:40.354Z"
+  },
+  "proof": {
+    "linkedJson": {
+      "report": "cmts://resolve/al/AA49A422F6AB469B576D0A1963499E2FD67D596654BA7D7F02680973F60890F4/mb/h/1"
+    },
+    "resolvedJson": {},
+    "proofs": {
+      "cmts://resolve/al/AA49A422F6AB469B576D0A1963499E2FD67D596654BA7D7F02680973F60890F4/mb/h/1": {
+        "virtualBlockchains": [
+          {
+            "id": "AA49A422F6AB469B576D0A1963499E2FD67D596654BA7D7F02680973F60890F4",
+            "microblocks": [
+              {
+                "height": 1,
+                "channels": []
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

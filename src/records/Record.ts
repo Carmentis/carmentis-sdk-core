@@ -12,14 +12,18 @@ import {
     BooleanItem,
     NullItem,
 } from '../type/valibot/proofs/AppLedgerProof';
+import { OffchainDataHandler } from './OffchainData';
+import { OFFCHAIN_DATA_TAG } from '../resolver/ResolverTypes';
 
 export class Record {
     private itemList: FlatItem[];
     private publicChannels: Set<number>;
+    private offchainDictionary: Map<string, Json>;
 
     constructor() {
         this.itemList = [];
         this.publicChannels = new Set;
+        this.offchainDictionary = new Map;
     }
 
     static fromObject(object: unknown) {
@@ -46,6 +50,10 @@ export class Record {
         for (const field of fields) {
             this.setFieldChannel(field.item, channelId);
         }
+    }
+
+    getOffchainDictionary() {
+        return this.offchainDictionary;
     }
 
     /**
@@ -135,7 +143,7 @@ export class Record {
      * Sets a mask on a field identified by its path, using a regular expression and a substitution
      * string. The regular expression must capture all parts of the string. The substitution string
      * is a mix of replacement strings and references to the captured groups with $x.
-     * Example: /^(.)(.*)(@.)(.*)$/ and '$1***$3***' applied to 'john.do@gmail.com' will produce
+     * Example: /^(.)(.*)(@.)(.*)$/ and '$1***$3***' applied to 'john.doe@gmail.com' will produce
      * 'j***@g***'.
      */
     private setMaskByRegexOnField(field: Item, regex: RegExp, substitutionString: string) {
@@ -324,9 +332,24 @@ export class Record {
     }
 
     private buildObjectItem(field: { [key: string]: Item }, path: Path) {
-        Object.keys(field).forEach((key) => {
-            const childField = field[key];
-            this.buildItemListByDfs(childField, [...path, key]);
+        const keys = Object.keys(field);
+        keys.forEach((key) => {
+            switch (key) {
+                case OFFCHAIN_DATA_TAG: {
+                    if (keys.length !== 1) {
+                        throw new Error(`when ${OFFCHAIN_DATA_TAG} is used, it must be the only key in the object`);
+                    }
+                    const { onchainData, offchainData } = OffchainDataHandler.extract(field[key]);
+                    this.offchainDictionary.set(onchainData.digest, offchainData);
+                    console.log(onchainData, onchainData.digest, offchainData);
+                    this.buildItemListByDfs(onchainData, [...path, key]);
+                    break;
+                }
+                default: {
+                    const childField = field[key];
+                    this.buildItemListByDfs(childField, [...path, key]);
+                }
+            }
         });
     }
 }

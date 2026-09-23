@@ -326,7 +326,7 @@ const ProofMicroblockSchema = v.object({
 
 export type ProofMicroblock = v.InferOutput<typeof ProofMicroblockSchema>;
 
-const ProofVirtualBlockchainSchema = v.object({
+export const ProofVirtualBlockchainSchema = v.object({
     id: v.string(),
     microblocks: v.array(ProofMicroblockSchema),
 });

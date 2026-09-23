@@ -361,8 +361,11 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
     }
 
     private async getMicroblockMerkleRecord(height: number, hostIdentity?: ICryptoKeyHandler) {
+        console.log("entering getMicroblockMerkleRecord");
+        console.log("hostIdentity", hostIdentity);
         const microblock = await this.getMicroblock(height);
         const listOfChannels: { channelId: number, isPublic: boolean, merkleRootHash: Uint8Array, data: Uint8Array }[] = [];
+        console.log("listOfChannels", listOfChannels);
 
         // we load the public channels that should be always accessible
         for (const section of microblock.getAllSections()) {
@@ -435,7 +438,7 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
                 }
             }
         } else {
-            console.warn("No private channel loaded: no private decryption key provided.")
+            logger.warn("No private channel loaded: no private decryption key provided.")
         }
 
         // import the channels to an OnChainRecord, then export a MerkleRecord
@@ -582,7 +585,8 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
      * Exports a proof containing intermediate representations for all microblocks up to the current height of the virtual blockchain.
      *
      * @param {Object} customInfo - Custom information to include in the proof.
-     * @param {string} customInfo.author - The author of the proof file.
+     * @param {ICryptoKeyHandler} hostIdentity - The identity used to access private data channels.
+     * @param {Array<number>} [heights] - The heights of the microblocks to include in the proof. Defaults to all of them.
      * @return {Promise<Object>} A promise that resolves to an object containing metadata and the exported proof data.
      * @return {Object} return.info - Metadata about the proof.
      * @return {string} return.info.title - A title describing the proof file.
@@ -595,12 +599,16 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
      */
     async exportProof(
         customInfo: { author: string },
-        hostIdentity: ICryptoKeyHandler
+        hostIdentity: ICryptoKeyHandler,
+        heights?: number[],
     ): Promise<WrappedAppLedgerProof> {
+        console.log("Entering exportProof");
         const appLedgerProofVB = new AppLedgerProofVB();
         appLedgerProofVB.setIdentifier(Utils.binaryToHexa(this.getIdentifier().toBytes()))
+        const currentHeight = this.getHeight();
+        const heightList = heights ?? [...Array(currentHeight)].map((_, ndx) => ndx + 1);
 
-        for (let height = 1; height <= this.getHeight(); height++) {
+        for (const height of heightList) {
             const merkleRecord = await this.getMicroblockMerkleRecord(height, hostIdentity);
             const proofRecord = ProofRecord.fromMerkleRecord(merkleRecord);
             const proofChannels = proofRecord.toProofChannels();
