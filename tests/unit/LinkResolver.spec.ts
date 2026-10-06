@@ -1,4 +1,5 @@
-import { LinkResolver, VbRef, MbRef, SectRef } from '../../src/blockchain/resolver/LinkResolver';
+import { LinkResolver } from '../../src/resolver/LinkResolver';
+import { MbRef, SectRef } from '../../src/resolver/ResolverTypes'
 import { describe, it, expect } from 'vitest'
 
 describe("Link resolver", () => {

@@ -1,10 +1,15 @@
 import { LinkResolver } from '../../src/resolver/LinkResolver';
 import { Resolver } from '../../src/resolver/Resolver';
 import { JsonData, JsonObject } from '../../src/type/valibot/json/Json';
-import { ResolverConnector, ResolverInput, ResolverOutput, VbRef, MbRef, SectRef } from '../../src/resolver/ResolverTypes';
+import { ResolverHydrator, ResolverInput, ResolverOutput, VbRef, MbRef, SectRef } from '../../src/resolver/ResolverTypes';
 import { describe, it, expect } from 'vitest'
 import { OffchainDataHandler } from '../../src/records/OffchainData';
 import { OnchainData } from '../../src/resolver/ResolverTypes';
+
+type OffchainStore = {
+    offchainData: JsonObject,
+    id: string | null
+}
 
 describe("Resolver", () => {
     it("Link resolver", async () => {
@@ -33,7 +38,7 @@ describe("Resolver", () => {
         const mbStore: Map<string, JsonObject> = new Map;
 
         // this Map simulates the operator DB
-        const offchainStore: Map<string, JsonObject> = new Map;
+        const offchainStore: Map<string, OffchainStore> = new Map;
 
         // this method simulates the chain anchoring, including __offchain_data__ processing
         function createMicroblock(data: JsonData, vbId?: string, height?: number) {
@@ -57,8 +62,8 @@ describe("Resolver", () => {
                     const newNode: JsonData = {};
                     for (const key of Object.keys(node)) {
                         if (key == '__offchain_data__') {
-                            const { onchainData, offchainData } = OffchainDataHandler.extract(node[key] as JsonObject);
-                            offchainStore.set(onchainData.digest, offchainData);
+                            const { onchainData, offchainData, id } = OffchainDataHandler.extract(node[key] as JsonObject);
+                            offchainStore.set(onchainData.digest, { offchainData, id });
                             newNode[key] = onchainData;
                         }
                         else {
@@ -78,13 +83,14 @@ describe("Resolver", () => {
         const studentVbId = createMicroblock({
             rgpd: {
                 __offchain_data__: {
+                    __id__: "12345",
                     prenom : "Martin",
                     nom : "Durand",
                     date_naissance : "2008-08-01",
                 },
             },
-            niveau : "Terminal",
-            classe : "T3"
+            niveau: "Terminal",
+            classe: "T3"
         });
 
         // Professeur
@@ -126,7 +132,7 @@ describe("Resolver", () => {
             appreciation: "Travail insuffisant"
         }, gradeVbId, 2);
 
-        // Bulletin 
+        // Bulletin
         const reportVbId = createMicroblock({
             _representation: "...",
             eleve: `cmts://resolve/al/${studentVbId}/mb/h/1`,
@@ -150,7 +156,7 @@ describe("Resolver", () => {
             }
         };
 
-        class GeneratorResolverConnector implements ResolverConnector {
+        class GeneratorResolverHydrator implements ResolverHydrator {
             private mbStore: Map<string, JsonObject>;
             private offchainStore: Map<string, JsonObject>;
             private proofs: Map<string, JsonObject> = new Map;
@@ -171,7 +177,7 @@ describe("Resolver", () => {
                 return Object.fromEntries(this.offchainData);
             }
 
-            async resolveMicroblock(link: string, mbRef: MbRef) {
+            async hydrateMicroblock(link: string, mbRef: MbRef) {
                 if (mbRef.vb !== undefined && mbRef.height !== undefined) {
                     const key = mbRef.vb.id + "/" + mbRef.height;
                     const data = this.mbStore.get(key) ?? {};
@@ -181,48 +187,49 @@ describe("Resolver", () => {
                 return {};
             }
 
-            async resolveOffchainData(onchainData: OnchainData) {
-                const offchainData = this.offchainStore.get(onchainData.digest);
-                if (offchainData === undefined) {
+            async hydrateOffchainData(onchainData: OnchainData) {
+                const data = this.offchainStore.get(onchainData.digest) as OffchainStore;
+                if (data === undefined) {
                     return null;
                 }
+                const { offchainData } = data;
                 const res = OffchainDataHandler.inject(onchainData, offchainData);
                 this.offchainData.set(onchainData.digest, offchainData);
                 return res;
             }
         }
 
-        const generatorResolverConnector = new GeneratorResolverConnector(mbStore, offchainStore);
-        const generatorResolver = new Resolver(generatorResolverConnector);
+        const generatorResolverHydrator = new GeneratorResolverHydrator(mbStore, offchainStore);
+        const generatorResolver = new Resolver(generatorResolverHydrator);
         const generatorResolvedJson = await generatorResolver.resolveFromInput(rootObject);
         const generatorOutput: ResolverOutput = {
             linkedJson: rootObject.linkedJson,
             resolvedJson: generatorResolvedJson,
-            offchainData: generatorResolverConnector.getOffchainData(),
-            proofs: generatorResolverConnector.getProofs(),
+            offchainData: generatorResolverHydrator.getOffchainData(),
+            proofs: generatorResolverHydrator.getProofs(),
         }
 
         console.log("generatorOutput", JSON.stringify(generatorOutput, null, 2));
 
-        class CheckerResolverConnector implements ResolverConnector {
+        class CheckerResolverHydrator implements ResolverHydrator {
             private resolverOutput: ResolverOutput;
 
             constructor(resolverOutput: ResolverOutput) {
                 this.resolverOutput = resolverOutput;
             }
 
-            async resolveMicroblock(link: string, mbRef: MbRef) {
+            async hydrateMicroblock(link: string, mbRef: MbRef) {
                 return this.resolverOutput.proofs[link];
             }
 
-            async resolveOffchainData(onchainData: OnchainData) {
+            async hydrateOffchainData(onchainData: OnchainData) {
                 const offchainData = this.resolverOutput.offchainData[onchainData.digest];
                 return OffchainDataHandler.inject(onchainData, offchainData);
             }
         }
 
-        const checkerResolverConnector = new CheckerResolverConnector(generatorOutput);
-        const checkerResolver = new Resolver(checkerResolverConnector);
+        const checkerResolverHydrator = new CheckerResolverHydrator(generatorOutput);
+        const checkerResolver = new Resolver(checkerResolverHydrator);
         const checkerResolvedJson = await checkerResolver.resolveFromOutput(generatorOutput);
 
         console.log("checkerResolvedJson", JSON.stringify(checkerResolvedJson, null, 2));

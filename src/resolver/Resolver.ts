@@ -7,17 +7,17 @@ import {
     Policies,
     ResolverInput,
     ResolverOutput,
-    ResolverConnector,
+    ResolverHydrator,
     OnchainDataSchema
 } from './ResolverTypes';
 
 export class Resolver {
-    private resolverConnector: ResolverConnector;
+    private resolverHydrator: ResolverHydrator;
     private policies: Policies = {};
     private resolvedLinks = new Map;
 
-    constructor(resolverConnector: ResolverConnector) {
-        this.resolverConnector = resolverConnector;
+    constructor(resolverHydrator: ResolverHydrator) {
+        this.resolverHydrator = resolverHydrator;
     }
 
     async resolveFromInput(input: ResolverInput): Promise<JsonObject> {
@@ -66,7 +66,7 @@ export class Resolver {
                 }
                 case OFFCHAIN_DATA_TAG: {
                     const onchainData = v.parse(OnchainDataSchema, node[key]);
-                    const data = await this.resolverConnector.resolveOffchainData(onchainData);
+                    const data = await this.resolverHydrator.hydrateOffchainData(onchainData);
                     newNode[key] = await this.resolveNode(data, subPath);
                     break;
                 }
@@ -114,7 +114,7 @@ export class Resolver {
 
         if (resolvedLink.type === "mb") {
             const mbRef = resolvedLink.ref;
-            const data = await this.resolverConnector.resolveMicroblock(link, mbRef);
+            const data = await this.resolverHydrator.hydrateMicroblock(link, mbRef);
             resolved = await this.resolveNode(data, path);
         }
         else {

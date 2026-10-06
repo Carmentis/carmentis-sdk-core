@@ -140,9 +140,6 @@ export class WalletRequestBasedApplicationLedgerMicroblockBuilder extends Applic
         // initialize a Record object from the JSON object
         const record = Record.fromObject(object.data);
 
-        // store the offchain dictionary
-        this.offchainDictionary = record.getOffchainDictionary();
-
         // process field assignations
         for (const def of object.channelAssignations || []) {
             const channelId = this.state.getChannelIdFromChannelName(def.channelName);

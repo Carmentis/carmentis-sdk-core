@@ -1,8 +1,8 @@
 import * as v from 'valibot';
 import { JsonObjectSchema } from '../json/Json';
-import { ProofVirtualBlockchainSchema } from './AppLedgerProof';
+import { AppLedgerProofSchema } from './AppLedgerProof';
 
-const ResolutionProofProofsSchema = v.record(v.string(), ProofVirtualBlockchainSchema);
+const ResolutionProofProofsSchema = v.record(v.string(), AppLedgerProofSchema);
 export type ResolutionProofProofs = v.InferOutput<typeof ResolutionProofProofsSchema>;
 
 const ResolutionProofOffchainDataSchema = v.record(v.string(), JsonObjectSchema);

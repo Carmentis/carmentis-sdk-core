@@ -53,7 +53,12 @@ export const OnchainDataSchema = v.object({
 
 export type OnchainData = v.InferOutput<typeof OnchainDataSchema>;
 
-export interface ResolverConnector {
-    resolveMicroblock(link: string, mbRef: MbRef): Promise<JsonData>;
-    resolveOffchainData(onchainData: OnchainData): Promise<JsonData>;
+export interface OffchainRecord {
+    onchainData: OnchainData
+    offchainData: JsonObject
+}
+
+export interface ResolverHydrator {
+    hydrateMicroblock(link: string, mbRef: MbRef): Promise<JsonData>;
+    hydrateOffchainData(onchainData: OnchainData): Promise<JsonData>;
 }

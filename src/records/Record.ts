@@ -12,18 +12,14 @@ import {
     BooleanItem,
     NullItem,
 } from '../type/valibot/proofs/AppLedgerProof';
-import { OffchainDataHandler } from './OffchainData';
-import { OFFCHAIN_DATA_TAG } from '../resolver/ResolverTypes';
 
 export class Record {
     private itemList: FlatItem[];
     private publicChannels: Set<number>;
-    private offchainDictionary: Map<string, Json>;
 
     constructor() {
         this.itemList = [];
         this.publicChannels = new Set;
-        this.offchainDictionary = new Map;
     }
 
     static fromObject(object: unknown) {
@@ -50,10 +46,6 @@ export class Record {
         for (const field of fields) {
             this.setFieldChannel(field.item, channelId);
         }
-    }
-
-    getOffchainDictionary() {
-        return this.offchainDictionary;
     }
 
     /**
@@ -334,22 +326,8 @@ export class Record {
     private buildObjectItem(field: { [key: string]: Item }, path: Path) {
         const keys = Object.keys(field);
         keys.forEach((key) => {
-            switch (key) {
-                case OFFCHAIN_DATA_TAG: {
-                    if (keys.length !== 1) {
-                        throw new Error(`when ${OFFCHAIN_DATA_TAG} is used, it must be the only key in the object`);
-                    }
-                    const { onchainData, offchainData } = OffchainDataHandler.extract(field[key]);
-                    this.offchainDictionary.set(onchainData.digest, offchainData);
-                    console.log(onchainData, onchainData.digest, offchainData);
-                    this.buildItemListByDfs(onchainData, [...path, key]);
-                    break;
-                }
-                default: {
-                    const childField = field[key];
-                    this.buildItemListByDfs(childField, [...path, key]);
-                }
-            }
+            const childField = field[key];
+            this.buildItemListByDfs(childField, [...path, key]);
         });
     }
 }

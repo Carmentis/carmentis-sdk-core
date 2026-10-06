@@ -3,31 +3,45 @@ import { JsonCanonicalizationMethod } from "../crypto/signature/signer/json/Json
 import { Crypto } from "../crypto/crypto";
 import { Hash } from "../entities/Hash";
 import { JsonObject } from "../type/valibot/json/Json";
-import { OnchainData } from '../resolver/ResolverTypes';
+import { OnchainData, OffchainRecord } from '../resolver/ResolverTypes';
 
 export class OffchainDataHandler {
-    static extract(field: JsonObject, encoding = "canonical", digestAlg = "sha256") {
+    static extract(object: JsonObject, encoding = "canonical", digestAlg = "sha256"): OffchainRecord {
+        // build offchainData by adding __salt__
         const rawSalt = Crypto.Random.getBytes(16);
         const salt = Hash.from(rawSalt).encode();
-        const offchainData = { __salt__: salt, ...field };
+        const offchainData = { __salt__: salt, ...object };
+
+        // compute the digest
         const digest = OffchainDataHandler.computeDigest(encoding, digestAlg, offchainData);
+
         const onchainData: OnchainData = {
             digest,
             encoding,
             digestAlg,
         };
-        return { onchainData, offchainData };
+
+        const record: OffchainRecord = {
+            onchainData,
+            offchainData,
+        };
+        return record;
     }
 
-    static inject(onchainData: OnchainData, offchainData: JsonObject) {
+    static inject(onchainData: OnchainData, offchainData: JsonObject): JsonObject {
         const { encoding, digestAlg, digest } = onchainData;
+
+        // re-compute the digest from offchainData and check it against the on-chain value
         const computedDigest = OffchainDataHandler.computeDigest(encoding, digestAlg, offchainData);
         if (computedDigest !== digest) {
             throw new Error(`digest of injected offchain data does not match onchain digest (offchain digest = ${computedDigest}, onchain digest = ${digest}), encoding = ${encoding}, digestAlg = ${digestAlg}`);
         }
-        const data = { ...offchainData };
-        delete (data as Record<string, unknown>).__salt__;
-        return data;
+
+        // build the object by removing __salt__
+        const object = { ...offchainData };
+        delete (object as Record<string, unknown>).__salt__;
+
+        return object;
     }
 
     static computeDigest(encoding: string, digestAlg: string, data: object) {
@@ -49,7 +63,7 @@ export class OffchainDataHandler {
                 break;
             }
             default: {
-                throw new Error(`unsupported disget algorithm '${digestAlg}'`);
+                throw new Error(`unsupported digest algorithm '${digestAlg}'`);
             }
         }
         const digest = Hash.from(rawDigest).encode();
