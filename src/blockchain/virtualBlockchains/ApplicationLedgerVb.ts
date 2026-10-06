@@ -32,9 +32,6 @@ import {SectionType} from "../../type/valibot/blockchain/section/SectionType";
 import {IProvider} from "../../providers/IProvider";
 import {ApplicationLedgerInternalState} from "../internalStates/ApplicationLedgerInternalState";
 import {InternalStateUpdaterFactory} from "../internalStatesUpdater/InternalStateUpdaterFactory";
-import {ICryptoKeyHandler} from "../../wallet/ICryptoKeyHandler";
-import {SignatureSchemeId} from "../../crypto/signature/SignatureSchemeId";
-import {PublicKeyEncryptionSchemeId} from "../../crypto/encryption/public-key-encryption/PublicKeyEncryptionSchemeId";
 import {ProtocolInternalState} from "../internalStates/ProtocolInternalState";
 import {ApplicationLedgerChannelInvitationSection} from "../../type/valibot/blockchain/section/sections";
 import {AppLedgerProofVB} from "../../proofs/AppLedgerProofVB";
@@ -45,6 +42,8 @@ import {ImportedProof} from "../../type/types";
 import {ProofRecord} from "../../records/ProofRecord";
 import {OnChainRecord} from "../../records/OnChainRecord";
 import {IDecryptor} from "../../crypto/IDecryptor";
+import {IApplicationLedgerActorIdentity} from "./IApplicationLedgerActorIdentity";
+
 
 export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInternalState> {
     static createApplicationLedgerVirtualBlockchain(provider: IProvider) {
@@ -360,7 +359,7 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
         return this.internalState.getNumberOfActors()
     }
 
-    private async getMicroblockMerkleRecord(height: number, hostIdentity?: ICryptoKeyHandler) {
+    private async getMicroblockMerkleRecord(height: number, hostIdentity?: IApplicationLedgerActorIdentity) {
         const microblock = await this.getMicroblock(height);
         const listOfChannels: { channelId: number, isPublic: boolean, merkleRootHash: Uint8Array, data: Uint8Array }[] = [];
 
@@ -379,8 +378,7 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
         // we now load private channels that might be protected (encrypted)
         const logger = Logger.getLogger([ApplicationLedgerVb.name]);
         if ( hostIdentity !== undefined ) {
-            const hostPrivateSignatureKey = await hostIdentity.getPrivateSignatureKey();
-            const hostPublicSignatureKey = await hostPrivateSignatureKey.getPublicKey();
+            const hostPublicSignatureKey = await hostIdentity.getActorPublicSignatureKey();
 
             // we attempt to identify the current actor
             let currentActorId: number | undefined;
@@ -476,13 +474,17 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
      *
      * @param actorId
      * @param channelId
-     * @param actorPrivateDecryptionKey
      *
+     * @param identity
      * @throws ActorNotInvitedError Occurs when no invitation of the actor has been found.
      * @throws NoSharedSecretError Occurs when no shared secret key has been found.
      * @throws DecryptionError Occurs when one of the encrypted channel key or encrypted shared key cannot be decrypted.
      */
-    async getChannelKey(actorId: number, channelId: number, hostIdentity: ICryptoKeyHandler) {
+    async getChannelKey(
+        actorId: number,
+        channelId: number,
+        identity: IApplicationLedgerActorIdentity
+    ) {
         // defensive programming
         Assertion.assert(Number.isInteger(actorId), 'Expected actor id with type number')
         Assertion.assert(Number.isInteger(channelId), `Expected channel id of type number: got ${typeof channelId}`)
@@ -492,7 +494,7 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
         const state = this.internalState;
         const creatorId = state.getChannelCreatorIdFromChannelId(channelId);
         if (creatorId === actorId) {
-            const usedSeed = hostIdentity.getSeedAsBytes();
+            const usedSeed = await identity.getChannelKeysDerivationSeed();
             const channelKey = await this.deriveChannelKey(
                 usedSeed,
                 channelId
@@ -500,8 +502,8 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
             return channelKey;
         }
 
-        // ... otherwise we have to obtain the (encryption of the) channel key from an invitation section.
-        const actorPrivateDecryptionKey = await hostIdentity.getPrivateDecryptionKey();
+        // ... otherwise we have to obtain the (encryption of the) channel key from an invitation section
+        const actorPrivateDecryptionKey = await identity.getActorPrivateDecryptionKey();
         const channelKey = await this.getChannelKeyFromInvitation(actorId, channelId, actorPrivateDecryptionKey);
         return channelKey;
     }
@@ -582,6 +584,7 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
      * Exports a proof containing intermediate representations for all microblocks up to the current height of the virtual blockchain.
      *
      * @param {Object} customInfo - Custom information to include in the proof.
+     * @param hostIdentity
      * @param {string} customInfo.author - The author of the proof file.
      * @return {Promise<Object>} A promise that resolves to an object containing metadata and the exported proof data.
      * @return {Object} return.info - Metadata about the proof.
@@ -595,7 +598,7 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
      */
     async exportProof(
         customInfo: { author: string },
-        hostIdentity: ICryptoKeyHandler
+        hostIdentity: IApplicationLedgerActorIdentity
     ): Promise<WrappedAppLedgerProof> {
         const appLedgerProofVB = new AppLedgerProofVB();
         appLedgerProofVB.setIdentifier(Utils.binaryToHexa(this.getIdentifier().toBytes()))
@@ -685,7 +688,7 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
      */
     async getRecord(
         height: Height,
-        hostIdentity?: ICryptoKeyHandler
+        hostIdentity?: IApplicationLedgerActorIdentity
     ): Promise<JsonData> {
         const merkleRecord = await this.getMicroblockMerkleRecord(height, hostIdentity);
         const proofRecord = ProofRecord.fromMerkleRecord(merkleRecord);

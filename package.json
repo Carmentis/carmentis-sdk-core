@@ -60,6 +60,7 @@
     "@noble/hashes": "^1.7.1",
     "@noble/post-quantum": "^0.4.1",
     "@noble/secp256k1": "^2.2.3",
+    "@scure/bip39": "^2.4.0",
     "canonical-json": "^0.4.0",
     "cbor-x": "^1.6.0",
     "decimal.js": "^10.6.0",

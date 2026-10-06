@@ -24,7 +24,7 @@ describe("SignatureObject", () => {
                 payload
             );
         const signature = JsonSignatureParser.parse(sig)
-
+        console.log(signature);
         const verifier = new JsonSignatureVerifier();
         const result = await verifier.verify(pk, signature, {
             verifiedAt: Date.now(),
@@ -57,6 +57,7 @@ describe("SignatureObject", () => {
         const result = await verifier
             .setPayload(payload)
             .verify(pk, signature);
+
         expect(result).toBeDefined();
         expect(result.verified).toBe(true);
     });

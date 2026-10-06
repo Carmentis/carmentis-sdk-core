@@ -39,6 +39,7 @@ import {
     AppLedgerMicroblockBuildRequestValidation
 } from "../../type/AppLedgerStateUpdateRequest";
 import {MaskPart} from "../../type/valibot/proofs/AppLedgerProof";
+import {IApplicationLedgerActorIdentity} from "./IApplicationLedgerActorIdentity";
 
 export class WalletRequestBasedApplicationLedgerMicroblockBuilder extends ApplicationLedgerMicroblockBuilder {
 
@@ -58,8 +59,7 @@ export class WalletRequestBasedApplicationLedgerMicroblockBuilder extends Applic
         return builder;
     }
 
-    private usedSignatureSchemeId: SignatureSchemeId = SignatureSchemeId.SECP256K1;
-    private usedPkeSchemeId: PublicKeyEncryptionSchemeId = PublicKeyEncryptionSchemeId.ML_KEM_768_AES_256_GCM;
+
 
     constructor(
         mbUnderConstruction: Microblock,
@@ -72,21 +72,13 @@ export class WalletRequestBasedApplicationLedgerMicroblockBuilder extends Applic
         return this.getInternalState()
     }
 
-    private getActorPrivateSignatureKey(actorIdentity: ICryptoKeyHandler) {
-        return actorIdentity.getPrivateSignatureKey(this.usedSignatureSchemeId);
-    }
-
-    private getActorPrivateDecryptionKey(actorIdentity: ICryptoKeyHandler) {
-        return actorIdentity.getPrivateDecryptionKey(this.usedPkeSchemeId);
-    }
-
     async createMicroblockFromStateUpdateRequest(
-        hostIdentity: ICryptoKeyHandler,
+        hostIdentity: IApplicationLedgerActorIdentity,
         request: AppLedgerMicroblockBuildRequest
     ) {
         const object = AppLedgerMicroblockBuildRequestValidation.validate(request);
-        const hostPrivateDecryptionKey = await this.getActorPrivateDecryptionKey(hostIdentity);
-        const hostPrivateSignatureKey = await this.getActorPrivateSignatureKey(hostIdentity);
+        const hostPrivateDecryptionKey = await hostIdentity.getActorPrivateDecryptionKey()
+        const hostPublicSignatureKey = await hostIdentity.getActorPublicSignatureKey()
 
         // add the new actors
         let freeActorId = this.state.getNumberOfActors();
@@ -110,7 +102,7 @@ export class WalletRequestBasedApplicationLedgerMicroblockBuilder extends Applic
             const authorPublicEncryptionKey = await hostPrivateDecryptionKey.getPublicKey();
             await this.subscribeActor(
                 authorName,
-                await hostPrivateSignatureKey.getPublicKey(),
+                hostPublicSignatureKey,
                 authorPublicEncryptionKey
             );
         }
@@ -196,12 +188,10 @@ export class WalletRequestBasedApplicationLedgerMicroblockBuilder extends Applic
                 this.mbUnderConstruction.addSection(section)
                 await this.updateStateWithSection(section)
             } else {
-                const logger = Logger.getLogger(["critical"]);
                 const height = this.vb.getHeight() + 1; // we are constructing a microblock so the height should be incremented to consider this microblock
                 const channelKey = await this.vb.getChannelKey(authorId, channelId, hostIdentity);
                 const channelSectionKey = this.vb.deriveChannelSectionKey(channelKey, height, channelId);
                 const channelSectionIv = this.vb.deriveChannelSectionIv(channelKey, height, channelId);
-                logger.debug(`Channel key ${channelKey} at height ${height} and channel id ${channelId} -> Channel section key: ${channelSectionKey} (iv ${channelSectionIv}) `)
                 const encryptedData = Crypto.Aes.encryptGcm(channelSectionKey, channelData.data, channelSectionIv);
                 const section: ApplicationLedgerPrivateChannelDataSection = {
                     type: SectionType.APP_LEDGER_PRIVATE_CHANNEL_DATA,
@@ -251,12 +241,12 @@ export class WalletRequestBasedApplicationLedgerMicroblockBuilder extends Applic
         await this.updateStateWithSection(section);
     }
 
-    async inviteActorOnChannel(actorName: string, channelName: string, hostIdentity: ICryptoKeyHandler) {
+    async inviteActorOnChannel(actorName: string, channelName: string, actorIdentity: IApplicationLedgerActorIdentity) {
         console.log("Inviting actor " + actorName + " on channel " + channelName)
         const channelId = this.state.getChannelIdFromChannelName(channelName);
         const actorId = this.getActorIdFromActorName(actorName);
-        const hostPrivateSignatureKey = await this.getActorPrivateSignatureKey(hostIdentity);
-        const hostId = await this.vb.getActorIdByPublicSignatureKey(await hostPrivateSignatureKey.getPublicKey());
+        const actorPublicSignatureKey: PublicSignatureKey = await actorIdentity.getActorPublicSignatureKey();
+        const hostId = await this.vb.getActorIdByPublicSignatureKey(actorPublicSignatureKey);
         Assertion.assert(typeof channelId === 'number', `Expected channel id of type number: got ${typeof channelId} for channel ${channelName}`)
         const guestId = actorId; // the guest is the actor assigned to the channel
 
@@ -265,7 +255,7 @@ export class WalletRequestBasedApplicationLedgerMicroblockBuilder extends Applic
         if (await this.vb.isActorInChannel(channelId, guestId)) return;
 
         // we first have to ensure that the host is able to recover the channel key
-        const channelKey = await this.vb.getChannelKey(hostId, channelId, hostIdentity);
+        const channelKey = await this.vb.getChannelKey(hostId, channelId, actorIdentity);
 
         // if the host is already able to recover the channel key, then we do not need to create an invitation
         const guestPublicEncryptionKey = await this.vb.getPublicEncryptionKeyByActorId(guestId);
