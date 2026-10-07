@@ -6,11 +6,17 @@ import { JsonObject } from "../type/valibot/json/Json";
 import { OnchainData, OffchainRecord } from '../resolver/ResolverTypes';
 
 export class OffchainDataHandler {
-    static extract(object: JsonObject, encoding = "canonical", digestAlg = "sha256"): OffchainRecord {
-        // build offchainData by adding __salt__
-        const rawSalt = Crypto.Random.getBytes(16);
-        const salt = Hash.from(rawSalt).encode();
-        const offchainData = { __salt__: salt, ...object };
+    static extract(object: JsonObject, addSalt: boolean, encoding = "canonical", digestAlg = "sha256"): OffchainRecord {
+        let offchainData;
+
+        if (addSalt) {
+            const rawSalt = Crypto.Random.getBytes(16);
+            const salt = Hash.from(rawSalt).encode();
+            offchainData = { __salt__: salt, ...object };
+        }
+        else {
+            offchainData = { ...object };
+        }
 
         // compute the digest
         const digest = OffchainDataHandler.computeDigest(encoding, digestAlg, offchainData);
