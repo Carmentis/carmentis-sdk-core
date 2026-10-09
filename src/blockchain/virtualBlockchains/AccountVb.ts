@@ -35,7 +35,7 @@ export class AccountVb extends VirtualBlockchain<AccountInternalState> {
             Utils.getNullHash() :
             (await this.getLastMicroblock()).getHash().toBytes();
         return {
-            expirationDay: this.getExpirationDay(),
+            expirationDay: await this.getExpirationDay(),
             height: height,
             internalState: this.internalState.toObject(),
             lastMicroblockHash: lastMicroblockHash,

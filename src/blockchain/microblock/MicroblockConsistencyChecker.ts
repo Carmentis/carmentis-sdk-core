@@ -100,9 +100,12 @@ export class MicroblockConsistencyChecker {
                 default:
                     throw new Error(`Unknown virtual blockchain type: ${type}`);
             }
+            /*
             const genesisPreviousHash = this.checkedMicroblock.getPreviousHash().toBytes();
             expirationDay = Microblock.extractExpirationDayFromGenesisPreviousHash(genesisPreviousHash)
             vb.setExpirationDay(expirationDay);
+
+             */
         } else {
             switch (type) {
                 case VirtualBlockchainType.ORGANIZATION_VIRTUAL_BLOCKCHAIN:

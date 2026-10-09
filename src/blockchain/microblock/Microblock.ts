@@ -25,6 +25,8 @@ import * as v from 'valibot';
 import {decode, encode} from 'cbor-x';
 import {MicroblockStruct, MicroblockStructSchema} from "../../type/valibot/blockchain/microblock/MicroblockStruct";
 import {SectionLabel} from "../../utils/SectionLabel";
+import {VirtualBlockchainSeed} from "../virtualBlockchains/VirtualBlockchainSeed";
+import {VirtualBlockchainExpiration} from "../virtualBlockchains/VirtualBlockchainExpiration";
 
 /**
  * Represents a microblock in the blockchain that contains sections of data.
@@ -251,16 +253,25 @@ export class Microblock {
     /**
      * Creates a new Microblock instance.
      * @param {VirtualBlockchainType} type - The type of virtual blockchain this microblock belongs to
+     * @param vbSeed
      */
-    constructor(type: VirtualBlockchainType) {
-        const defaultExpirationDay = 0;
+    constructor(type: VirtualBlockchainType, vbSeed?: VirtualBlockchainSeed) {
+        const defaultExpirationDay = vbSeed ?
+            vbSeed.getExpirationDay() :
+            VirtualBlockchainExpiration.noExpiration();
         const defaultTimestampInSeconds = Math.floor(Date.now() / 1000);
         const defaultGasPrice = CMTSToken.zero().getAmountAsAtomic();
+
+        // when provided, we rely on the given vb seed, otherwise we generate one to define the default previous hash
+        const previousHash = vbSeed ?
+            vbSeed.getGenesisSeed().toBytes() :
+            Microblock.generatePreviousHashForGenesisMicroblock(type, defaultExpirationDay);
+
         const initialHeader : MicroblockHeader = {
             magicString: CHAIN.MAGIC_STRING,
             microblockType: type,
             height: 1,
-            previousHash: Microblock.generatePreviousHashForGenesisMicroblock(type, defaultExpirationDay),
+            previousHash: previousHash,
             timestamp: defaultTimestampInSeconds,
             gas: 0,
             gasPrice: defaultGasPrice,

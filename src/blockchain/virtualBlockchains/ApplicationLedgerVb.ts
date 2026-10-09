@@ -43,6 +43,7 @@ import {ProofRecord} from "../../records/ProofRecord";
 import {OnChainRecord} from "../../records/OnChainRecord";
 import {IDecryptor} from "../../crypto/IDecryptor";
 import {IApplicationLedgerActorIdentity} from "./IApplicationLedgerActorIdentity";
+import {VirtualBlockchainSeed} from "./VirtualBlockchainSeed";
 
 
 export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInternalState> {
@@ -80,7 +81,7 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
             Utils.getNullHash() :
             (await this.getLastMicroblock()).getHash().toBytes();
         return {
-            expirationDay: this.getExpirationDay(),
+            expirationDay: await this.getExpirationDay(),
             height: height,
             internalState: this.internalState.toObject(),
             lastMicroblockHash: lastMicroblockHash,

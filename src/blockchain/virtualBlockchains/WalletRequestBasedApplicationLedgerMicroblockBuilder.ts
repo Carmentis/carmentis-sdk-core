@@ -40,26 +40,47 @@ import {
 } from "../../type/AppLedgerStateUpdateRequest";
 import {MaskPart} from "../../type/valibot/proofs/AppLedgerProof";
 import {IApplicationLedgerActorIdentity} from "./IApplicationLedgerActorIdentity";
+import {VirtualBlockchainSeed} from "./VirtualBlockchainSeed";
 
 export class WalletRequestBasedApplicationLedgerMicroblockBuilder extends ApplicationLedgerMicroblockBuilder {
 
     private logger = Logger.getLogger([WalletRequestBasedApplicationLedgerMicroblockBuilder.name]);
-    static async createFromVirtualBlockchain(applicationId: Hash, vb: ApplicationLedgerVb) {
-        const mb = await vb.createMicroblock();
+
+    /**
+     * Creates a microblock builder for an empty application ledger virtual blockchain.
+     * @param applicationId
+     * @param vb
+     * @param vbSeed
+     */
+    static async createFromEmptyVirtualBlockchain(applicationId: Hash, vb: ApplicationLedgerVb, vbSeed: VirtualBlockchainSeed) {
+        if (!vbSeed) {
+            throw new Error("Virtual blockchain seed is required to create genesis microblock");
+        }
+        const mb = await vb.createGenesisMicroblock(vbSeed);
         const builder = new WalletRequestBasedApplicationLedgerMicroblockBuilder(mb, vb)
         vb.setMicroblockSearchFailureFallback(builder);
-        if (vb.isEmpty()) {
-            const section: Section = {
-                type: SectionType.APP_LEDGER_CREATION,
-                applicationId: applicationId.toBytes()
-            };
-            mb.addSection(section)
-            await builder.updateStateWithSection(section);
-        }
+        const section: Section = {
+            type: SectionType.APP_LEDGER_CREATION,
+            applicationId: applicationId.toBytes()
+        };
+        mb.addSection(section)
+        await builder.updateStateWithSection(section);
         return builder;
     }
 
 
+    /**
+     * Creates a microblock builder for an existing application ledger virtual blockchain.
+     *
+     * @param applicationId
+     * @param vb
+     */
+    static async createFromVirtualBlockchain(applicationId: Hash, vb: ApplicationLedgerVb) {
+        const mb = await vb.createMicroblock();
+        const builder = new WalletRequestBasedApplicationLedgerMicroblockBuilder(mb, vb)
+        vb.setMicroblockSearchFailureFallback(builder);
+        return builder;
+    }
 
     constructor(
         mbUnderConstruction: Microblock,
