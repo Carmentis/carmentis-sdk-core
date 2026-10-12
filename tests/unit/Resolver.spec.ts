@@ -1,15 +1,10 @@
 import { LinkResolver } from '../../src/resolver/LinkResolver';
 import { Resolver } from '../../src/resolver/Resolver';
-import { JsonData, JsonObject } from '../../src/type/valibot/json/Json';
-import { ResolverHydrator, ResolverInput, ResolverOutput, VbRef, MbRef, SectRef } from '../../src/resolver/ResolverTypes';
+import { JsonObject } from '../../src/type/valibot/json/Json';
+import { ResolverHydrator, ResolverOutput, MbRef, SectRef } from '../../src/resolver/ResolverTypes';
 import { describe, it, expect } from 'vitest'
-import { OffchainDataHandler } from '../../src/records/OffchainData';
+import { DigestDataHandler } from '../../src/records/digestData';
 import { OnchainData } from '../../src/resolver/ResolverTypes';
-
-type OffchainStore = {
-    offchainData: JsonObject,
-    id: string | null
-}
 
 describe("Resolver", () => {
     it("Link resolver", async () => {
@@ -38,10 +33,10 @@ describe("Resolver", () => {
         const mbStore: Map<string, JsonObject> = new Map;
 
         // this Map simulates the operator DB
-        const offchainStore: Map<string, OffchainStore> = new Map;
+        const digestStore: Map<string, JsonObject> = new Map;
 
-        // this method simulates the chain anchoring, including __offchain_data__ processing
-        function createMicroblock(data: JsonData, vbId?: string, height?: number) {
+        // this method simulates the chain anchoring
+        function createMicroblock(data: JsonObject, vbId?: string, height?: number) {
             if (vbId !== undefined) {
                 if (height === undefined) {
                     throw new Error('vbId without height');
@@ -51,31 +46,8 @@ describe("Resolver", () => {
                 vbId = [...Array(64)].map(() => (Math.random() * 16 | 0).toString(16)).join("");
                 height = 1;
             }
-            function walk(node: JsonData): JsonData {
-                if (node === null) {
-                    return null;
-                }
-                if (Array.isArray(node)) {
-                    return node.map((child) => walk(child));
-                }
-                if (typeof node === "object") {
-                    const newNode: JsonData = {};
-                    for (const key of Object.keys(node)) {
-                        if (key == '__offchain_data__') {
-                            const { onchainData, offchainData, id } = OffchainDataHandler.extract(node[key] as JsonObject);
-                            offchainStore.set(onchainData.digest, { offchainData, id });
-                            newNode[key] = onchainData;
-                        }
-                        else {
-                            newNode[key] = walk(node[key]);
-                        }
-                    }
-                    return newNode;
-                }
-                return node;
-            }
             const key = vbId + "/" + height;
-            mbStore.set(key, walk(data) as JsonObject);
+            mbStore.set(key, data);
             return vbId;
         }
 
@@ -173,8 +145,8 @@ describe("Resolver", () => {
                 return Object.fromEntries(this.proofs);
             }
 
-            getOffchainData() {
-                return Object.fromEntries(this.offchainData);
+            getDigestData() {
+                return {};
             }
 
             async hydrateMicroblock(link: string, mbRef: MbRef) {
@@ -187,25 +159,24 @@ describe("Resolver", () => {
                 return {};
             }
 
-            async hydrateOffchainData(onchainData: OnchainData) {
-                const data = this.offchainStore.get(onchainData.digest) as OffchainStore;
-                if (data === undefined) {
+            async hydrateDigestData(onchainData: OnchainData) {
+                const digestData = this.offchainStore.get(onchainData.digest);
+                if (digestData === undefined) {
                     return null;
                 }
-                const { offchainData } = data;
-                const res = OffchainDataHandler.inject(onchainData, offchainData);
-                this.offchainData.set(onchainData.digest, offchainData);
+                const res = DigestDataHandler.jsonFromDigestData(onchainData, digestData);
+                this.offchainData.set(onchainData.digest, digestData);
                 return res;
             }
         }
 
-        const generatorResolverHydrator = new GeneratorResolverHydrator(mbStore, offchainStore);
+        const generatorResolverHydrator = new GeneratorResolverHydrator(mbStore, digestStore);
         const generatorResolver = new Resolver(generatorResolverHydrator);
         const generatorResolvedJson = await generatorResolver.resolveFromInput(rootObject);
         const generatorOutput: ResolverOutput = {
             linkedJson: rootObject.linkedJson,
             resolvedJson: generatorResolvedJson,
-            offchainData: generatorResolverHydrator.getOffchainData(),
+            digestData: generatorResolverHydrator.getDigestData(),
             proofs: generatorResolverHydrator.getProofs(),
         }
 
@@ -222,9 +193,9 @@ describe("Resolver", () => {
                 return this.resolverOutput.proofs[link];
             }
 
-            async hydrateOffchainData(onchainData: OnchainData) {
-                const offchainData = this.resolverOutput.offchainData[onchainData.digest];
-                return OffchainDataHandler.inject(onchainData, offchainData);
+            async hydrateDigestData(onchainData: OnchainData) {
+                const digestData = this.resolverOutput.digestData[onchainData.digest];
+                return DigestDataHandler.jsonFromDigestData(onchainData, digestData);
             }
         }
 
