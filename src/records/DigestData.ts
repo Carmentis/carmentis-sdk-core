@@ -5,6 +5,10 @@ import { Hash } from "../entities/Hash";
 import { JsonObject } from "../type/valibot/json/Json";
 import { OnchainData, DigestRecord } from '../resolver/ResolverTypes';
 
+/**
+ * A utility class for handling digest operations on JSON data, including creating and verifying digests.
+ * This class supports adding salts, canonical encoding, and hashing with configurable algorithms.
+ */
 export class DigestDataHandler {
     static jsonToDigestData(object: JsonObject, addSalt: boolean, encoding = "canonical", digestAlg = "sha256"): DigestRecord {
         let digestData;
