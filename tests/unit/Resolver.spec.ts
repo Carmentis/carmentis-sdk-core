@@ -3,7 +3,7 @@ import { Resolver } from '../../src/resolver/Resolver';
 import { JsonObject } from '../../src/type/valibot/json/Json';
 import { ResolverHydrator, ResolverOutput, MbRef, SectRef } from '../../src/resolver/ResolverTypes';
 import { describe, it, expect } from 'vitest'
-import { DigestDataHandler } from '../../src/records/digestData';
+import { DigestDataHandler } from '../../src/records/DigestData';
 import { OnchainData } from '../../src/resolver/ResolverTypes';
 
 describe("Resolver", () => {
