@@ -5,13 +5,13 @@ import { AppLedgerProofSchema } from './AppLedgerProof';
 const ResolutionProofProofsSchema = v.record(v.string(), AppLedgerProofSchema);
 export type ResolutionProofProofs = v.InferOutput<typeof ResolutionProofProofsSchema>;
 
-const ResolutionProofOffchainDataSchema = v.record(v.string(), JsonObjectSchema);
-export type ResolutionProofOffchainData = v.InferOutput<typeof ResolutionProofOffchainDataSchema>;
+const ResolutionProofDigestDataSchema = v.record(v.string(), JsonObjectSchema);
+export type ResolutionProofDigestData = v.InferOutput<typeof ResolutionProofDigestDataSchema>;
 
 export const ResolutionProofSchema = v.object({
     linkedJson: JsonObjectSchema,
     resolvedJson: JsonObjectSchema,
-    offchainData: ResolutionProofOffchainDataSchema,
+    digestData: ResolutionProofDigestDataSchema,
     proofs: ResolutionProofProofsSchema,
 });
 

@@ -12,11 +12,8 @@ import {
 } from "../src/blockchain/virtualBlockchains/WalletRequestBasedApplicationLedgerMicroblockBuilder";
 import {Hash} from "../src/entities/Hash";
 import {AppLedgerMicroblockBuildRequest} from "../src/type/AppLedgerStateUpdateRequest";
-import {
-    PublicKeyEncryptionSchemeId
-} from "../src/crypto/encryption/public-key-encryption/PublicKeyEncryptionSchemeId";
-import {SignatureSchemeId} from "../src/crypto/signature/SignatureSchemeId";
 import {Utils} from "../src/utils/utils";
+import { CryptoHandlerApplicationLedgerActorIdentityAdapter } from "../src/blockchain/virtualBlockchains/IApplicationLedgerActorIdentity";
 import * as fs from 'fs';
 
 const usePublicChannel = false;
@@ -174,9 +171,17 @@ async function run() {
             expirationDay
         );
         const vbSeed = tempMb.getPreviousHash();
-        const walletCrypto = WalletCrypto.generateWallet();
-        const accountCrypto = walletCrypto.getDefaultAccountCrypto();
-        const actorCrypto = accountCrypto.getActor(vbSeed.toBytes());
+
+        const userWalletCrypto = WalletCrypto.generateWallet();
+        const userAccountCrypto = userWalletCrypto.getDefaultAccountCrypto();
+        const userActorCrypto = userAccountCrypto.deriveActorFromVbSeed(vbSeed.toBytes());
+        const userIdentity = new CryptoHandlerApplicationLedgerActorIdentityAdapter(userActorCrypto);
+
+        const operatorWalletCrypto = WalletCrypto.generateWallet();
+        const operatorAccountCrypto = operatorWalletCrypto.getDefaultAccountCrypto();
+        const operatorActorCrypto = operatorAccountCrypto.deriveActorFromVbSeed(vbSeed.toBytes());
+        const operatorIdentity = new CryptoHandlerApplicationLedgerActorIdentityAdapter(operatorActorCrypto);
+
         const mbBuilder = await WalletRequestBasedApplicationLedgerMicroblockBuilder.createFromVirtualBlockchain(
             Hash.from(appId),
             applicationLedger
@@ -228,14 +233,16 @@ async function run() {
                     },
                 ],
             };
+            const privateEncryptionKey = await userIdentity.getActorPrivateDecryptionKey();
+            const publicEncryptionKey = await privateEncryptionKey.getPublicKey();
             await mbBuilder.subscribeActor(
                 'user',
-                await actorCrypto.getPublicSignatureKey(SignatureSchemeId.SECP256K1),
-                await actorCrypto.getPublicEncryptionKey(PublicKeyEncryptionSchemeId.ML_KEM_768_AES_256_GCM)
+                await userIdentity.getActorPublicSignatureKey(),
+                publicEncryptionKey
             );
         }
         const appLedgerMicroblock = await mbBuilder.createMicroblockFromStateUpdateRequest(
-            accountCrypto,
+            operatorIdentity,
             request
         );
         let previousHash: Hash;
@@ -246,7 +253,6 @@ async function run() {
         else {
             previousHash = vbSeed;
         }
-        appLedgerMicroblock.setPreviousHash(previousHash);
         appLedgerMicroblock.setFeesPayerAccount(accountId.toBytes());
         appLedgerMicroblock.setTimestamp(Utils.getTimestampInSeconds());
         appLedgerMicroblock.setGasPrice(CMTSToken.createMilliToken(1));

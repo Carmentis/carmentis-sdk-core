@@ -4,7 +4,7 @@ import { MbRef, VbRef, SectRef } from "./ResolverTypes";
 import { Section } from "../type/valibot/blockchain/section/sections";
 import { SectionType } from "../type/valibot/blockchain/section/SectionType";
 import { ApplicationLedgerVb } from "../blockchain/virtualBlockchains/ApplicationLedgerVb";
-import { ICryptoKeyHandler } from "../wallet/ICryptoKeyHandler";
+import { IApplicationLedgerActorIdentity } from "../blockchain/virtualBlockchains/IApplicationLedgerActorIdentity";
 import { Utils } from "../utils/utils";
 import { Hash } from "../entities/Hash";
 
@@ -26,7 +26,7 @@ export class LinkedObjectResolver {
         throw new Error(`inconsistent microblock reference`);
     }
 
-    async getAppLedgerContentFromMicroblockRef(mbRef: MbRef, hostIdentity: ICryptoKeyHandler) {
+    async getAppLedgerContentFromMicroblockRef(mbRef: MbRef, hostIdentity: IApplicationLedgerActorIdentity) {
         let vbId: string;
         let height: number;
 

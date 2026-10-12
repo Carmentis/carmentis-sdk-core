@@ -15,10 +15,8 @@ import {
     WalletRequestBasedApplicationLedgerMicroblockBuilder
 } from "../src/blockchain/virtualBlockchains/WalletRequestBasedApplicationLedgerMicroblockBuilder";
 import {AppLedgerMicroblockBuildRequest} from "../src/type/AppLedgerStateUpdateRequest";
-import {SignatureSchemeId} from "../src/crypto/signature/SignatureSchemeId";
-import {
-    PublicKeyEncryptionSchemeId
-} from "../src/crypto/encryption/public-key-encryption/PublicKeyEncryptionSchemeId";
+import { CryptoHandlerApplicationLedgerActorIdentityAdapter } from "../src/blockchain/virtualBlockchains/IApplicationLedgerActorIdentity";
+import { randomBytes } from "@noble/post-quantum/utils";
 
 const NODE_URL = "http://localhost:26657";
 const nodeUrl = NODE_URL;
@@ -176,9 +174,17 @@ async function run() {
         // TODO: This would avoid having to resort to this hack (which is not even correct because
         // TODO: it works on the full 'previousHash' field instead of just the seed).
         const vbSeed = tempMb.getPreviousHash();
-        const walletCrypto = WalletCrypto.generateWallet();
-        const accountCrypto = walletCrypto.getDefaultAccountCrypto();
-        const actorCrypto = accountCrypto.getActor(vbSeed.toBytes());
+
+        const userWalletCrypto = WalletCrypto.generateWallet();
+        const userAccountCrypto = userWalletCrypto.getDefaultAccountCrypto();
+        const userActorCrypto = userAccountCrypto.deriveActorFromVbSeed(vbSeed.toBytes());
+        const userIdentity = new CryptoHandlerApplicationLedgerActorIdentityAdapter(userActorCrypto);
+
+        const operatorWalletCrypto = WalletCrypto.generateWallet();
+        const operatorAccountCrypto = operatorWalletCrypto.getDefaultAccountCrypto();
+        const operatorActorCrypto = operatorAccountCrypto.deriveActorFromVbSeed(vbSeed.toBytes());
+        const operatorIdentity = new CryptoHandlerApplicationLedgerActorIdentityAdapter(operatorActorCrypto);
+
         const mbBuilder = await WalletRequestBasedApplicationLedgerMicroblockBuilder.createFromVirtualBlockchain(
             Hash.from(applicationId),
             applicationLedger
@@ -210,8 +216,8 @@ async function run() {
                 }
             ],
             actors: [
-                {name: "appOperator"},
-                {name: "user"},
+                { name: "appOperator" },
+                { name: "user" },
             ],
             actorAssignations: [
                 {
@@ -225,16 +231,19 @@ async function run() {
             ],
             approvalMessage: 'please approve this data set',
         };
+
+        const privateEncryptionKey = await userIdentity.getActorPrivateDecryptionKey();
+        const publicEncryptionKey = await privateEncryptionKey.getPublicKey();
         await mbBuilder.subscribeActor(
             'user',
-            await actorCrypto.getPublicSignatureKey(SignatureSchemeId.SECP256K1),
-            await actorCrypto.getPublicEncryptionKey(PublicKeyEncryptionSchemeId.ML_KEM_768_AES_256_GCM)
+            await userIdentity.getActorPublicSignatureKey(),
+            publicEncryptionKey
         );
+
         const appLedgerMicroblock = await mbBuilder.createMicroblockFromStateUpdateRequest(
-            accountCrypto,
+            operatorIdentity,
             request
         );
-        appLedgerMicroblock.setPreviousHash(vbSeed);
         appLedgerMicroblock.setFeesPayerAccount(newAccountId.toBytes());
         appLedgerMicroblock.setTimestamp(Utils.getTimestampInSeconds());
         appLedgerMicroblock.setGasPrice(CMTSToken.createMilliToken(1));
@@ -247,7 +256,7 @@ async function run() {
         const appLedgerVb = await provider.loadApplicationLedgerVirtualBlockchain(Hash.from(applicationLedgerId));
         const proofWrapper = await appLedgerVb.exportProof(
             { author },
-            actorCrypto
+            userIdentity
         );
         fs.writeFileSync(`C:/Users/arnau/Desktop/Proof-${author}.json`, JSON.stringify(proofWrapper, null, 2));
         console.log(JSON.stringify(proofWrapper, null, 2));

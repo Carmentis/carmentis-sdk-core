@@ -3,48 +3,49 @@ import { JsonCanonicalizationMethod } from "../crypto/signature/signer/json/Json
 import { Crypto } from "../crypto/crypto";
 import { Hash } from "../entities/Hash";
 import { JsonObject } from "../type/valibot/json/Json";
-import { OnchainData, OffchainRecord } from '../resolver/ResolverTypes';
+import { OnchainData, DigestRecord } from '../resolver/ResolverTypes';
 
-export class OffchainDataHandler {
-    static extract(object: JsonObject, addSalt: boolean, encoding = "canonical", digestAlg = "sha256"): OffchainRecord {
-        let offchainData;
+export class DigestDataHandler {
+    static jsonToDigestData(object: JsonObject, addSalt: boolean, encoding = "canonical", digestAlg = "sha256"): DigestRecord {
+        let digestData;
 
         if (addSalt) {
             const rawSalt = Crypto.Random.getBytes(16);
             const salt = Hash.from(rawSalt).encode();
-            offchainData = { __salt__: salt, ...object };
+            digestData = { __salt__: salt, ...object };
         }
         else {
-            offchainData = { ...object };
+            digestData = { ...object };
         }
 
         // compute the digest
-        const digest = OffchainDataHandler.computeDigest(encoding, digestAlg, offchainData);
+        const digest = DigestDataHandler.computeDigest(encoding, digestAlg, digestData);
 
         const onchainData: OnchainData = {
             digest,
+            type: "json",
             encoding,
             digestAlg,
         };
 
-        const record: OffchainRecord = {
+        const record: DigestRecord = {
             onchainData,
-            offchainData,
+            digestData,
         };
         return record;
     }
 
-    static inject(onchainData: OnchainData, offchainData: JsonObject): JsonObject {
+    static jsonFromDigestData(onchainData: OnchainData, digestData: JsonObject): JsonObject {
         const { encoding, digestAlg, digest } = onchainData;
 
-        // re-compute the digest from offchainData and check it against the on-chain value
-        const computedDigest = OffchainDataHandler.computeDigest(encoding, digestAlg, offchainData);
+        // re-compute the digest from digestData and check it against the on-chain value
+        const computedDigest = DigestDataHandler.computeDigest(encoding, digestAlg, digestData);
         if (computedDigest !== digest) {
-            throw new Error(`digest of injected offchain data does not match onchain digest (offchain digest = ${computedDigest}, onchain digest = ${digest}), encoding = ${encoding}, digestAlg = ${digestAlg}`);
+            throw new Error(`digest of injected data does not match onchain digest (external data digest = ${computedDigest}, onchain digest = ${digest}), encoding = ${encoding}, digestAlg = ${digestAlg}`);
         }
 
         // build the object by removing __salt__
-        const object = { ...offchainData };
+        const object = { ...digestData };
         delete (object as Record<string, unknown>).__salt__;
 
         return object;

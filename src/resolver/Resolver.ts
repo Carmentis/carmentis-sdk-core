@@ -3,7 +3,7 @@ import { JsonData, JsonObject } from '../type/valibot/json/Json';
 import { LinkResolver } from './LinkResolver';
 import {
     RESOLUTION_LINK_TAG,
-    OFFCHAIN_DATA_TAG,
+    DIGEST_DATA_TAG,
     Policies,
     ResolverInput,
     ResolverOutput,
@@ -64,9 +64,9 @@ export class Resolver {
                     await this.processResolutionLinkTag(node[key], newNode, subPath);
                     break;
                 }
-                case OFFCHAIN_DATA_TAG: {
+                case DIGEST_DATA_TAG: {
                     const onchainData = v.parse(OnchainDataSchema, node[key]);
-                    const data = await this.resolverHydrator.hydrateOffchainData(onchainData);
+                    const data = await this.resolverHydrator.hydrateDigestData(onchainData);
                     newNode[key] = await this.resolveNode(data, subPath);
                     break;
                 }

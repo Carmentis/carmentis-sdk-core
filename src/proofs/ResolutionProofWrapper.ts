@@ -2,7 +2,7 @@ import * as v from "valibot";
 import { Json, JsonObject } from "../type/valibot/json/Json"
 import { ProofWrapper } from "./ProofWrapper"
 import { WrappedResolutionProof, WrappedResolutionProofSchema } from "../type/valibot/proofs/CarmentisProof"
-import { ResolutionProofProofs, ResolutionProofOffchainData } from "../type/valibot/proofs/ResolutionProof";
+import { ResolutionProofProofs, ResolutionProofDigestData } from "../type/valibot/proofs/ResolutionProof";
 
 const RESOLUTION_PROOF_VERSION = 1;
 
@@ -18,7 +18,7 @@ export class ResolutionProofWrapper extends ProofWrapper<WrappedResolutionProof>
             proof: {
                 linkedJson: {},
                 resolvedJson: {},
-                offchainData: {},
+                digestData: {},
                 proofs: {},
             }
         }
@@ -38,8 +38,8 @@ export class ResolutionProofWrapper extends ProofWrapper<WrappedResolutionProof>
         this.wrapper.proof.resolvedJson = jsonObject;
     }
 
-    setOffchainData(offchainData: ResolutionProofOffchainData) {
-        this.wrapper.proof.offchainData = offchainData;
+    setDigestData(digestData: ResolutionProofDigestData) {
+        this.wrapper.proof.digestData = digestData;
     }
 
     setProofs(proofs: ResolutionProofProofs) {

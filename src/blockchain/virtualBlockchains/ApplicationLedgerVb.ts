@@ -495,6 +495,7 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
         const state = this.internalState;
         const creatorId = state.getChannelCreatorIdFromChannelId(channelId);
         if (creatorId === actorId) {
+            console.log(`getChannelKey: Actor ${actorId} is the creator of channel ${channelId}: deriving channel key`)            
             const usedSeed = await identity.getChannelKeysDerivationSeed();
             const channelKey = await this.deriveChannelKey(
                 usedSeed,
@@ -525,7 +526,8 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
             new Uint8Array(Utils.intToByteArray(channelId, 6))
         );
         const hkdf = new HKDF();
-        return hkdf.deriveKeyNoSalt(seed, info, 32);
+        const key = hkdf.deriveKeyNoSalt(seed, info, 32);
+        return key;
     }
 
     /**

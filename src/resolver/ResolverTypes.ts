@@ -2,7 +2,7 @@ import * as v from 'valibot';
 import { JsonData, JsonObject } from '../type/valibot/json/Json';
 
 export const RESOLUTION_LINK_TAG = "__resolution_link__";
-export const OFFCHAIN_DATA_TAG = "__offchain_data__";
+export const DIGEST_DATA_TAG = "__digest_data__";
 
 export interface Policies {
     onResolutionFailure?: 'ignore' | 'throw'
@@ -19,7 +19,7 @@ export interface ResolverOutput {
     linkedJson: JsonObject
     policies?: Policies
     resolvedJson: JsonObject
-    offchainData: Record<string, JsonObject>
+    digestData: Record<string, JsonObject>
     proofs: Record<string, JsonObject>
 }
 
@@ -47,18 +47,19 @@ export type ResolvedPath =
 
 export const OnchainDataSchema = v.object({
     digest: v.string(),
+    type: v.picklist(["json"]),
     encoding: v.string(),
     digestAlg: v.string(),
 });
 
 export type OnchainData = v.InferOutput<typeof OnchainDataSchema>;
 
-export interface OffchainRecord {
+export interface DigestRecord {
     onchainData: OnchainData
-    offchainData: JsonObject
+    digestData: JsonObject
 }
 
 export interface ResolverHydrator {
     hydrateMicroblock(link: string, mbRef: MbRef): Promise<JsonData>;
-    hydrateOffchainData(onchainData: OnchainData): Promise<JsonData>;
+    hydrateDigestData(onchainData: OnchainData): Promise<JsonData>;
 }
