@@ -18,6 +18,8 @@ import {BlockchainUtils} from "../../utils/BlockchainUtils";
 import {ProtocolInternalState} from "../internalStates/ProtocolInternalState";
 import {Utils} from "../../utils/utils";
 import {VirtualBlockchainState} from "../../type/valibot/blockchain/virtualBlockchain/virtualBlockchains";
+import {VirtualBlockchainSeed} from "./VirtualBlockchainSeed";
+import {VirtualBlockchainExpiration} from "./VirtualBlockchainExpiration";
 
 /**
  * Abstract class representing a Virtual Blockchain (VB).
@@ -61,7 +63,6 @@ export abstract class VirtualBlockchain<InternalState extends IInternalState = I
     protected provider: IProvider;
     private type: number;
     private merkleRootHash: Uint8Array;
-    private expirationDay: number;
 
     /**
      * A fallback mechanism for handling microblock retrieval failures.
@@ -82,7 +83,6 @@ export abstract class VirtualBlockchain<InternalState extends IInternalState = I
         this.microblockByHeight = new Map<Height, Microblock>();
         this.type = type;
         this.merkleRootHash = Utils.getNullHash();
-        this.expirationDay = 0;
         this.height = 0;
         this.microblockSearchFailureFallback = new ThrownErrorMicroblockSearchFailureFallback();
     }
@@ -162,6 +162,19 @@ export abstract class VirtualBlockchain<InternalState extends IInternalState = I
     }
 
     /**
+     * This method creates a new genesis microblock which extends the virtual blockchain state.
+     *
+     * This update does not affect the virtual blockchain.
+     */
+    async createGenesisMicroblock(vbSeed: VirtualBlockchainSeed) {
+        if (!this.isEmpty()) throw new Error('Cannot create genesis microblock on non-empty virtual blockchain');
+        if (vbSeed.getType() !== this.type) throw new Error('Cannot create genesis microblock with a seed of a different type');
+        const genesisMicroblock = new Microblock(this.type, vbSeed);
+        genesisMicroblock.setHeight(1);
+        return genesisMicroblock;
+    }
+
+    /**
      * This method returns a new microblock which extends the virtual blockchain state.
      *
      * The returned microblock is not added to the list of microblocks contained in the virtual blockchain
@@ -171,7 +184,10 @@ export abstract class VirtualBlockchain<InternalState extends IInternalState = I
      */
     async createMicroblock() {
         // easy case where the virtual blockchain is empty: we create and return a new microblock
-        if (this.isEmpty()) return new Microblock(this.type)
+        if (this.isEmpty()) {
+            this.logger.warning("The VirtualBlockchain.createMicroblock method is deprecated for empty virtual blockchains. Please use the createGenesisMicroblock method instead.");
+            return new Microblock(this.type)
+        }
 
         // otherwise, we have to create a new microblock and update its state to match the current state
         // of the virtual blockchain.
@@ -203,15 +219,6 @@ export abstract class VirtualBlockchain<InternalState extends IInternalState = I
         }
     }
 
-    setExpirationDay(day: number) {
-        /*
-        if (this.height > 1) {
-            throw new Error("The expiration day cannot be changed anymore.");
-        }
-
-         */
-        this.expirationDay = day;
-    }
 
     async getSerializedVirtualBlockchainState(): Promise<Uint8Array> {
         return BlockchainUtils.encodeVirtualBlockchainState(
@@ -226,7 +233,6 @@ export abstract class VirtualBlockchain<InternalState extends IInternalState = I
      */
     async getGenesisSeed() {
         const mb = await this.getFirstMicroBlock();
-        // TODO(correctness): check because the genesisseed is a *part* of the previousHash (also includes type and expirationDate)
         return mb.getPreviousHash();
     }
 
@@ -428,9 +434,16 @@ export abstract class VirtualBlockchain<InternalState extends IInternalState = I
     /**
      * Retrieves the expiration day of the object.
      *
-     * @return {number|string} The expiration day of the object. The type may vary depending on implementation.
+     * @return {Promise<number>} The expiration day of the object.
      */
-    getExpirationDay() {
-        return this.expirationDay;
+    async getExpirationDay(): Promise<number> {
+        try {
+            // extract the expiration day from the genesis seed
+            const vbSeed = await this.getGenesisSeed();
+            return VirtualBlockchainSeed.createFromGenesisSeed(vbSeed.toBytes()).getExpirationDay()
+        } catch (e) {
+            return VirtualBlockchainExpiration.noExpiration();
+        }
+
     }
 }

@@ -139,7 +139,7 @@ export abstract class AbstractProvider implements IProvider {
 
         vb.setIdentifier(identifier) //this.identifier = identifier;
         vb.setHeight(vbState.height) //this.height = content.state.height;
-        vb.setExpirationDay(vbState.expirationDay) //this.expirationDay = content.state.expirationDay;
+        //vb.setExpirationDay(vbState.expirationDay) //this.expirationDay = content.state.expirationDay;
         vb.setInternalState(
             InternalStateFactory.createInternalStateFromObject(
                 vb.getType(),

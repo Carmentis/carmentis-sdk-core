@@ -33,7 +33,7 @@ export class ApplicationVb extends VirtualBlockchain<ApplicationInternalState> {
             Utils.getNullHash() :
             (await this.getLastMicroblock()).getHash().toBytes();
         return {
-            expirationDay: this.getExpirationDay(),
+            expirationDay: await this.getExpirationDay(),
             height: height,
             internalState: this.internalState.toObject(),
             lastMicroblockHash: lastMicroblockHash,
