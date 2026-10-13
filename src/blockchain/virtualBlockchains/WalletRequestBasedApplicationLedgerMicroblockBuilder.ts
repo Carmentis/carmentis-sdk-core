@@ -275,6 +275,10 @@ export class WalletRequestBasedApplicationLedgerMicroblockBuilder extends Applic
         // If yes, then we have nothing to do.
         if (await this.vb.isActorInChannel(channelId, guestId)) return;
 
+        // if the guestId equals the hostId, it is likely a misuse of the record. In this case, we do not do anything
+        // because the host is already in the channel by definition (it can recover the channel key).
+        if (hostId === guestId) return;
+
         // we first have to ensure that the host is able to recover the channel key
         const channelKey = await this.vb.getChannelKey(hostId, channelId, actorIdentity);
 
@@ -299,12 +303,6 @@ export class WalletRequestBasedApplicationLedgerMicroblockBuilder extends Applic
         }
         this.mbUnderConstruction.addSection(section)
         await this.updateStateWithSection(section);
-
-        /*
-        // if the guestId equals the hostId, it is likely a misuse of the record. In this case, we do not do anything
-        // because the author is already in the channel by definition (no need to create a shared key, ...).
-        if (hostId === guestId) return
-         */
 
         /*
         // To invite the actor in the channel, we first retrieve or generate a symmetric encryption key used to establish

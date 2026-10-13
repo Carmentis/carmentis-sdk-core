@@ -705,6 +705,9 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
     }
 
     async isActorInChannel(channelId: number, actorId: number) {
+        // the creator of a channel derives the channel key locally: no invitation is needed
+        if (this.internalState.getChannelCreatorIdFromChannelId(channelId) === actorId) return true;
+
         const actor = this.internalState.getActorById(actorId);
         return actor.invitations.some(invitation => invitation.channelId == channelId);
     }
