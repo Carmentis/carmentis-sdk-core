@@ -326,7 +326,7 @@ export class NetworkProvider implements IExternalProvider {
         const result = await NetworkProvider.query(urlObject, {
             "jsonrpc": "2.0",
             "id": 1,
-            "method": "broadcast_tx_sync", // TODO(sync): use async
+            "method": "broadcast_tx_async",
             "params": {
                 "tx": encoder.encode(data)
             }
