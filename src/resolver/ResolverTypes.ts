@@ -3,6 +3,7 @@ import { JsonData, JsonObject } from '../type/valibot/json/Json';
 
 export const RESOLUTION_LINK_TAG = "__resolution_link__";
 export const DIGEST_DATA_TAG = "__digest_data__";
+export const DIGEST_TAG = "__digest__";
 
 export interface Policies {
     onResolutionFailure?: 'ignore' | 'throw'
@@ -13,6 +14,7 @@ export interface Policies {
 export interface ResolverInput {
     linkedJson: JsonObject
     policies?: Policies
+    digestData?: Record<string, JsonObject>
 }
 
 export interface ResolverOutput {
@@ -60,6 +62,16 @@ export interface DigestRecord {
 }
 
 export interface ResolverHydrator {
-    hydrateMicroblock(link: string, mbRef: MbRef): Promise<JsonData>;
-    hydrateDigestData(onchainData: OnchainData): Promise<JsonData>;
+    hydrateMicroblock(link: string, mbRef: MbRef): Promise<JsonData | undefined>;
+}
+
+export interface Unresolved {
+    path: string
+    type: string
+    cause: string
+}
+
+export interface ResolverReport {
+    passes: number
+    unresolved: Unresolved[]
 }

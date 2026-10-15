@@ -1,41 +1,77 @@
 import * as v from 'valibot';
 import { JsonData, JsonObject } from '../type/valibot/json/Json';
 import { LinkResolver } from './LinkResolver';
+import { DigestDataHandler } from '../records/DigestData';
+import { Provider } from '../providers/Provider';
 import {
     RESOLUTION_LINK_TAG,
     DIGEST_DATA_TAG,
+    DIGEST_TAG,
     Policies,
     ResolverInput,
     ResolverOutput,
     ResolverHydrator,
-    OnchainDataSchema
+    OnchainDataSchema,
+    Unresolved,
+    ResolverReport,
 } from './ResolverTypes';
 
 export class Resolver {
+    private readonly provider: Provider;
     private resolverHydrator: ResolverHydrator;
     private policies: Policies = {};
-    private resolvedLinks = new Map;
+    private unresolved: Unresolved[] = [];
+    private resolvedLinksMap: Map<string, JsonData | undefined> = new Map;
+    private digestDataMap: Map<string, JsonObject> = new Map;
+    private pass = 0;
+    private additionalPass = false;
 
-    constructor(resolverHydrator: ResolverHydrator) {
+    constructor(provider: Provider, resolverHydrator: ResolverHydrator) {
+        this.provider = provider;
         this.resolverHydrator = resolverHydrator;
     }
 
     async resolveFromInput(input: ResolverInput): Promise<JsonObject> {
-        await this.initializeResolution(input);
-        return await this.resolveNode(input.linkedJson) as JsonObject;
+        return await this.resolve(input);
     }
 
     async resolveFromOutput(output: ResolverOutput): Promise<JsonObject> {
-        await this.initializeResolution(output);
-        return await this.resolveNode(output.linkedJson) as JsonObject;
+        return await this.resolve(output);
     }
 
-    private async initializeResolution(json: ResolverInput | ResolverOutput) {
+    getReport(): ResolverReport {
+        return {
+            passes: this.pass,
+            unresolved: this.unresolved,
+        };
+    }
+
+    private async resolve(json: ResolverInput | ResolverOutput): Promise<JsonObject> {
         this.policies = json.policies ?? {};
-        this.resolvedLinks.clear();
+        this.resolvedLinksMap.clear();
+        this.digestDataMap = new Map(Object.entries(json.digestData ?? {}));
+        this.pass = 0;
+        let res: JsonObject;
+
+        do {
+            this.pass++;
+            this.additionalPass = false;
+            this.unresolved.length = 0;
+            res = await this.resolveRoot(json.linkedJson);
+        } while(this.additionalPass);
+
+        return res;
     }
 
-    private async resolveNode(node: JsonData, path = "root"): Promise<JsonData> {
+    private async resolveRoot(root: JsonData): Promise<JsonObject> {
+        const res = await this.resolveNode(root, "root");
+        if (res === undefined || res === null || typeof res !== "object") {
+            throw new Error(`the root did not resolve as an object`);
+        }
+        return res as JsonObject;
+    }
+
+    private async resolveNode(node: JsonData, path: string): Promise<JsonData | undefined> {
         if (node === null) {
             return null;
         }
@@ -48,9 +84,9 @@ export class Resolver {
         if (Array.isArray(node)) {
             const newNode: JsonData[] = [];
 
-            for (const key in node) {
-                const subPath = path + `[${key}]`;
-                newNode[key] = await this.resolveNode(node[key], subPath);
+            for (let index = 0; index < node.length; index++) {
+                const subPath = path + `[${index}]`;
+                await this.mapArrayField(node, newNode, index, subPath);
             }
             return newNode;
         }
@@ -64,20 +100,37 @@ export class Resolver {
                     await this.processResolutionLinkTag(node[key], newNode, subPath);
                     break;
                 }
+                case DIGEST_TAG: {
+                    await this.processDigestTag(node[key], newNode, subPath);
+                    break;
+                }
                 case DIGEST_DATA_TAG: {
-                    const onchainData = v.parse(OnchainDataSchema, node[key]);
-                    const data = await this.resolverHydrator.hydrateDigestData(onchainData);
-                    newNode[key] = await this.resolveNode(data, subPath);
+                    await this.processDigestDataTag(node[key]);
                     break;
                 }
                 default: {
-                    newNode[key] = await this.resolveNode(node[key], subPath);
+                    await this.mapObjectField(node, newNode, key, subPath);
                     break;
                 }
             }
         }
         return newNode;
     }
+
+    private async mapObjectField(sourceNode: JsonObject, targetNode: JsonObject, key: string, path: string) {
+        const value = await this.resolveNode(sourceNode[key], path);
+        if (value !== undefined) {
+            targetNode[key] = value;
+        }
+    }
+
+    private async mapArrayField(sourceNode: JsonData[], targetNode: JsonData[], index: number, path: string) {
+        let value = await this.resolveNode(sourceNode[index], path);
+        if (value === undefined) {
+            value = null;
+        }
+        targetNode[index] = value;
+    } 
 
     private async processResolutionLinkTag(value: unknown, node: JsonObject, path: string) {
         const isArray = Array.isArray(value);
@@ -89,38 +142,82 @@ export class Resolver {
             if (typeof link !== 'string' || !LinkResolver.isLink(link)) {
                 throw new Error(`provided entry in ${RESOLUTION_LINK_TAG} has an invalid format (path: ${subPath})`);
             }
-            const res = await this.resolveLink(link, subPath);
-            if (res === null || Array.isArray(res) || typeof res !== 'object') {
+            const linkNode = await this.resolveLink(link, subPath);
+            if (linkNode === undefined) {
+                this.unresolved.push({
+                    path,
+                    type: "link",
+                    cause: "unable to resolve link",
+                });
+                continue;
+            }
+            if (linkNode === null || Array.isArray(linkNode) || typeof linkNode !== 'object') {
                 throw new Error(`provided entry in ${RESOLUTION_LINK_TAG} does not resolve as an object: cannot inline (path: ${subPath})`);
             }
-            for (const key in res) {
+            for (const key in linkNode) {
                 if (node[key] !== undefined && this.policies.onDuplicateKeys === 'throw') {
                     throw new Error(`duplicate entry '${key}' while processing ${RESOLUTION_LINK_TAG} (path: ${subPath})`);
                 }
-                node[key] = res[key];
+                await this.mapObjectField(linkNode, node, key, subPath);
             }
             index++;
         }
     }
 
-    private async resolveLink(link: string, path: string): Promise<JsonData> {
-        const savedEntry = this.resolvedLinks.get(link);
-        if (savedEntry !== undefined) {
-            return savedEntry;
-        }
-
-        let resolved: JsonData;
+    private async resolveLink(link: string, path: string): Promise<JsonData | undefined> {
+        let resolved: JsonData | undefined = undefined;
         const resolvedLink = LinkResolver.resolve(link);
 
         if (resolvedLink.type === "mb") {
             const mbRef = resolvedLink.ref;
-            const data = await this.resolverHydrator.hydrateMicroblock(link, mbRef);
-            resolved = await this.resolveNode(data, path);
+            let data: JsonData | undefined;
+            if (this.resolvedLinksMap.has(link)) {
+                data = this.resolvedLinksMap.get(link);
+            }
+            else {
+                data = await this.resolverHydrator.hydrateMicroblock(link, mbRef);
+                this.resolvedLinksMap.set(link, data);
+            }
+            if (data !== undefined) {
+                resolved = await this.resolveNode(data, path);
+            }
+        }
+        return resolved;
+    }
+
+    private async processDigestTag(value: unknown, node: JsonObject, path: string) {
+        const onchainData = v.parse(OnchainDataSchema, value);
+        const digestData = this.digestDataMap.get(onchainData.digest);
+
+        if (digestData !== undefined) {
+            const digestNode = DigestDataHandler.jsonFromDigestData(onchainData, digestData);
+            for (const key of Object.keys(digestNode)) {
+                await this.mapObjectField(digestNode, node, key, path);
+            }
         }
         else {
-            resolved = link;
+            this.unresolved.push({
+                path,
+                type: "digest data",
+                cause: "digest data was neither provided in the JSON file nor found on-chain",
+            });
         }
-        this.resolvedLinks.set(link, resolved);
-        return resolved;
+    }
+
+    private async processDigestDataTag(value: unknown) {
+        if (value !== null && !Array.isArray(value) && typeof value === "object") {
+            for (const [ digest, data ] of Object.entries(value)) {
+                if (!/^[a-f\d]{64}$/i.test(digest)) {
+                    continue;
+                }
+                const known = this.digestDataMap.has(digest);
+                if (!known) {
+                    // new digest data has been found: a new resolution pass is required because
+                    // the corresponding digest reference(s) may be located anywhere in the tree
+                    this.additionalPass = true;
+                    this.digestDataMap.set(digest, data);
+                }
+            }
+        }
     }
 }

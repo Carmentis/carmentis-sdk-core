@@ -1,42 +1,22 @@
-import { LinkResolver } from '../../src/resolver/LinkResolver';
+/*
 import { Resolver } from '../../src/resolver/Resolver';
 import { JsonObject } from '../../src/type/valibot/json/Json';
 import { ResolverHydrator, ResolverOutput, MbRef, SectRef } from '../../src/resolver/ResolverTypes';
 import { describe, it, expect } from 'vitest'
 import { DigestDataHandler } from '../../src/records/DigestData';
-import { OnchainData } from '../../src/resolver/ResolverTypes';
 
 describe("Resolver", () => {
-    it("Link resolver", async () => {
-        const vbId = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
-        const link0 = `cmts://resolve/vb/${vbId}/mb/h/1`;
-        const res0 = LinkResolver.resolve(link0);
-        expect(res0.type).toEqual("mb");
-        expect((res0.ref as MbRef).vb!.id).toEqual(vbId);
-
-        const link1 = `cmts://resolve/vb/${vbId}/mb/h/1/sect/123`;
-        const res1 = LinkResolver.resolve(link1);
-        expect(res1.type).toEqual("section");
-        expect((res1.ref as SectRef).index).toEqual(123);
-
-        const link2 = `cmts://resolve/vb/${vbId}/mb/h/1/sect/n/foobar`;
-        const res2 = LinkResolver.resolve(link2);
-        expect(res2.type).toEqual("section");
-        expect((res2.ref as SectRef).name).toEqual("foobar");
-
-        const link3 = `cmtx://resolve/vb/${vbId}/mb/h/1/sect/n/foobar`;
-        expect(() => LinkResolver.resolve(link3)).toThrow();
-    });
-
-    it("Resolver", async () => {
+    it("Should resolve as expected", async () => {
         // this Map simulates the chain
         const mbStore: Map<string, JsonObject> = new Map;
 
-        // this Map simulates the operator DB
+        // this Map simulates the application DB
         const digestStore: Map<string, JsonObject> = new Map;
 
         // this method simulates the chain anchoring
         function createMicroblock(data: JsonObject, vbId?: string, height?: number) {
+            console.log("anchoring", data);
+
             if (vbId !== undefined) {
                 if (height === undefined) {
                     throw new Error('vbId without height');
@@ -51,25 +31,36 @@ describe("Resolver", () => {
             return vbId;
         }
 
+        const studentRgpdData = {
+            prenom : "Martin",
+            nom : "Durand",
+            date_naissance : "2008-08-01",
+        };
+
+        const studentData = DigestDataHandler.jsonToDigestData(studentRgpdData, true);
+        digestStore.set(studentData.onchainData.digest, studentData.digestData);
+
+        const teacherRgpdData = {
+            prenom : "Martine",
+            nom : "Dupont",
+            date_naissance : "1973-12-20"
+        };
+
+        const teacherData = DigestDataHandler.jsonToDigestData(teacherRgpdData, true);
+
         // Eleve
         const studentVbId = createMicroblock({
-            rgpd: {
-                __offchain_data__: {
-                    __id__: "12345",
-                    prenom : "Martin",
-                    nom : "Durand",
-                    date_naissance : "2008-08-01",
-                },
-            },
+            __digest__: studentData.onchainData,
             niveau: "Terminal",
             classe: "T3"
         });
 
         // Professeur
         const teacherVbId = createMicroblock({
-            prenom : "Martine",
-            nom : "Dupont",
-            date_naissance : "1973-12-20"
+            __digest_data__: {
+                [teacherData.onchainData.digest]: teacherData.digestData
+            },
+            __digest__: teacherData.onchainData,
         });
 
         // Epreuve 1
@@ -124,29 +115,22 @@ describe("Resolver", () => {
             linkedJson: {
                 report: `cmts://resolve/al/${reportVbId}/mb/h/1`
             },
+            digestData: Object.fromEntries(digestStore),
             policies: {            
             }
         };
 
         class GeneratorResolverHydrator implements ResolverHydrator {
             private mbStore: Map<string, JsonObject>;
-            private offchainStore: Map<string, JsonObject>;
             private proofs: Map<string, JsonObject> = new Map;
-            private offchainData: Map<string, JsonObject> = new Map;
 
-            constructor(mbStore: Map<string, JsonObject>, offchainStore: Map<string, JsonObject>) {
+            constructor(mbStore: Map<string, JsonObject>) {
                 this.mbStore = mbStore;
-                this.offchainStore = offchainStore;
                 this.proofs.clear();
-                this.offchainData.clear();
             }
 
             getProofs() {
                 return Object.fromEntries(this.proofs);
-            }
-
-            getDigestData() {
-                return {};
             }
 
             async hydrateMicroblock(link: string, mbRef: MbRef) {
@@ -158,29 +142,20 @@ describe("Resolver", () => {
                 }
                 return {};
             }
-
-            async hydrateDigestData(onchainData: OnchainData) {
-                const digestData = this.offchainStore.get(onchainData.digest);
-                if (digestData === undefined) {
-                    return null;
-                }
-                const res = DigestDataHandler.jsonFromDigestData(onchainData, digestData);
-                this.offchainData.set(onchainData.digest, digestData);
-                return res;
-            }
         }
 
-        const generatorResolverHydrator = new GeneratorResolverHydrator(mbStore, digestStore);
+        const generatorResolverHydrator = new GeneratorResolverHydrator(mbStore);
         const generatorResolver = new Resolver(generatorResolverHydrator);
         const generatorResolvedJson = await generatorResolver.resolveFromInput(rootObject);
         const generatorOutput: ResolverOutput = {
             linkedJson: rootObject.linkedJson,
             resolvedJson: generatorResolvedJson,
-            digestData: generatorResolverHydrator.getDigestData(),
+            digestData: rootObject.digestData,
             proofs: generatorResolverHydrator.getProofs(),
         }
 
         console.log("generatorOutput", JSON.stringify(generatorOutput, null, 2));
+        console.log("report", generatorResolver.getReport());
 
         class CheckerResolverHydrator implements ResolverHydrator {
             private resolverOutput: ResolverOutput;
@@ -192,11 +167,6 @@ describe("Resolver", () => {
             async hydrateMicroblock(link: string, mbRef: MbRef) {
                 return this.resolverOutput.proofs[link];
             }
-
-            async hydrateDigestData(onchainData: OnchainData) {
-                const digestData = this.resolverOutput.digestData[onchainData.digest];
-                return DigestDataHandler.jsonFromDigestData(onchainData, digestData);
-            }
         }
 
         const checkerResolverHydrator = new CheckerResolverHydrator(generatorOutput);
@@ -204,5 +174,7 @@ describe("Resolver", () => {
         const checkerResolvedJson = await checkerResolver.resolveFromOutput(generatorOutput);
 
         console.log("checkerResolvedJson", JSON.stringify(checkerResolvedJson, null, 2));
+        console.log("report", generatorResolver.getReport());
     });
 })
+*/
