@@ -14,7 +14,6 @@ import {
 } from "../../errors/carmentis-error";
 import {Microblock} from "../microblock/Microblock";
 import {
-    AbstractPrivateDecryptionKey,
     AbstractPublicEncryptionKey
 } from "../../crypto/encryption/public-key-encryption/PublicKeyEncryptionSchemeInterface";
 import {Logger} from "../../utils/Logger";
@@ -34,6 +33,7 @@ import {ApplicationLedgerInternalState} from "../internalStates/ApplicationLedge
 import {InternalStateUpdaterFactory} from "../internalStatesUpdater/InternalStateUpdaterFactory";
 import {ProtocolInternalState} from "../internalStates/ProtocolInternalState";
 import {ApplicationLedgerChannelInvitationSection} from "../../type/valibot/blockchain/section/sections";
+import {AppLedgerProof, ProofMicroblock, ProofChannel} from "../../type/valibot/proofs/AppLedgerProof";
 import {AppLedgerProofVB} from "../../proofs/AppLedgerProofVB";
 import {AppLedgerProofWrapper} from "../../proofs/AppLedgerProofWrapper";
 import {WrappedAppLedgerProof} from "../../type/valibot/proofs/CarmentisProof";
@@ -43,7 +43,6 @@ import {ProofRecord} from "../../records/ProofRecord";
 import {OnChainRecord} from "../../records/OnChainRecord";
 import {IDecryptor} from "../../crypto/IDecryptor";
 import {IApplicationLedgerActorIdentity} from "./IApplicationLedgerActorIdentity";
-import {VirtualBlockchainSeed} from "./VirtualBlockchainSeed";
 
 
 export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInternalState> {
@@ -606,16 +605,13 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
         hostIdentity: IApplicationLedgerActorIdentity,
         heights?: number[],
     ): Promise<WrappedAppLedgerProof> {
-        console.log("Entering exportProof");
         const appLedgerProofVB = new AppLedgerProofVB();
-        appLedgerProofVB.setIdentifier(Utils.binaryToHexa(this.getIdentifier().toBytes()))
+        appLedgerProofVB.setIdentifier(this.getIdentifier().encode());
         const currentHeight = this.getHeight();
         const heightList = heights ?? [...Array(currentHeight)].map((_, ndx) => ndx + 1);
 
         for (const height of heightList) {
-            const merkleRecord = await this.getMicroblockMerkleRecord(height, hostIdentity);
-            const proofRecord = ProofRecord.fromMerkleRecord(merkleRecord);
-            const proofChannels = proofRecord.toProofChannels();
+            const proofChannels = await this.getProofChannels(hostIdentity, height);
             appLedgerProofVB.addMicroblock(height, proofChannels);
         }
         const chainId = await this.provider.getChainId();
@@ -627,7 +623,32 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
     }
 
     /**
-     *
+     * Exports an AppLedgerProof with a single VB and a single microblock, which is what the resolver needs to do.
+     */
+    async exportMicroblockProof(
+        hostIdentity: IApplicationLedgerActorIdentity,
+        height: number,
+    ): Promise<AppLedgerProof> {
+        const appLedgerProofVB = new AppLedgerProofVB();
+        appLedgerProofVB.setIdentifier(this.getIdentifier().encode());
+
+        const proofChannels = await this.getProofChannels(hostIdentity, height);
+        appLedgerProofVB.addMicroblock(height, proofChannels);
+
+        return { virtualBlockchains: [ appLedgerProofVB.toObject() ] };
+    }
+
+    private async getProofChannels(
+        hostIdentity: IApplicationLedgerActorIdentity,
+        height: number,
+    ): Promise<ProofChannel[]> {
+        const merkleRecord = await this.getMicroblockMerkleRecord(height, hostIdentity);
+        const proofRecord = ProofRecord.fromMerkleRecord(merkleRecord);
+        const proofChannels = proofRecord.toProofChannels();
+        return proofChannels;
+    }
+
+    /**
      * @param proofObject
      * @param hostPrivateSignatureKey
      * @param hostPrivateDecryptionKey
@@ -642,48 +663,54 @@ export class ApplicationLedgerVb extends VirtualBlockchain<ApplicationLedgerInte
         const proofMicroblocks = proofVirtualBlockchain.getMicroblocks();
 
         for (const proofMicroblock of proofMicroblocks) {
-            // get the microblock at the expected height, extract all channel data sections
-            // and store their channel IDs and Merkle root hashes in listOfChannels
-            const height = proofMicroblock.height;
-            const onChainMicroblock = await this.getMicroblock(height);
-            const listOfChannels: { channelId: number, merkleRootHash: Uint8Array }[] = [];
-
-            for (const section of onChainMicroblock.getAllSections()) {
-                if (section.type === SectionType.APP_LEDGER_PUBLIC_CHANNEL_DATA) {
-                    const {channelId} = section;
-                    listOfChannels.push({
-                        channelId,
-                        merkleRootHash: Utils.getNullHash(),
-                    });
-                }
-                else if (section.type === SectionType.APP_LEDGER_PRIVATE_CHANNEL_DATA) {
-                    const {channelId, merkleRootHash} = section;
-                    listOfChannels.push({
-                        channelId,
-                        merkleRootHash,
-                    });
-                }
-            }
-
-            // extract the channels from the proof microblock and compare all Merkle root hashes
-            const proofRecord = ProofRecord.fromProofChannels(proofMicroblock.channels);
-
-            for (const channel of listOfChannels) {
-                const computedMerkleRootHash = proofRecord.getRootHashAsBinary(channel.channelId);
-                if (!Utils.binaryIsEqual(channel.merkleRootHash, computedMerkleRootHash)) {
-                    const computedHash = Utils.binaryToHexa(computedMerkleRootHash);
-                    const onChainHash = Utils.binaryToHexa(channel.merkleRootHash);
-                    throw new ProofVerificationFailedError(channel.channelId, computedHash, onChainHash);
-                }
-            }
+            const mbProofData = await this.importMicroblockProof(proofMicroblock);
 
             data.push({
-                height,
-                data: proofRecord.toJson()
+                height: proofMicroblock.height,
+                data: mbProofData
             });
         }
 
         return data;
+    }
+
+    async importMicroblockProof(proofMicroblock: ProofMicroblock) {
+        // get the microblock at the expected height, extract all channel data sections
+        // and store their channel IDs and Merkle root hashes in listOfChannels
+        const height = proofMicroblock.height;
+        const onChainMicroblock = await this.getMicroblock(height);
+        const listOfChannels: { channelId: number, merkleRootHash: Uint8Array }[] = [];
+
+        for (const section of onChainMicroblock.getAllSections()) {
+            if (section.type === SectionType.APP_LEDGER_PUBLIC_CHANNEL_DATA) {
+                const {channelId} = section;
+                listOfChannels.push({
+                    channelId,
+                    merkleRootHash: Utils.getNullHash(),
+                });
+            }
+            else if (section.type === SectionType.APP_LEDGER_PRIVATE_CHANNEL_DATA) {
+                const {channelId, merkleRootHash} = section;
+                listOfChannels.push({
+                    channelId,
+                    merkleRootHash,
+                });
+            }
+        }
+
+        // extract the channels from the proof microblock and compare all Merkle root hashes
+        const proofRecord = ProofRecord.fromProofChannels(proofMicroblock.channels);
+
+        for (const channel of listOfChannels) {
+            const computedMerkleRootHash = proofRecord.getRootHashAsBinary(channel.channelId);
+            if (!Utils.binaryIsEqual(channel.merkleRootHash, computedMerkleRootHash)) {
+                const computedHash = Utils.binaryToHexa(computedMerkleRootHash);
+                const onChainHash = Utils.binaryToHexa(channel.merkleRootHash);
+                throw new ProofVerificationFailedError(channel.channelId, computedHash, onChainHash);
+            }
+        }
+
+        return proofRecord.toJson();
     }
 
     /**

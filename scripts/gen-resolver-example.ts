@@ -1,266 +1,312 @@
-import {CryptoEncoderFactory} from "../src/crypto/encoder/CryptoEncoderFactory";
-import {ProviderFactory} from "../src/providers/ProviderFactory";
-import {Logger} from "../src/utils/Logger";
-import {Microblock} from "../src/blockchain/microblock/Microblock";
-import {CMTSToken} from "../src/economics/currencies/token";
-import {SectionType} from "../src/type/valibot/blockchain/section/SectionType";
-import {ApplicationLedgerVb} from "../src/blockchain/virtualBlockchains/ApplicationLedgerVb";
-import {VirtualBlockchainType} from "../src/type/VirtualBlockchainType";
-import {WalletCrypto} from "../src/wallet/WalletCrypto";
-import {
-    WalletRequestBasedApplicationLedgerMicroblockBuilder
-} from "../src/blockchain/virtualBlockchains/WalletRequestBasedApplicationLedgerMicroblockBuilder";
-import {Hash} from "../src/entities/Hash";
-import {AppLedgerMicroblockBuildRequest} from "../src/type/AppLedgerStateUpdateRequest";
-import {Utils} from "../src/utils/utils";
-import { CryptoHandlerApplicationLedgerActorIdentityAdapter } from "../src/blockchain/virtualBlockchains/IApplicationLedgerActorIdentity";
 import * as fs from 'fs';
+import { JsonObject } from '../src/type/valibot/json/Json';
+import { DigestDataHandler } from '../src/records/DigestData';
+import { ResolverHydrator, ResolverOutput, MbRef } from '../src/resolver/ResolverTypes';
+import { Provider } from '../src/providers/Provider';
+import { Hash } from '../src/entities/Hash';
+import { ApplicationLedgerVb } from "../src/blockchain/virtualBlockchains/ApplicationLedgerVb";
+import { WalletCrypto } from "../src/wallet/WalletCrypto";
+import { CryptoHandlerApplicationLedgerActorIdentityAdapter } from "../src/blockchain/virtualBlockchains/IApplicationLedgerActorIdentity";
+import { LinkResolver } from "../src/resolver/LinkResolver";
+import { Resolver } from "../src/resolver/Resolver";
+import { ResolutionProofProofs } from "../src/type/valibot/proofs/ResolutionProof";
+import { AppLedgerProof } from "../src/type/valibot/proofs/AppLedgerProof";
+import { Test } from "../src/test/Test";
 
-const usePublicChannel = false;
 const nodeUrl = "http://localhost:26657";
-const provider = ProviderFactory.createInMemoryProviderWithExternalProvider(nodeUrl);
-const sigEncoder = CryptoEncoderFactory.defaultStringSignatureEncoder();
-const encodedSk = "sig:secp256k1:sk:e94dfef251c2da1feda001a82137f40a6517a544e4ac6eedb2a88f5aa98c4dd4";
+const encodedSk = 'sig:secp256k1:sk:cd42ad5f7a7823f3ab4da368ea4f807fa8246526ea4ea7eeb4879c42048916a5';
+const usePublicChannel = false;
 
-// set up the logger
-Logger.enableLogs();
+const pem1 = `-----BEGIN CERTIFICATE-----
+MIID9zCCAt+gAwIBAgIUKiawZMLinRSTLO55DatDv+denH0wDQYJKoZIhvcNAQEL
+BQAwgYoxCzAJBgNVBAYTAkZSMRYwFAYDVQQIDA1JbGUgZGUgRnJhbmNlMQ4wDAYD
+VQQHDAVQYXJpczEWMBQGA1UECgwNQ2FybWVudGlzIFNBUzEZMBcGA1UEAwwQd3d3
+LmNhcm1lbnRpcy5pbzEgMB4GCSqGSIb3DQEJARYRaW5mb0BjYXJtZW50aXMuaW8w
+HhcNMjYwMzE5MTMxNDQxWhcNMjYwNDE4MTMxNDQxWjCBijELMAkGA1UEBhMCRlIx
+FjAUBgNVBAgMDUlsZSBkZSBGcmFuY2UxDjAMBgNVBAcMBVBhcmlzMRYwFAYDVQQK
+DA1DYXJtZW50aXMgU0FTMRkwFwYDVQQDDBB3d3cuY2FybWVudGlzLmlvMSAwHgYJ
+KoZIhvcNAQkBFhFpbmZvQGNhcm1lbnRpcy5pbzCCASIwDQYJKoZIhvcNAQEBBQAD
+ggEPADCCAQoCggEBAMcftWqguNDiG5cSoMBBwYhHN0MQqfVmzUkMChj2ATAEz8N9
+VaXOFG2UplZXkGcYlh9t585h74czobJjoRaqw3kXi4W70kyf9/z3ikJd2stMtY1t
+6edm0TCUsHCKE+KXsHBQKKxno73w9WA7LRecQMhJ4TS24OJboIVJgC1aHqupVlCe
+i2aNK0kC1dQvmYPcxGxn4HRtM1crlo+CIHevaCRTzpaUzEZym7sbhGCUxDpUmn0S
+eJOYlIfBCrEG8cyF58QHPTQBxcbV4/woLJm8LMCgcf+lnbMi95Yl7+yZukef0APn
+kH+PuMYkbQfymrpVUbQAyit30Yz8BoXr3VvZeEECAwEAAaNTMFEwHQYDVR0OBBYE
+FM1QoZA7aKHzjq5mdErw776DHhV7MB8GA1UdIwQYMBaAFM1QoZA7aKHzjq5mdErw
+776DHhV7MA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEBAHwVe1cG
+gEHKV7sHzwQv3XeVESr0JR/YgrG8iyvhUaJNJjQW6xx4GhHd8X4du9h4Y0jZHDB9
+kKQtQ+oPt5yB52pSIXZhsBVtKOr5v+0ddSwr4T5CUfLwDE0TuYCIQhr752XBMczf
+KGO8lcXnjbesK1PQ3MM6x1eTv4vBARCImX8VKHx2qC3txIL2AFbTmhi2a/vHsz1S
+P0Z4vu4yoVZRsaF+/AwNlIKKHtyz/8Cc7acwmlkGaOCmyddlrX+FR1Yld8RsV6/F
+09mT6qcCDkWGsC4pknZbqyQDtUbZT0qYlqfmHCPN0GrCOrnVl0QADJ3JaLyjj6tB
+UI9X4hM8epAa/Lg=
+-----END CERTIFICATE-----`;
+
+const pem2 = `-----BEGIN CERTIFICATE-----
+MIIDQzCCAiugAwIBAgIUajNNq6ugW4bRvfQd5EqUKmmXp1AwDQYJKoZIhvcNAQEL
+BQAwGjEYMBYGA1UEAwwPd3d3LmZpbmN0ZWsuY29tMB4XDTI2MTAwMTEzNDYzMloX
+DTI3MTAwMTEzNDYzMlowGjEYMBYGA1UEAwwPd3d3LmZpbmN0ZWsuY29tMIIBIjAN
+BgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAofsQ/bWSyHgznDXSduZ0PrkVMasZ
++W0Ut4cuDRAOSvKeaSLbZusQdwA0f8rFdAFOgQTGyCxGceAjYqg5SAkglWR8+ix8
+TITGsSOhnFBOvII/Fq86ORIFFiR8BUQVD0t/VddSU65ANqSVpCLKVlXKXseLy/LU
+dgUE4fw2NqHLsO5DLK5NPhlQ5LwhH4WtubhM0R73LvhgcdB0Vual6lGNdMM0Sc5Z
+14M6KcqVT/HIICkKivq7RALpDZHE2XiLlO7sflwS/qO3EhQpy2vMvQyrvatogHsW
+bMasgkmhVZlL+IKoik8Bvtscie0tXKtLKErZobY4WcYUUd6ARFuhOPvU5wIDAQAB
+o4GAMH4wDAYDVR0TAQH/BAIwADALBgNVHQ8EBAMCBaAwHQYDVR0lBBYwFAYIKwYB
+BQUHAwIGCCsGAQUFBwMBMCMGCSsGAQQBg5gqAQQWDBQ5Njk1MDBQVEpKWlRDRTBJ
+M0I2MDAdBgNVHQ4EFgQU3KVAzQ5YukRxub0v7konaXutJH0wDQYJKoZIhvcNAQEL
+BQADggEBACjXpuB7PJXHeOTUcbmZH3wwHXR0Ewj9ZCAxp3/XJTFmuJuKfBUcYwH8
+BcrnrENaoHOtBfA9OoUkyE4esjaNZJkH4IdX+OHlMHc8SuK/WCcXu0N2rzDahnJj
+pZ5qWOEVM8SENAdf8fJUt3mUKKKCKehJOPmMtC6CtUcyUJCCBCE56lBoF614KTda
+trMhQjbMgyx80Girlq6VCwxqkqt2OSQL7cUAvlzejW1l9ff+AihS8hdvBpLCoUEt
+/yoLA8kW/zrgUqUn+MGmAfCBG6byk0s6y0DhNM4Fgba9lGldxV3RfyCf/QgTfC7m
+BVgu+T7rIjrdma8yPm+y+c8w6jSMoxs=
+-----END CERTIFICATE-----`;
 
 run();
 
 async function run() {
-    const sk = await sigEncoder.decodePrivateKey(encodedSk);
-    const pk = await sk.getPublicKey();
-
-    // create organization
-    const accountId = await provider.getAccountIdFromPublicKey(pk);
-    const carmentisOrganizationMicroblock = Microblock.createGenesisOrganizationMicroblock();
-    carmentisOrganizationMicroblock.addSections([
-        {
-            type: SectionType.ORG_CREATION,
-            accountId: accountId.toBytes(),
-        },
-        {
-            type: SectionType.ORG_DESCRIPTION,
-            name: `ACME`,
-            website: '',
-            countryCode: 'FR',
-            city: 'Paris',
-        },
-    ]);
-    carmentisOrganizationMicroblock.setFeesPayerAccount(accountId.toBytes());
-    carmentisOrganizationMicroblock.setTimestamp(Utils.getTimestampInSeconds());
-    carmentisOrganizationMicroblock.setGasPrice(CMTSToken.createMilliToken(1));
-    await carmentisOrganizationMicroblock.setGasAndSeal(provider, sk);
-    const { microblockHash: orgId } = carmentisOrganizationMicroblock.serialize();
-    await provider.publishMicroblock(carmentisOrganizationMicroblock);
-    await provider.awaitMicroblockAnchoring(carmentisOrganizationMicroblock.getHash().toBytes());
-
-    // create application
-    const applicationMicroblock = Microblock.createGenesisApplicationMicroblock();
-    applicationMicroblock.addSections([
-        {
-            type: SectionType.APP_CREATION,
-            organizationId: orgId,
-        },
-        {
-            type: SectionType.APP_DESCRIPTION,
-            name: `My Application`,
-            logoUrl: '',
-            homepageUrl: 'FR',
-            description: 'A test application',
-        },
-    ]);
-    applicationMicroblock.setFeesPayerAccount(accountId.toBytes());
-    applicationMicroblock.setTimestamp(Utils.getTimestampInSeconds());
-    applicationMicroblock.setGasPrice(CMTSToken.createMilliToken(1));
-    await applicationMicroblock.setGasAndSeal(provider, sk);
-    const { microblockHash: appId } = applicationMicroblock.serialize();
-    await provider.publishMicroblock(applicationMicroblock);
-    await provider.awaitMicroblockAnchoring(applicationMicroblock.getHash().toBytes());
+    const test = new Test(nodeUrl, encodedSk);
+    const sk = await test.createAccount();
+    const custom = [{
+        __certificate__: { type: "PEM", pem: pem1 }
+    }];
+    const organizationId = await test.createOrganization(sk, custom);
+    const applicationId = await test.createApplication(sk, organizationId);
+    const operatorWallet = test.createWallet();
+    const userWallet = test.createWallet();
+    const digestStore: Map<string, JsonObject> = new Map;
 
     // create application ledgers
     // Eleve
-    const studentVbId = await createApplicationLedger({
+    const studentRgpdData = {
         prenom : "Martin",
         nom : "Durand",
         date_naissance : "2008-08-01",
-        niveau : "Terminal",
-        classe : "T3"
-    });
+    };
+
+    const studentData = DigestDataHandler.jsonToDigestData(studentRgpdData, true);
+    digestStore.set(studentData.digest.digest, studentData.digestData);
+
+    const { applicationLedgerId: studentVbId } = await test.createAppLedger(
+        sk,
+        applicationId,
+        {
+            __digest__: studentData.digest,
+            niveau : "Terminal",
+            classe : "T3"
+        },
+        userWallet,
+        operatorWallet,
+        usePublicChannel,
+    );
 
     // Professeur
-    const teacherVbId = await createApplicationLedger({
+    const teacherRgpdData = {
         prenom : "Martine",
         nom : "Dupont",
         date_naissance : "1973-12-20"
-    });
+    };
+
+    const teacherData = DigestDataHandler.jsonToDigestData(teacherRgpdData, true);
+
+    const { applicationLedgerId: teacherVbId } = await test.createAppLedger(
+        sk,
+        applicationId,
+        {
+            __digest_data__: {
+                [teacherData.digest.digest]: teacherData.digestData
+            },
+            __digest__: teacherData.digest,
+        },
+        userWallet,
+        operatorWallet,
+        usePublicChannel,
+    );
 
     // Epreuve 1
-    const test1VbId = await createApplicationLedger({
-        matiere : "Mathématique",
-        coefficient : 3,
-        date : "2026-08-26"
-    });
+    const { applicationLedgerId: test1VbId } = await test.createAppLedger(
+        sk,
+        applicationId,
+        {
+            matiere : "Mathématique",
+            coefficient : 3,
+            date : "2026-08-26"
+        },
+        userWallet,
+        operatorWallet,
+        usePublicChannel,
+    );
 
     // Epreuve 2
-    const test2VbId = await createApplicationLedger({
-        matiere : "Anglais",
-        coefficient : 3,
-        date : "2026-08-26"
-    });
+    const { applicationLedgerId: test2VbId } = await test.createAppLedger(
+        sk,
+        applicationId,
+        {
+            matiere : "Anglais",
+            coefficient : 3,
+            date : "2026-08-26"
+        },
+        userWallet,
+        operatorWallet,
+        usePublicChannel,
+    );
 
     // Note 1
-    const gradeVbId = await createApplicationLedger({
-        eleve: `cmts://resolve/al/${studentVbId}/mb/h/1`,
-        professeur: `cmts://resolve/al/${teacherVbId}/mb/h/1`,
-        epreuve: `cmts://resolve/al/${test1VbId}/mb/h/1`,
-        note: 18.5,
-        appreciation: "Excellent travail"
-    });
+    const { applicationLedgerId: gradeVbId } = await test.createAppLedger(
+        sk,
+        applicationId,
+        {
+            eleve: `cmts://resolve/al/${studentVbId}/mb/h/1`,
+            professeur: `cmts://resolve/al/${teacherVbId}/mb/h/1`,
+            epreuve: `cmts://resolve/al/${test1VbId}/mb/h/1`,
+            note: 18.5,
+            appreciation: "Excellent travail"
+        },
+        userWallet,
+        operatorWallet,
+        usePublicChannel,
+    );
 
     // Note 2
-    await createApplicationLedger({
-        eleve: `cmts://resolve/al/${studentVbId}/mb/h/1`,
-        professeur: `cmts://resolve/al/${teacherVbId}/mb/h/1`,
-        epreuve: `cmts://resolve/al/${test2VbId}/mb/h/1`,
-        note: 7.5,
-        appreciation: "Travail insuffisant"
-    }, gradeVbId);
-
-    // Bulletin 
-    const reportVbId = await createApplicationLedger({
-        _representation: "...",
-        eleve: `cmts://resolve/al/${studentVbId}/mb/h/1`,
-        periode: {
-            debut: "2026-01-01",
-            fin: "2026-03-30"
+    await test.updateAppLedger(
+        gradeVbId,
+        sk,
+        applicationId,
+        {
+            eleve: `cmts://resolve/al/${studentVbId}/mb/h/1`,
+            professeur: `cmts://resolve/al/${teacherVbId}/mb/h/1`,
+            epreuve: `cmts://resolve/al/${test2VbId}/mb/h/1`,
+            note: 7.5,
+            appreciation: "Travail insuffisant"
         },
-        moyenne: 13,
-        appreciation: "Bon trimestre",
-        notes: [
-            `cmts://resolve/al/${gradeVbId}/mb/h/1`,
-            `cmts://resolve/al/${gradeVbId}/mb/h/2`,
-        ]
-    });
+        userWallet,
+        operatorWallet,
+        usePublicChannel,
+    );
+
+    // Bulletin
+    const { applicationLedgerId: reportVbId } = await test.createAppLedger(
+        sk,
+        applicationId,
+        {
+            eleve: `cmts://resolve/al/${studentVbId}/mb/h/1`,
+            periode: {
+                debut: "2026-01-01",
+                fin: "2026-03-30"
+            },
+            moyenne: 13,
+            appreciation: "Bon trimestre",
+            notes: [
+                `cmts://resolve/al/${gradeVbId}/mb/h/1`,
+                `cmts://resolve/al/${gradeVbId}/mb/h/2`,
+            ],
+            cert1: `cmts://resolve/org/${organizationId}/mb/h/1/sect/n/__certificate__`,
+            cert2: {
+                __certificate__: { type: "PEM", pem: pem2 },
+            },
+        },
+        userWallet,
+        operatorWallet,
+        usePublicChannel,
+    );
 
     const rootObject = {
         linkedJson: {
             report: `cmts://resolve/al/${reportVbId}/mb/h/1`
         },
+        digestData: Object.fromEntries(digestStore),
         policies: {            
         }
     };
 
-    const json = JSON.stringify(rootObject, null, 2);
-    fs.writeFileSync("resolverQuery.json", json);
+    const query = JSON.stringify(rootObject, null, 2);
+    fs.writeFileSync("resolverQuery.json", query);
 
-    async function createApplicationLedger(data: object, vbId?: string): Promise<string> {
-        let applicationLedger;
-        if (vbId) {
-            applicationLedger = await provider.loadApplicationLedgerVirtualBlockchain(Hash.from(vbId));
+    const provider = test.getProvider();
+
+    const generatorResolverHydrator = new GeneratorResolverHydrator(provider, userWallet);
+    const generatorResolver = new Resolver(provider, generatorResolverHydrator);
+    const generatorResolvedJson = await generatorResolver.resolveFromInput(rootObject);
+    const generatorOutput: ResolverOutput = {
+        linkedJson: rootObject.linkedJson,
+        resolvedJson: generatorResolvedJson,
+        digestData: rootObject.digestData,
+        proofs: generatorResolverHydrator.getProofs(),
+    }
+
+    const generatorJson = JSON.stringify(generatorOutput, null, 2);
+    fs.writeFileSync("generator-resolved.json", generatorJson);
+    console.log("report", generatorResolver.getReport());
+
+    const checkerResolverHydrator = new CheckerResolverHydrator(provider, generatorOutput.proofs);
+    const checkerResolver = new Resolver(provider, checkerResolverHydrator);
+    const checkerResolvedJson = await checkerResolver.resolveFromInput(rootObject);
+    const checkerOutput: ResolverOutput = {
+        linkedJson: rootObject.linkedJson,
+        resolvedJson: checkerResolvedJson,
+        digestData: rootObject.digestData,
+        proofs: generatorResolverHydrator.getProofs(),
+    }
+
+    const checkerJson = JSON.stringify(checkerOutput, null, 2);
+    fs.writeFileSync("checker-resolved.json", checkerJson);
+    console.log("report", checkerResolver.getReport());
+}
+
+class GeneratorResolverHydrator implements ResolverHydrator {
+    private proofs: Map<string, AppLedgerProof> = new Map;
+
+    constructor(
+        private readonly provider: Provider,
+        private readonly wallet: WalletCrypto,
+    ) {
+        this.proofs.clear();
+    }
+
+    getProofs() {
+        return Object.fromEntries(this.proofs);
+    }
+
+    async hydrateMicroblock(link: string, mbRef: MbRef) {
+        const { vb, height } = await LinkResolver.getMicroblockLocation(this.provider, mbRef);
+
+        if (!(vb instanceof ApplicationLedgerVb)) {
+            throw new Error(`the microblock does not belong to an application ledger`);
         }
-        else {
-            applicationLedger = ApplicationLedgerVb.createApplicationLedgerVirtualBlockchain(provider);
-        }
-        const expirationDay = Utils.addDaysToTimestamp(
-            Utils.getTimestampInSeconds(),
-            10
+
+		const vbSeedHash = await vb.getGenesisSeed();
+		const vbSeed = vbSeedHash.toBytes();
+        const accountCrypto = this.wallet.getDefaultAccountCrypto();
+        const actorCrypto = accountCrypto.deriveActorFromVbSeed(vbSeed);
+        const identity = new CryptoHandlerApplicationLedgerActorIdentityAdapter(actorCrypto);
+
+        const data = await vb.getRecord(height, identity);
+        const proof = await vb.exportMicroblockProof(
+            identity,
+            height,
         );
-        const tempMb = Microblock.createGenesisMicroblock(
-            VirtualBlockchainType.APP_LEDGER_VIRTUAL_BLOCKCHAIN,
-            expirationDay
-        );
-        const vbSeed = tempMb.getPreviousHash();
+        this.proofs.set(link, proof);
+        return data;
+    }
+}
 
-        const userWalletCrypto = WalletCrypto.generateWallet();
-        const userAccountCrypto = userWalletCrypto.getDefaultAccountCrypto();
-        const userActorCrypto = userAccountCrypto.deriveActorFromVbSeed(vbSeed.toBytes());
-        const userIdentity = new CryptoHandlerApplicationLedgerActorIdentityAdapter(userActorCrypto);
+class CheckerResolverHydrator implements ResolverHydrator {
+    private readonly provider: Provider;
+    private readonly proofs: ResolutionProofProofs;
 
-        const operatorWalletCrypto = WalletCrypto.generateWallet();
-        const operatorAccountCrypto = operatorWalletCrypto.getDefaultAccountCrypto();
-        const operatorActorCrypto = operatorAccountCrypto.deriveActorFromVbSeed(vbSeed.toBytes());
-        const operatorIdentity = new CryptoHandlerApplicationLedgerActorIdentityAdapter(operatorActorCrypto);
+    constructor(provider: Provider, proofs: ResolutionProofProofs) {
+        this.provider = provider;
+        this.proofs = proofs;
+    }
 
-        const mbBuilder = await WalletRequestBasedApplicationLedgerMicroblockBuilder.createFromVirtualBlockchain(
-            Hash.from(appId),
-            applicationLedger
-        );
-        let request: AppLedgerMicroblockBuildRequest;
-        if (vbId) {
-            request = {
-                virtualBlockchainId: vbId,
-                author: 'appOperator',
-                endorser: 'user',
-                data,
-                channelAssignations: [
-                    {
-                        channelName: 'mainChannel',
-                        fieldPath: 'this.*'
-                    }
-                ],
-            };
-        }
-        else {
-            request = {
-                author: 'appOperator',
-                endorser: 'user',
-                data,
-                channels: [
-                    {
-                        name: 'mainChannel',
-                        public: usePublicChannel,
-                    }
-                ],
-                channelAssignations: [
-                    {
-                        channelName: 'mainChannel',
-                        fieldPath: 'this.*'
-                    }
-                ],
-                actors: [
-                    { name: "appOperator" },
-                    { name: "user" },
-                ],
-                actorAssignations: [
-                    {
-                        channelName: 'mainChannel',
-                        actorName: 'appOperator',
-                    },
-                    {
-                        channelName: 'mainChannel',
-                        actorName: 'user'
-                    },
-                ],
-            };
-            const privateEncryptionKey = await userIdentity.getActorPrivateDecryptionKey();
-            const publicEncryptionKey = await privateEncryptionKey.getPublicKey();
-            await mbBuilder.subscribeActor(
-                'user',
-                await userIdentity.getActorPublicSignatureKey(),
-                publicEncryptionKey
-            );
-        }
-        const appLedgerMicroblock = await mbBuilder.createMicroblockFromStateUpdateRequest(
-            operatorIdentity,
-            request
-        );
-        let previousHash: Hash;
-        if (vbId) {
-            const lastMb = await applicationLedger.getLastMicroblock();
-            previousHash = lastMb.getHash();
-        }
-        else {
-            previousHash = vbSeed;
-        }
-        appLedgerMicroblock.setFeesPayerAccount(accountId.toBytes());
-        appLedgerMicroblock.setTimestamp(Utils.getTimestampInSeconds());
-        appLedgerMicroblock.setGasPrice(CMTSToken.createMilliToken(1));
-        await appLedgerMicroblock.setGasAndSeal(provider, sk);
-        const {microblockHash: applicationLedgerId} = appLedgerMicroblock.serialize();
-        await provider.publishMicroblock(appLedgerMicroblock);
-        await provider.awaitMicroblockAnchoring(appLedgerMicroblock.getHash().toBytes());
-
-        return Utils.binaryToHexa(applicationLedgerId);
+    async hydrateMicroblock(link: string, mbRef: MbRef) {
+        const proof = this.proofs[link];
+        const vb = proof.virtualBlockchains[0];
+        const vbId = vb.id;
+        const appLedgerIdHash = Hash.fromHex(vbId);
+        const appLedgerVb = await this.provider.loadApplicationLedgerVirtualBlockchain(appLedgerIdHash);
+        const data = await appLedgerVb.importMicroblockProof(vb.microblocks[0]);
+        return data;
     }
 }

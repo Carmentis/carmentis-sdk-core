@@ -1,5 +1,9 @@
 import { ResolvedPath, MbRef, VbRef, SectRef } from "./ResolverTypes";
 import { VirtualBlockchainType } from "../type/VirtualBlockchainType";
+import { Provider } from '../providers/Provider';
+import { Hash } from '../entities/Hash';
+import { Utils } from '../utils/utils';
+import { SectionType } from '../type/valibot/blockchain/section/SectionType';
 
 const VB_TYPES: Record<string, number | undefined> = {
     vb: undefined,
@@ -113,5 +117,56 @@ export class LinkResolver {
             throw new Error(`unexpected trailing tags in '${link}'`);
         }
         return { type: "section", ref: sect };
+    }
+
+    static async getMicroblockLocation(provider: Provider, mbRef: MbRef) {
+        let vbId: string;
+        let height: number;
+
+        if (mbRef.hash !== undefined) {
+            const mbInfo = await provider.getMicroblockInformation(Utils.binaryFromHexa(mbRef.hash));
+            if (mbInfo === null) {
+                throw new Error(`microblock not found`);
+            }
+            vbId = Utils.binaryToHexa(mbInfo.virtualBlockchainId);
+            height = mbInfo.header.height;
+        } else if (mbRef.vb !== undefined && mbRef.height !== undefined) {
+            vbId = mbRef.vb.id;
+            height = mbRef.height;
+        } else {
+            throw new Error(`inconsistent microblock reference`);
+        }
+        const vb = await provider.loadVirtualBlockchain(Hash.from(vbId));
+        return { vb, height };
+    }
+
+    static async getSection(provider: Provider, sectRef: SectRef) {
+        const mbRef = sectRef.mb;
+        const { vb, height } = await LinkResolver.getMicroblockLocation(provider, mbRef);
+        const microblock = await vb.getMicroblock(height);
+        const sections = microblock.getAllSections();
+        let index: number;
+
+        if (sectRef.index !== undefined) {
+            index = sectRef.index;
+        }
+        else if (sectRef.name !== undefined) {
+            const name = sectRef.name;
+            index = sections.findIndex((section) =>
+                section.type == SectionType.CUSTOM && name in section
+            );
+            if (index == -1) {
+                console.log(name, sections);
+                throw new Error(`unable to find section with name '${name}'`);
+            }
+        }
+        else {
+            throw new Error(`inconsistent section reference`);
+        }
+        const section = sections[index];
+        if (section === undefined) {
+            throw new Error(`inconsistent section index ${index}`);
+        }
+        return section;
     }
 }

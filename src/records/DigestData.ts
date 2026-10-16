@@ -3,7 +3,7 @@ import { JsonCanonicalizationMethod } from "../crypto/signature/signer/json/Json
 import { Crypto } from "../crypto/crypto";
 import { Hash } from "../entities/Hash";
 import { JsonObject } from "../type/valibot/json/Json";
-import { OnchainData, DigestRecord } from '../resolver/ResolverTypes';
+import { Digest, DigestRecord } from '../resolver/ResolverTypes';
 
 /**
  * A utility class for handling digest operations on JSON data, including creating and verifying digests.
@@ -22,30 +22,29 @@ export class DigestDataHandler {
             digestData = { ...object };
         }
 
-        // compute the digest
-        const digest = DigestDataHandler.computeDigest(encoding, digestAlg, digestData);
+        const digestValue = DigestDataHandler.computeDigest(encoding, digestAlg, digestData);
 
-        const onchainData: OnchainData = {
-            digest,
+        const digest: Digest = {
+            digest: digestValue,
             type: "json",
             encoding,
             digestAlg,
         };
 
         const record: DigestRecord = {
-            onchainData,
+            digest,
             digestData,
         };
         return record;
     }
 
-    static jsonFromDigestData(onchainData: OnchainData, digestData: JsonObject): JsonObject {
-        const { encoding, digestAlg, digest } = onchainData;
+    static jsonFromDigestData(digest: Digest, digestData: JsonObject): JsonObject {
+        const { encoding, digestAlg, digest: storedDigest } = digest;
 
         // re-compute the digest from digestData and check it against the on-chain value
         const computedDigest = DigestDataHandler.computeDigest(encoding, digestAlg, digestData);
-        if (computedDigest !== digest) {
-            throw new Error(`digest of injected data does not match onchain digest (external data digest = ${computedDigest}, onchain digest = ${digest}), encoding = ${encoding}, digestAlg = ${digestAlg}`);
+        if (computedDigest !== storedDigest) {
+            throw new Error(`digest of injected data does not match onchain digest (external data digest = ${computedDigest}, onchain digest = ${storedDigest}), encoding = ${encoding}, digestAlg = ${digestAlg}`);
         }
 
         // build the object by removing __salt__

@@ -1,8 +1,6 @@
 import * as v from 'valibot';
 import { JsonData, JsonObject } from '../type/valibot/json/Json';
-
-export const RESOLUTION_LINK_TAG = "__resolution_link__";
-export const DIGEST_DATA_TAG = "__digest_data__";
+import { ResolutionProofProofs } from '../type/valibot/proofs/ResolutionProof';
 
 export interface Policies {
     onResolutionFailure?: 'ignore' | 'throw'
@@ -13,6 +11,7 @@ export interface Policies {
 export interface ResolverInput {
     linkedJson: JsonObject
     policies?: Policies
+    digestData?: Record<string, JsonObject>
 }
 
 export interface ResolverOutput {
@@ -20,7 +19,7 @@ export interface ResolverOutput {
     policies?: Policies
     resolvedJson: JsonObject
     digestData: Record<string, JsonObject>
-    proofs: Record<string, JsonObject>
+    proofs: ResolutionProofProofs
 }
 
 export interface VbRef {
@@ -45,21 +44,31 @@ export type ResolvedPath =
     | { type: "mb"; ref: MbRef }
     | { type: "section"; ref: SectRef };
 
-export const OnchainDataSchema = v.object({
+export const DigestSchema = v.object({
     digest: v.string(),
     type: v.picklist(["json"]),
     encoding: v.string(),
     digestAlg: v.string(),
 });
 
-export type OnchainData = v.InferOutput<typeof OnchainDataSchema>;
+export type Digest = v.InferOutput<typeof DigestSchema>;
 
 export interface DigestRecord {
-    onchainData: OnchainData
+    digest: Digest
     digestData: JsonObject
 }
 
 export interface ResolverHydrator {
-    hydrateMicroblock(link: string, mbRef: MbRef): Promise<JsonData>;
-    hydrateDigestData(onchainData: OnchainData): Promise<JsonData>;
+    hydrateMicroblock(link: string, mbRef: MbRef): Promise<JsonData | undefined>;
+}
+
+export interface Unresolved {
+    path: string
+    type: string
+    cause: string
+}
+
+export interface ResolverReport {
+    passes: number
+    unresolved: Unresolved[]
 }
