@@ -76,6 +76,9 @@ describe('WalletRequestBasedApplicationLedgerMicroblockBuilder', () => {
         // no invitation should be included: the creator cannot invite himself
         expect(mb.getSectionsByType(SectionType.APP_LEDGER_CHANNEL_INVITATION)).toHaveLength(0);
 
+        // should contain an application ledger creation
+        expect(mb.getSectionsByType(SectionType.APP_LEDGER_CREATION)).toHaveLength(1);
+
         // the data are still encrypted in the private channel
         expect(mb.getSectionsByType(SectionType.APP_LEDGER_PRIVATE_CHANNEL_DATA)).toHaveLength(1);
     })

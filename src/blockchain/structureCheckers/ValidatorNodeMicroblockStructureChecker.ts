@@ -23,11 +23,19 @@ export class ValidatorNodeMicroblockStructureChecker implements IMicroblockStruc
                     checker.isFirstBlock() ? SectionConstraint.ONE : SectionConstraint.ZERO,
                     SectionType.VN_CREATION
                 );
+                // the cometbft public key and the RPC endpoint are both declared at genesis; afterwards,
+                // the cometbft public key is frozen while the RPC endpoint can be redeclared
                 checker.group(
                     SectionConstraint.AT_LEAST_ONE,
                     [
-                        [SectionConstraint.AT_MOST_ONE, SectionType.VN_COMETBFT_PUBLIC_KEY_DECLARATION],
-                        [SectionConstraint.AT_MOST_ONE, SectionType.VN_RPC_ENDPOINT],
+                        [
+                            checker.isFirstBlock() ? SectionConstraint.ONE : SectionConstraint.ZERO,
+                            SectionType.VN_COMETBFT_PUBLIC_KEY_DECLARATION
+                        ],
+                        [
+                            checker.isFirstBlock() ? SectionConstraint.ONE : SectionConstraint.AT_MOST_ONE,
+                            SectionType.VN_RPC_ENDPOINT
+                        ],
                         [SectionConstraint.ANY, SectionType.CUSTOM],
                     ]
                 );
