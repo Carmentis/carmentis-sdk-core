@@ -112,7 +112,7 @@ export class Resolver {
                 }
                 default: {
                     if (TaggedObjectTransformer.isKnownTag(key)) {
-                        const transformedObject = await TaggedObjectTransformer.process(key, node[key]);
+                        const transformedObject = await TaggedObjectTransformer.process(key, node[key], subPath, this.unresolved);
                         if (transformedObject !== null) {
                             for (const [key, value] of Object.entries(transformedObject)) {
                                 newNode[key] = value as JsonData;
@@ -210,7 +210,7 @@ export class Resolver {
         if (section.type == SectionType.CUSTOM) {
             const tag = Object.keys(section).find((key) => /^__/.test(key));
             if (tag !== undefined) {
-                const transformedObject = await TaggedObjectTransformer.process(tag, section[tag]);
+                const transformedObject = await TaggedObjectTransformer.process(tag, section[tag], path, this.unresolved);
                 if (transformedObject !== undefined) {
                     return transformedObject as JsonObject;
                 }

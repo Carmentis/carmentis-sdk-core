@@ -19,6 +19,13 @@ export type OIDCollection = Record<string, {
     values: string[]
 }>
 
+export type CertificateInformation = {
+    notBefore: string
+    notAfter: string
+    serialNumber: string
+    selfSigned: boolean
+}
+
 const OID: OIDDefinition[] = [
     // DN
     { oid: "2.5.4.3", shortNames: ["CN"], description: "Common Name" },
@@ -81,7 +88,7 @@ export class X509 {
         };
     }
 
-    async getInformation() {
+    async getInformation(): Promise<CertificateInformation> {
         const selfSigned = await this.cert.isSelfSigned();
         return {
             notBefore: this.cert.notBefore.toISOString(),
@@ -89,6 +96,18 @@ export class X509 {
             serialNumber: this.cert.serialNumber,
             selfSigned,
         };
+    }
+
+    getSubject() {
+        return this.cert.subject;
+    }
+
+    getIssuer() {
+        return this.cert.issuer;
+    }
+
+    async getPublicKey() {
+        return await this.cert.publicKey.export();
     }
 
     getSubjectDN(): OIDCollection {

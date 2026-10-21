@@ -136,11 +136,10 @@ export class SdJwt {
         let verified: boolean;
         try {
             const result = await sdjwtVerifier.safeVerify(this.jwt)
-            console.log("safeVerify()", result);
             verified = result.success;
         }
         catch (error) {
-            console.error("sig verification failed", error);
+            console.error("verification failed", error);
             verified = false;
         }
         return verified;
