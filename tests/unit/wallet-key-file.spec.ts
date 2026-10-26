@@ -27,7 +27,7 @@ function builder() {
             name: 'seed-wallet',
             privateKey: ExportedWalletMapper.seedKeyFromWallet(WalletCrypto.generateWallet(), SignatureSchemeId.SECP256K1),
             actorPassphrase: 'actor passphrase',
-            connectivity: {networkName: 'testnet', nodeEndpoint: 'https://node.example', rpcEndpoint: 'https://node.example/rpc'},
+            connectivity: {networkName: 'testnet', nodeEndpoint: 'https://node.example', indexerEndpoint: 'https://node.example/rpc'},
         })
         .addWallet({
             name: 'jwk-wallet',
