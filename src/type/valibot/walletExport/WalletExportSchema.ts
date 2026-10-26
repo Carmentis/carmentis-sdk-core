@@ -33,7 +33,7 @@ export type ExportedKey = v.InferOutput<typeof ExportedKeySchema>;
 export const ConnectivitySchema = v.object({
     networkName: v.string(),
     nodeEndpoint: v.string(),
-    rpcEndpoint: v.string(),
+    indexerEndpoint: v.string(),
 });
 export type Connectivity = v.InferOutput<typeof ConnectivitySchema>;
 
