@@ -11,8 +11,10 @@ import {
 import {Base64} from "../../data/base64";
 import {WalletKeyFileError} from "../../errors/carmentis-error";
 
-// Plain CBOR (no cbor-x records), as for the JWK encoding.
-const ENCODER = new Encoder({useRecords: false, variableMapSize: true, mapsAsObjects: true});
+// Plain CBOR (no cbor-x records), as for the JWK encoding. `tagUint8Array: false` keeps byte strings
+// untagged whatever the runtime: cbor-x otherwise tags a Uint8Array (tag 64) when `Buffer` exists
+// (Node) but not in a browser or webview, which would make the authenticated header differ.
+const ENCODER = new Encoder({useRecords: false, variableMapSize: true, mapsAsObjects: true, tagUint8Array: false});
 
 /**
  * Serialization of key files: CBOR for the envelope and for the payload (the JSON document),
