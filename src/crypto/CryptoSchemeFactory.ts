@@ -10,6 +10,8 @@ import {MLDSA65PrivateSignatureKey, MLDSA65PublicSignatureKey, MLDSA65SignatureS
 import {CryptographicHash, CryptographicHashSchemeId, Sha256CryptographicHash} from "./hash/hash-interface";
 
 import {PBKDF2} from "./kdf/PBKDF2";
+import {Scrypt} from "./kdf/Scrypt";
+import {Argon2id, Argon2idParams} from "./kdf/Argon2id";
 import {PasswordBasedKeyDerivationFunction} from "./kdf/PasswordBasedKeyDerivationFunction";
 import {KeyDerivationFunction} from "./kdf/KeyDerivationFunction";
 import {HKDF} from "./kdf/HKDF";
@@ -159,6 +161,15 @@ export class CryptoSchemeFactory {
 
     static createDefaultPBKDF(): PasswordBasedKeyDerivationFunction {
         return new PBKDF2();
+    }
+
+    static createPBKDF(schemeId: PasswordBasedKeyDerivationFunctionSchemeId, argon2idParams?: Argon2idParams): PasswordBasedKeyDerivationFunction {
+        switch (schemeId) {
+            case PasswordBasedKeyDerivationFunctionSchemeId.PBKDF2: return new PBKDF2();
+            case PasswordBasedKeyDerivationFunctionSchemeId.SCRYPT: return new Scrypt();
+            case PasswordBasedKeyDerivationFunctionSchemeId.ARGON2ID: return new Argon2id(argon2idParams);
+            default: throw new Error(`Not supported password-based KDF scheme ID: ${schemeId}`)
+        }
     }
 
     static createDefaultKDF() {

@@ -8,7 +8,7 @@ export class PBKDF2 extends PasswordBasedKeyDerivationFunction {
         return PasswordBasedKeyDerivationFunctionSchemeId.PBKDF2;
     }
 
-    deriveKey(password: string, salt: string, keyLength: number): Uint8Array {
+    deriveKey(password: string, salt: string | Uint8Array, keyLength: number): Uint8Array {
         return pbkdf2(sha256, password, salt, {c: 100000, dkLen: keyLength});
     }
 }

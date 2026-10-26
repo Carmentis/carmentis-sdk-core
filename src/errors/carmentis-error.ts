@@ -86,6 +86,11 @@ export class EmptyBlockError extends CarmentisError {
 }
 
 export class CryptoError extends CarmentisError {}
+export class WalletKeyFileError extends CryptoError {
+    constructor(message: string) {
+        super(`Wallet key file error: ${message}`);
+    }
+}
 export class DecryptionError extends CryptoError {
     constructor(message?: string) {
         super(message ?? "Decryption failure");

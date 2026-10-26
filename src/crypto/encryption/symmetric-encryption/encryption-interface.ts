@@ -24,16 +24,18 @@ export interface SymmetricEncryptionKey  {
      * Encrypts the given plaintext using a predefined encryption algorithm.
      *
      * @param {Uint8Array} plaintext - The plaintext data to be encrypted.
+     * @param {Uint8Array} [associatedData] - Optional data authenticated but not encrypted (AAD); it must be supplied again to decrypt.
      * @return {Promise<Uint8Array>} The encrypted data as a Uint8Array.
      */
-    encrypt(plaintext: Uint8Array): Promise<Uint8Array>;
+    encrypt(plaintext: Uint8Array, associatedData?: Uint8Array): Promise<Uint8Array>;
     /**
      * Decrypts the given ciphertext and returns the resulting plaintext.
      *
      * @param {Uint8Array} ciphertext - The encrypted data to be decrypted.
+     * @param {Uint8Array} [associatedData] - The data that was authenticated at encryption time.
      * @return {Promise<Uint8Array>} The decrypted plaintext as a Uint8Array.
      */
-    decrypt(ciphertext: Uint8Array): Promise<Uint8Array>;
+    decrypt(ciphertext: Uint8Array, associatedData?: Uint8Array): Promise<Uint8Array>;
     /**
      * Retrieves the raw secret key as a Uint8Array.
      *
@@ -134,10 +136,10 @@ export class AES256GCMSymmetricEncryptionKey implements SymmetricEncryptionKey {
      * @param {Uint8Array} plaintext - The plaintext data to be encrypted.
      * @return {Uint8Array} A Uint8Array containing the IV followed by the encrypted ciphertext.
      */
-    async encrypt(plaintext: Uint8Array): Promise<Uint8Array> {
+    async encrypt(plaintext: Uint8Array, associatedData?: Uint8Array): Promise<Uint8Array> {
         const iv = new Uint8Array(12);
         crypto.getRandomValues(iv);
-        const stream = gcm(this.key, iv);
+        const stream = gcm(this.key, iv, associatedData);
         const encrypted = stream.encrypt(plaintext);
         const result = new Uint8Array(iv.length + encrypted.length);
         result.set(iv);
@@ -151,11 +153,11 @@ export class AES256GCMSymmetricEncryptionKey implements SymmetricEncryptionKey {
      * @param {Uint8Array} ciphertext - The encrypted data to be decrypted. The first 12 bytes are assumed to be the initialization vector (IV), and the rest is the encrypted content.
      * @return {Uint8Array} The decrypted plaintext as a Uint8Array.
      */
-    async decrypt(ciphertext: Uint8Array): Promise<Uint8Array> {
+    async decrypt(ciphertext: Uint8Array, associatedData?: Uint8Array): Promise<Uint8Array> {
         try {
             const iv = ciphertext.slice(0, 12);
             const encrypted = ciphertext.slice(12);
-            const stream = gcm(this.key, iv);
+            const stream = gcm(this.key, iv, associatedData);
             return stream.decrypt(encrypted);
         } catch (e) {
             if (CarmentisError.isCarmentisError(e)) {
@@ -218,8 +220,8 @@ export class ExtendedSymmetricEncryptionKey implements SymmetricEncryptionKey {
      * @param {Uint8Array} plaintext - The data to be encrypted.
      * @return {Uint8Array} The encrypted ciphertext as a Uint8Array.
      */
-    async encrypt(plaintext: Uint8Array): Promise<Uint8Array> {
-        return this.wrappedKey.encrypt(plaintext);
+    async encrypt(plaintext: Uint8Array, associatedData?: Uint8Array): Promise<Uint8Array> {
+        return this.wrappedKey.encrypt(plaintext, associatedData);
     }
 
     /**
@@ -228,8 +230,8 @@ export class ExtendedSymmetricEncryptionKey implements SymmetricEncryptionKey {
      * @param {Uint8Array} ciphertext - The ciphertext to be decrypted.
      * @return {Uint8Array} The decrypted plaintext as a Uint8Array.
      */
-    async decrypt(ciphertext: Uint8Array): Promise<Uint8Array> {
-        return this.wrappedKey.decrypt(ciphertext);
+    async decrypt(ciphertext: Uint8Array, associatedData?: Uint8Array): Promise<Uint8Array> {
+        return this.wrappedKey.decrypt(ciphertext, associatedData);
     }
 
     /**
