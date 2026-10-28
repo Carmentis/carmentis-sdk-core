@@ -210,9 +210,9 @@ async function run() {
     dumpReport(checkerReport);
 
     const nodeMapper = new ResolverNodeMapper(checkerReport.nodes);
-    const path0 = new ResolverPath(["root", "report", "eleve"]);
+    const path0 = new ResolverPath(["report", "eleve"]);
     console.log(nodeMapper.map(path0));
-    const path1 = new ResolverPath(["root", "report", "eleve", "prenom"]);
+    const path1 = new ResolverPath(["report", "eleve", "prenom"]);
     console.log(nodeMapper.map(path1));
 
     console.log('seed:', Utils.binaryToHexa(userWallet.getSeedAsBytes()));

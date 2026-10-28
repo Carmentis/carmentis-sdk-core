@@ -2,9 +2,12 @@ import { TagHandler } from "./TagHandler";
 import { JsonObject, JsonData } from '../type/valibot/json/Json';
 import { LinkResolver } from '../resolver/LinkResolver';
 import { SectionType } from '../type/valibot/blockchain/section/SectionType';
+import { Microblock } from '../blockchain/microblock/Microblock';
+import { DckfSignatureEncoder } from '../crypto/encoder/signature/dckf/DckfSignatureEncoder';
 import { TAG } from '../type/tags/tags';
 import { MicroblockNode, SectionNode } from '../type/valibot/resolutionNodes/ResolutionNodes';
 import { ResolverPath } from '../resolver/ResolverPath';
+import { Hash } from '../entities/Hash';
 import {
     MbRef,
     SectRef,
@@ -59,11 +62,12 @@ export class LinkTagHandler extends TagHandler {
 
     private async resolveMicroblock(link: string, path: ResolverPath, mbRef: MbRef) {
         const { vb, height } = await LinkResolver.getMicroblockLocation(this.provider, mbRef);
-        const mb = await vb.getMicroblock(height);
+        const microblock = await vb.getMicroblock(height);
         const data = await this.hydrator.hydrateMicroblock(link, mbRef);
         const node: MicroblockNode = {
             type: "microblock",
-            hash: mb.getHash().encode(),
+            hash: microblock.getHash().encode(),
+            publicKey: await this.getMicroblockPublicKey(microblock),
             vbId: vb.getIdentifier().encode(),
             height,
             found: true,
@@ -72,15 +76,25 @@ export class LinkTagHandler extends TagHandler {
     }
 
     private async resolveSection(link: string, path: ResolverPath, sectRef: SectRef) {
-        const { section, microblockHash, vbId, height, index } = await LinkResolver.getSection(this.provider, sectRef);
+        const { section, microblock, vbId, height, index } = await LinkResolver.getSection(this.provider, sectRef);
         const node: SectionNode = {
             type: "section",
-            microblockHash,
+            microblockHash: microblock.getHash().encode(),
+            publicKey: await this.getMicroblockPublicKey(microblock),
             vbId,
             height,
             index,
             found: true,
         };
         return { output: section as JsonObject, node, resolveOutput: true };
+    }
+
+    private async getMicroblockPublicKey(microblock: Microblock) {
+        const accountId = microblock.getFeesPayerAccount();
+        const accountVb = await this.provider.loadAccountVirtualBlockchain(Hash.from(accountId));
+        const pubKey = await accountVb.getPublicKey();
+        const encoder = new DckfSignatureEncoder;
+        const encodedPublicKey = await encoder.encodePublicKey(pubKey);
+        return encodedPublicKey;
     }
 }

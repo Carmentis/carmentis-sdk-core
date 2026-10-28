@@ -170,7 +170,7 @@ export class LinkResolver {
         return {
             section,
             vbId: vb.getIdentifier().encode(),
-            microblockHash: microblock.getHash().encode(),
+            microblock: microblock,
             height,
             index,
         };

@@ -3,6 +3,7 @@ import * as v from 'valibot';
 const MicroblockNodeSchema = v.object({
     type: v.literal("microblock"),
     hash: v.string(),
+    publicKey: v.string(),
     vbId: v.string(),
     height: v.number(),
     found: v.boolean(),
@@ -12,6 +13,7 @@ export type MicroblockNode = v.InferOutput<typeof MicroblockNodeSchema>;
 const SectionNodeSchema = v.object({
     type: v.literal("section"),
     microblockHash: v.string(),
+    publicKey: v.string(),
     vbId: v.string(),
     height: v.number(),
     index: v.number(),

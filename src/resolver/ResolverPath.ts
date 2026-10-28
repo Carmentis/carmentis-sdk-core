@@ -3,7 +3,7 @@ type Path = (string | number)[]
 export class ResolverPath {
     private readonly path: Path;
 
-    constructor(path: Path = [ 'root' ]) {
+    constructor(path: Path = []) {
         this.path = path;
     }
 
