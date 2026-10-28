@@ -70,3 +70,9 @@ export const SignatureVerificationSchema = v.variant('verified', [
     }),
 ])
 export type SignatureVerification = v.InferOutput<typeof SignatureVerificationSchema>
+
+export const SignatureTransformationSchema = v.object({
+	publicKey: v.string(),
+	valid: v.boolean(),
+    error: v.string(),
+});

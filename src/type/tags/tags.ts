@@ -1,5 +1,6 @@
 export const TAG = {
-    RESOLUTION_LINK: "__resolution_link__",
+    REPRESENTATION: "__representation__",
+    LINK: "__link__",
     DIGEST_DATA: "__digest_data__",
     DIGEST: "__digest__",
     CERTIFICATE: "__certificate__",

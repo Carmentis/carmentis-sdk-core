@@ -1,6 +1,7 @@
 import * as v from 'valibot';
 import { JsonData, JsonObject } from '../type/valibot/json/Json';
 import { ResolutionProofProofs } from '../type/valibot/proofs/ResolutionProof';
+import { ResolutionNode } from '../type/valibot/resolutionNodes/ResolutionNodes';
 
 export interface Policies {
     onResolutionFailure?: 'ignore' | 'throw'
@@ -62,13 +63,26 @@ export interface ResolverHydrator {
     hydrateMicroblock(link: string, mbRef: MbRef): Promise<JsonData | undefined>;
 }
 
-export interface Unresolved {
-    path: string
-    type: string
-    cause: string
-}
 
 export interface ResolverReport {
     passes: number
-    unresolved: Unresolved[]
+    nodes: Map<string, ResolutionNode[]>
+}
+
+export interface TagHandlerOutput {
+    node: ResolutionNode | null
+    output?: JsonData
+    resolveOutput?: boolean
+    newPassRequired?: boolean
+}
+
+export interface TagInfo {
+    name: string
+    noOutput?: boolean
+}
+
+export interface MappedNode {
+    depth: number
+    path: (string | number)[]
+    node: ResolutionNode
 }

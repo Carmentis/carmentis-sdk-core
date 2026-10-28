@@ -167,6 +167,12 @@ export class LinkResolver {
         if (section === undefined) {
             throw new Error(`inconsistent section index ${index}`);
         }
-        return section;
+        return {
+            section,
+            vbId: vb.getIdentifier().encode(),
+            microblockHash: microblock.getHash().encode(),
+            height,
+            index,
+        };
     }
 }

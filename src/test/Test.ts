@@ -46,6 +46,10 @@ export class Test {
         return WalletCrypto.generateWallet();
     }
 
+    createWalletFromSeed(seed: Uint8Array) {
+        return WalletCrypto.fromSeed(seed);
+    }
+
     async createAccount(): Promise<PrivateSignatureKey> {
         const sigEncoder = CryptoEncoderFactory.defaultStringSignatureEncoder();
         const sellerSk = await sigEncoder.decodePrivateKey(this.encodedSk);
