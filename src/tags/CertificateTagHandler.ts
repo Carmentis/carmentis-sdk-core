@@ -1,18 +1,21 @@
 import * as v from "valibot";
 import { TAG } from '../type/tags/tags';
-import { TagHandler } from "./TagHandler";
+import { TagHandler, TagHandlerContext } from "./TagHandler";
 import { X509CertificatTagType, X509CertificateSchema } from "../type/X509CertificateSchema";
 import { X509 } from '../credentials/X509';
 import { JsonObject } from '../type/valibot/json/Json';
 import { CertificateNode } from '../type/valibot/resolutionNodes/ResolutionNodes';
 import { ResolverPath } from '../resolver/ResolverPath';
+import { KeyAttestationJwt } from '../credentials/KeyAttestationJwt';
+import { DckfSignatureDecoder } from '../crypto/encoder/signature/dckf/DckfSignatureDecoder';
+import { EncoderFactory } from '../utils/encoder';
 
 export class CertificateTagHandler extends TagHandler {
     getTags() {
         return [ { name: TAG.CERTIFICATE } ];
     }
 
-    async handle(tag: string, object: any, path: ResolverPath) {
+    async handle(tag: string, object: any, path: ResolverPath, context?: TagHandlerContext) {
         const wrapper = v.parse(X509CertificateSchema, object);
         let output: JsonObject;
         let node: CertificateNode;
@@ -37,7 +40,25 @@ export class CertificateTagHandler extends TagHandler {
                 break;
             }
             case X509CertificatTagType.KEY_ATTESTATION_JWT: {
-                throw new Error("'key_attestation_jwt' is not yet supported");
+                const attestation = await new KeyAttestationJwt(wrapper.jwt).decode();
+                const x509Chain: JsonObject[] = [];
+                for (const cert of X509.fromX5c(attestation.x5c)) {
+                    x509Chain.push(await this.processCertificate(cert));
+                }
+                const boundToSigner = await this.isSubjectSigner(attestation.subject, context?.getEnclosingNode(path));
+                output = {
+                    keyAttestation: {
+                        subject: attestation.subject,
+                        issuedOn: attestation.info.issuedOn?.toISOString() ?? null,
+                        notBefore: attestation.info.notBefore?.toISOString() ?? null,
+                        expiresOn: attestation.info.expiresOn?.toISOString() ?? null,
+                        x509Chain,
+                        signatureValid: attestation.signatureValid,
+                        boundToSigner,
+                    },
+                };
+                node = { type: "certificate", valid: attestation.signatureValid && boundToSigner };
+                break;
             }
         }
         return {
@@ -45,6 +66,18 @@ export class CertificateTagHandler extends TagHandler {
             node,
             resolveOutput: false,
         }
+    }
+
+    /**
+     * Tells whether the attested key is the one that signed the enclosing microblock.
+     */
+    private async isSubjectSigner(subject: string, enclosing: { publicKey: string } | undefined) {
+        if (enclosing === undefined) {
+            return false;
+        }
+        const signerKey = await new DckfSignatureDecoder().decodePublicKey(enclosing.publicKey);
+        const encoded = EncoderFactory.defaultBytesToStringEncoder().encode(await signerKey.getPublicKeyAsBytes());
+        return encoded.toLowerCase() === subject.toLowerCase();
     }
 
     private async processCertificate(cert: X509): Promise<JsonObject> {

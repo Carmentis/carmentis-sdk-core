@@ -17,6 +17,6 @@ export const X509CertificateSchema = v.variant('type', [
 	}),
 	v.object({
 		type: v.literal(X509CertificatTagType.KEY_ATTESTATION_JWT),
-		jwt: v.unknown(),
+		jwt: v.string(),
 	})
 ]);
