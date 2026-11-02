@@ -1,11 +1,13 @@
-import { decodeJwt, decodeProtectedHeader, importX509, jwtVerify } from "jose";
+import { base64url, decodeJwt, decodeProtectedHeader, importJWK, importX509, jwtVerify, JWK, JWTPayload, JWTHeaderParameters } from "jose";
 
 /**
  * JWT signed by an external certified key (e.g. a hardware token) attesting a public key.
  *
- * The `sub` claim holds the attested public key. The key signing the JWT is the leaf
- * certificate of the `x5c` header member. Only the signature and the validity dates are
- * checked here: the trust in the certificate chain is left to the consumer.
+ * The `sub` claim holds the attested public key. The key signing the JWT is looked up,
+ * in order, in the `x5c` header member (leaf certificate), the `jwk` header member, and
+ * the `did:jwk` identifier held by the `iss` claim (its `x5c` member if any, else the
+ * key itself). Only the signature and the validity dates are checked here: the trust in
+ * the certificate chain is left to the consumer.
  */
 export class KeyAttestationJwt {
     constructor(private readonly jwt: string) {}
@@ -18,9 +20,6 @@ export class KeyAttestationJwt {
         const header = decodeProtectedHeader(this.jwt);
         const claims = decodeJwt(this.jwt);
 
-        if (!Array.isArray(header.x5c) || header.x5c.length === 0 || !header.x5c.every((c) => typeof c === "string")) {
-            throw new Error("the key attestation JWT has no 'x5c' header");
-        }
         if (typeof claims.sub !== "string") {
             throw new Error("the key attestation JWT has no 'sub' claim");
         }
@@ -28,11 +27,14 @@ export class KeyAttestationJwt {
             throw new Error("the key attestation JWT has no 'alg' header");
         }
 
-        const x5c = header.x5c as string[];
+        const source = KeyAttestationJwt.findVerificationKey(header, claims);
+        const x5c = source.x5c;
         let signatureValid = false;
         let error: string | undefined;
         try {
-            const key = await importX509(KeyAttestationJwt.toPem(x5c[0]), header.alg);
+            const key = x5c.length > 0
+                ? await importX509(KeyAttestationJwt.toPem(x5c[0]), header.alg)
+                : await importJWK(source.jwk!, header.alg);
             await jwtVerify(this.jwt, key);
             signatureValid = true;
         }
@@ -53,6 +55,28 @@ export class KeyAttestationJwt {
             signatureValid,
             error,
         };
+    }
+
+    private static findVerificationKey(header: JWTHeaderParameters, claims: JWTPayload): { x5c: string[]; jwk?: JWK } {
+        if (Array.isArray(header.x5c) && header.x5c.length > 0 && header.x5c.every((c) => typeof c === "string")) {
+            return { x5c: header.x5c as string[] };
+        }
+        if (header.jwk !== undefined) {
+            return { x5c: [], jwk: header.jwk as JWK };
+        }
+        const DID_JWK = "did:jwk:";
+        if (typeof claims.iss === "string" && claims.iss.startsWith(DID_JWK)) {
+            let jwk: JWK;
+            try {
+                jwk = JSON.parse(new TextDecoder().decode(base64url.decode(claims.iss.slice(DID_JWK.length))));
+            }
+            catch {
+                throw new Error("the 'iss' claim is not a valid did:jwk identifier");
+            }
+            const x5c = Array.isArray(jwk.x5c) && jwk.x5c.every((c) => typeof c === "string") ? jwk.x5c as string[] : [];
+            return { x5c, jwk };
+        }
+        throw new Error("the key attestation JWT carries no verification key: expected an 'x5c' or 'jwk' header, or a did:jwk 'iss'");
     }
 
     private static toDate(ts: number | undefined) {

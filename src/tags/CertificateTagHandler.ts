@@ -70,10 +70,14 @@ export class CertificateTagHandler extends TagHandler {
 
     /**
      * Tells whether the attested key is the one that signed the enclosing microblock.
+     * The subject is either the DCKF encoding of the key (`sig:secp256k1:pk:...`) or its hex bytes.
      */
     private async isSubjectSigner(subject: string, enclosing: { publicKey: string } | undefined) {
         if (enclosing === undefined) {
             return false;
+        }
+        if (subject === enclosing.publicKey) {
+            return true;
         }
         const signerKey = await new DckfSignatureDecoder().decodePublicKey(enclosing.publicKey);
         const encoded = EncoderFactory.defaultBytesToStringEncoder().encode(await signerKey.getPublicKeyAsBytes());

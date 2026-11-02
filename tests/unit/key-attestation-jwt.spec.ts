@@ -103,11 +103,24 @@ describe('KEY_ATTESTATION_JWT', () => {
         expect((res.node as any).valid).toBe(false);
     });
 
-    it('rejects a JWT without x5c', async () => {
+    it('verifies with the did:jwk issuer (x5c inside the JWK) and a DCKF subject', async () => {
+        const attester = await makeAttester();
+        const key = await carmentisKey();
+        const { exportJWK, importX509, base64url } = await import('jose');
+        const pub = await exportJWK(await importX509(`-----BEGIN CERTIFICATE-----\n${attester.x5c[0]}\n-----END CERTIFICATE-----`, 'ES256'));
+        const iss = 'did:jwk:' + base64url.encode(JSON.stringify({ ...pub, alg: 'ES256', x5c: attester.x5c }));
+        const jwt = await new SignJWT({ iss }).setProtectedHeader({ alg: 'ES256', typ: 'JWT' })
+            .setSubject(key.dckf).setIssuedAt().setExpirationTime('1h').sign(attester.privateKey);
+        const res = await handler.handle(TAG.CERTIFICATE, { type: 'KEY_ATTESTATION_JWT', jwt } as any, certPath, makeContext(key.dckf));
+        expect(res.node).toEqual({ type: 'certificate', valid: true });
+        expect((res.output as any).keyAttestation.x509Chain).toHaveLength(1);
+    });
+
+    it('rejects a JWT without any verification key', async () => {
         const attester = await makeAttester();
         const jwt = await new SignJWT({}).setProtectedHeader({ alg: 'ES256' }).setSubject('aa').sign(attester.privateKey);
         await expect(handler.handle(TAG.CERTIFICATE, { type: 'KEY_ATTESTATION_JWT', jwt } as any, certPath, makeContext()))
-            .rejects.toThrow('x5c');
+            .rejects.toThrow('verification key');
     });
 });
 
