@@ -3,6 +3,8 @@ import {JwsSignatureObject, SignatureContext, SignatureContextSchema} from "../.
 import {JsonSignature} from "./JsonSignature";
 import {SignatureVerificationUtils} from "./SignatureVerificationUtils";
 import {base64UrlToBytes, base64UrlToObject} from "./JsonSignatureUtils";
+import {PublicSignatureKey} from "../../PublicSignatureKey";
+import {CryptoEncoderFactory} from "../../../encoder/CryptoEncoderFactory";
 
 export class JwsSignature extends JsonSignature {
     private readonly jws: string;
@@ -25,6 +27,13 @@ export class JwsSignature extends JsonSignature {
 
     getPayload() {
         return this.payload;
+    }
+
+    async getPublicKey(): Promise<PublicSignatureKey | undefined> {
+        const publicKey = this.signature.publicKey;
+        if (!publicKey) return undefined;
+        return CryptoEncoderFactory.defaultStringSignatureEncoder()
+            .decodePublicKey(publicKey)
     }
 
     // Ajout : nécessaire pour reconstruire le signing input lors de la vérification.
