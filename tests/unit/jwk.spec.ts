@@ -73,6 +73,27 @@ const ALGORITHMS: Array<{
     {alg: "ML-DSA-87", signatureSize: 4627, publicKeySize: 2592},
 ];
 
+const exampleEncodedPrivateJwk = "sig:jwk:sk:aa63616c6765525332353661647901564e47664838576762626f4f5f467364582d47554d466345617868675a483758414a74377a4b384649734458734138734b6c4f4c426b75706a5155567259716733796f47697967694d384d385946745361766b44614478484e4249426365413754524b78775331524b5350317a7132724664716636384e2d6468634a7951786e4e59566d66736e65564650564730545f624761376e4f4f5a6f445f4b4c64396c693548334d4e326a416676335935726632304d51784a76585777705466364a484478464d3867524936776d51776b4c6f4144447367595073772d347031535f76517574447a424658767a456b554b77567a395438516655596977755a434c39786137704d747566335f534b39323969774c696f426b6b414d4e5830317169367952754b534d627a52612d32715039365953796473707970726c666c754c656b6c584735616234345f4b6f7161763133774647664c45775162647078ab61434d69554b6379437273574c3556697a62526f4a4f4a6b6932796747444d51645556644434533968524578533942556c4556645147795f393944764c5f71426549636f334e7659426231316f424e394979483553446e36487132316b5564346732312d77526944696253714b48316e3736673044386a714979694b33703562666a78596661642d644e5278626b422d4c586a6c3958376553316450537354376f335f50384241414a644562647178ab4c7775365a79576174456757336a6b46414975586541507253464449695136645f4a5265494475646e35643136447869414538674b2d4b657572484445676c7270377a3758766f6b48506c4a76576454743250394b6d6b344561486c3568457263757161565a6d4763513449754147375652594c49707463463550487556425773463567464167424879466f52416e354732656d536a3677626e2d5761695534417641586c457a6e65645561656441514142636b747963525341616e7901566d6257334a55346c317236653379736f44536f66535a476d63505349714e495438564d51746e4d73536131494541645f54383270696b506c764853377a727138484f4e3270616e7238556f5232586444784934714b57484241763669345779506b336c5238486941714146746f664436624e777548525730576a44616b3163734343566f69574c384d39424b496c735f7a37676d6c657a44546346763259387a5a556f6f7758526e656f6950636946785177377249307547646b3558306e4a6d4a63676d6c626d69416b78325278524c43487167324e6b7837444a65584254706654333332396d6168415744797446676453526f793850546a672d684337743677793375466a5267345035476e3131656d6b316f3958376362505a4f503453347a544a6e6d464f56556c34513455686d4356463950663341544c4d7a6e6d36343231445472396f735f646d546c633155597078546d77617078ab786f376d4d755538776e5679463538696e4858487730327464665136695f776879556c4762794c73634c6a674174394443536b5946634e4a6c76595361775938765047507478726738475a7936774652347868757161683954776b38764e7431665839674c39634b69484b4d54445179766b4179385a614e506a48357a41317342334a63586e5f4841737250456f5055324c4b6f4571415f65516161672d504f4964353636326e5a2d4455617178ab786931665970416252352d5038786b483950504b653770724a2d74366a516a574f61457a554c4262696b54653277505352496b4b6e5157386666767978476a6755397a6e653261787771347a486f59347837414b50636259516f495f486e334e74313755374f436a5a7a356b567938454b50597037396d4b626d4145625958476a57556a466e7077335444634c34362d35554868422d47693069687461787a32625241416d557878746f3862716978ab576e3142376f7270436b584146384b4d776270683251727243505f67504f4236715230696f744658614d514d6a42477a57775778387753526f726c3239535838347352534a5757515736447658446a7a35725465386965374d4d744274536e7a566c7471596446484539566b552d54353872575a39674b426d6d4349634e5a7676684f4b653668783641545677617542733974417071336d6d444b6c4a73553959675f4f6235687361524d"
+const examplePrivateJwk = {
+    "alg": "RS256",
+    "d": "NGfH8WgbboO_FsdX-GUMFcEaxhgZH7XAJt7zK8FIsDXsA8sKlOLBkupjQUVrYqg3yoGiygiM8M8YFtSavkDaDxHNBIBceA7TRKxwS1RKSP1zq2rFdqf68N-dhcJyQxnNYVmfsneVFPVG0T_bGa7nOOZoD_KLd9li5H3MN2jAfv3Y5rf20MQxJvXWwpTf6JHDxFM8gRI6wmQwkLoADDsgYPsw-4p1S_vQutDzBFXvzEkUKwVz9T8QfUYiwuZCL9xa7pMtuf3_SK929iwLioBkkAMNX01qi6yRuKSMbzRa-2qP96YSydspyprlfluLeklXG5ab44_Koqav13wFGfLEwQ",
+    "dp": "aCMiUKcyCrsWL5VizbRoJOJki2ygGDMQdUVdD4S9hRExS9BUlEVdQGy_99DvL_qBeIco3NvYBb11oBN9IyH5SDn6Hq21kUd4g21-wRiDibSqKH1n76g0D8jqIyiK3p5bfjxYfad-dNRxbkB-LXjl9X7eS1dPSsT7o3_P8BAAJdE",
+    "dq": "Lwu6ZyWatEgW3jkFAIuXeAPrSFDIiQ6d_JReIDudn5d16DxiAE8gK-KeurHDEglrp7z7XvokHPlJvWdTt2P9Kmk4EaHl5hErcuqaVZmGcQ4IuAG7VRYLIptcF5PHuVBWsF5gFAgBHyFoRAn5G2emSj6wbn-WaiU4AvAXlEznedU",
+    "e": "AQAB",
+    "kty": "RSA",
+    "n": "mbW3JU4l1r6e3ysoDSofSZGmcPSIqNIT8VMQtnMsSa1IEAd_T82pikPlvHS7zrq8HON2panr8UoR2XdDxI4qKWHBAv6i4WyPk3lR8HiAqAFtofD6bNwuHRW0WjDak1csCCVoiWL8M9BKIls_z7gmlezDTcFv2Y8zZUoowXRneoiPciFxQw7rI0uGdk5X0nJmJcgmlbmiAkx2RxRLCHqg2Nkx7DJeXBTpfT3329mahAWDytFgdSRoy8PTjg-hC7t6wy3uFjRg4P5Gn11emk1o9X7cbPZOP4S4zTJnmFOVUl4Q4UhmCVF9Pf3ATLMznm6421DTr9os_dmTlc1UYpxTmw",
+    "p": "xo7mMuU8wnVyF58inHXHw02tdfQ6i_whyUlGbyLscLjgAt9DCSkYFcNJlvYSawY8vPGPtxrg8GZy6wFR4xhuqah9Twk8vNt1fX9gL9cKiHKMTDQyvkAy8ZaNPjH5zA1sB3JcXn_HAsrPEoPU2LKoEqA_eQaag-POId5662nZ-DU",
+    "q": "xi1fYpAbR5-P8xkH9PPKe7prJ-t6jQjWOaEzULBbikTe2wPSRIkKnQW8ffvyxGjgU9zne2axwq4zHoY4x7AKPcbYQoI_Hn3Nt17U7OCjZz5kVy8EKPYp79mKbmAEbYXGjWUjFnpw3TDcL46-5UHhB-Gi0ihtaxz2bRAAmUxxto8",
+    "qi": "Wn1B7orpCkXAF8KMwbph2QrrCP_gPOB6qR0iotFXaMQMjBGzWwWx8wSRorl29SX84sRSJWWQW6DvXDjz5rTe8ie7MMtBtSnzVltqYdFHE9VkU-T58rWZ9gKBmmCIcNZvvhOKe6hx6ATVwauBs9tApq3mmDKlJsU9Yg_Ob5hsaRM"
+}
+const examplePublicJwk = {
+    "alg": "RS256",
+    "e": "AQAB",
+    "kty": "RSA",
+    "n": "mbW3JU4l1r6e3ysoDSofSZGmcPSIqNIT8VMQtnMsSa1IEAd_T82pikPlvHS7zrq8HON2panr8UoR2XdDxI4qKWHBAv6i4WyPk3lR8HiAqAFtofD6bNwuHRW0WjDak1csCCVoiWL8M9BKIls_z7gmlezDTcFv2Y8zZUoowXRneoiPciFxQw7rI0uGdk5X0nJmJcgmlbmiAkx2RxRLCHqg2Nkx7DJeXBTpfT3329mahAWDytFgdSRoy8PTjg-hC7t6wy3uFjRg4P5Gn11emk1o9X7cbPZOP4S4zTJnmFOVUl4Q4UhmCVF9Pf3ATLMznm6421DTr9os_dmTlc1UYpxTmw"
+}
+const exampleEncodedPublicKey = 'did:jwk:eyJhbGciOiJSUzI1NiIsImUiOiJBUUFCIiwia3R5IjoiUlNBIiwibiI6Im1iVzNKVTRsMXI2ZTN5c29EU29mU1pHbWNQU0lxTklUOFZNUXRuTXNTYTFJRUFkX1Q4MnBpa1BsdkhTN3pycThIT04ycGFucjhVb1IyWGREeEk0cUtXSEJBdjZpNFd5UGszbFI4SGlBcUFGdG9mRDZiTnd1SFJXMFdqRGFrMWNzQ0NWb2lXTDhNOUJLSWxzX3o3Z21sZXpEVGNGdjJZOHpaVW9vd1hSbmVvaVBjaUZ4UXc3ckkwdUdkazVYMG5KbUpjZ21sYm1pQWt4MlJ4UkxDSHFnMk5reDdESmVYQlRwZlQzMzI5bWFoQVdEeXRGZ2RTUm95OFBUamctaEM3dDZ3eTN1RmpSZzRQNUduMTFlbWsxbzlYN2NiUFpPUDRTNHpUSm5tRk9WVWw0UTRVaG1DVkY5UGYzQVRMTXpubTY0MjFEVHI5b3NfZG1UbGMxVVlweFRtdyJ9';
+
 describe("JWK signature keys", () => {
 
 
@@ -92,7 +113,7 @@ describe("JWK signature keys", () => {
       })
 
         it("Should accept EC JWK keys with x5c", async () => {
-            const certifiedSk = await JwkPrivateSignatureKey.fromJwk({
+            const privateJwk = {
                 "kty": "EC",
                 "crv": "P-256",
                 "x": "MnBrYzxoY7MU-GEsl-fwNtyT_pcT6QEAstPgz5lQBBU",
@@ -106,8 +127,52 @@ describe("JWK signature keys", () => {
                 "kid": "dEFLst7nHDmX7E81TkJL8ACnMOT-5JeuB1XXX7cIL7E",
                 "use": "sig",
                 "alg": "ES256"
-            })
+            }
+            const certifiedSk = await JwkPrivateSignatureKey.fromJwk(privateJwk)
+            expect(certifiedSk.getPrivateJwk()).toEqual(privateJwk)
+            console.log((await certifiedSk.getPublicKey()).getPublicJwk())
         })
+
+        describe("Example RSA keys", () => {
+            const encoder = CryptoEncoderFactory.defaultStringSignatureEncoder();
+
+            it("keeps the private JWK as provided and derives the matching public JWK", async () => {
+                const privateKey = await JwkPrivateSignatureKey.fromJwk(examplePrivateJwk);
+
+                expect(privateKey.getAlgorithm()).toBe("RS256");
+                expect(privateKey.getPrivateJwk()).toEqual(examplePrivateJwk);
+                expect(privateKey.getPublicJwk()).toEqual(examplePublicJwk);
+                expect((await privateKey.getPublicKey()).getPublicJwk()).toEqual(examplePublicJwk);
+            });
+
+            it("encodes the private key as expected, and decodes it back", async () => {
+                const privateKey = await JwkPrivateSignatureKey.fromJwk(examplePrivateJwk);
+                expect(await encoder.encodePrivateKey(privateKey)).toEqual(exampleEncodedPrivateJwk);
+
+                const decoded = await encoder.decodePrivateKey(exampleEncodedPrivateJwk) as JwkPrivateSignatureKey;
+                expect(decoded.getPrivateJwk()).toEqual(examplePrivateJwk);
+            });
+
+            it("encodes the public key as expected, and decodes it back", async () => {
+                const publicKey = await JwkPublicSignatureKey.fromJwk(examplePublicJwk);
+                expect(await encoder.encodePublicKey(publicKey)).toEqual(exampleEncodedPublicKey);
+
+                const decoded = await encoder.decodePublicKey(exampleEncodedPublicKey) as JwkPublicSignatureKey;
+                expect(decoded.getPublicJwk()).toEqual(examplePublicJwk);
+
+                const derived = await (await JwkPrivateSignatureKey.fromJwk(examplePrivateJwk)).getPublicKey();
+                expect(await encoder.encodePublicKey(derived)).toEqual(exampleEncodedPublicKey);
+            });
+
+            it("verifies with the public key what the private key signs", async () => {
+                const privateKey = await JwkPrivateSignatureKey.fromJwk(examplePrivateJwk);
+                const publicKey = await encoder.decodePublicKey(exampleEncodedPublicKey);
+                const signature = await privateKey.sign(MESSAGE);
+
+                await expect(publicKey.verify(MESSAGE, signature)).resolves.toBe(true);
+                await expect(publicKey.verify(OTHER_MESSAGE, signature)).resolves.toBe(false);
+            });
+        });
     })
 
     const SomeDidsFoundOnline = [
@@ -210,14 +275,15 @@ describe("JWK signature keys", () => {
     };
 
     describe("canonical form", () => {
-        it.each(ALGORITHMS)("keeps only the members that model a $alg key", async ({alg}) => {
+        it.each(ALGORITHMS)("JwkFilter keeps only the members that model a $alg key", async ({alg}) => {
             const privateKey = await JwkPrivateSignatureKey.gen(alg);
-            const publicKey = await privateKey.getPublicKey();
+            const algorithm = resolveJwkSignatureAlgorithm(privateKey.getPrivateJwk());
             const expected = CANONICAL_MEMBERS[privateKey.getPrivateJwk().kty as string];
 
-            expect(Object.keys(privateKey.getPrivateJwk())).toEqual(expected.privateMembers);
-            expect(Object.keys(privateKey.getPublicJwk())).toEqual(expected.publicMembers);
-            expect(Object.keys(publicKey.getPublicJwk())).toEqual(expected.publicMembers);
+            expect(Object.keys(JwkFilter.toPrivateJwk(privateKey.getPrivateJwk(), algorithm)))
+                .toEqual(expected.privateMembers);
+            expect(Object.keys(JwkFilter.toPublicJwk(privateKey.getPrivateJwk(), algorithm)))
+                .toEqual(expected.publicMembers);
         });
 
         it.each(ALGORITHMS)("JwkFilter drops every descriptive member of a $alg JWK", async ({alg}) => {
@@ -225,24 +291,27 @@ describe("JWK signature keys", () => {
             const decorated = {...generated.getPrivateJwk(), ...DESCRIPTIVE_MEMBERS};
             const algorithm = resolveJwkSignatureAlgorithm(decorated);
 
-            expect(JwkFilter.toPrivateJwk(decorated, algorithm)).toEqual(generated.getPrivateJwk());
-            expect(JwkFilter.toPublicJwk(decorated, algorithm)).toEqual(generated.getPublicJwk());
+            expect(JwkFilter.toPrivateJwk(decorated, algorithm))
+                .toEqual(JwkFilter.toPrivateJwk(generated.getPrivateJwk(), algorithm));
+            expect(JwkFilter.toPublicJwk(decorated, algorithm))
+                .toEqual(JwkFilter.toPublicJwk(generated.getPrivateJwk(), algorithm));
         });
 
-        it.each(ALGORITHMS)("keeps the usage of a $alg private key, and derives the public one", async ({alg}) => {
+        it.each(ALGORITHMS)("preserves every member of a $alg private JWK, and derives the public one", async ({alg}) => {
             const generated = await JwkPrivateSignatureKey.gen(alg);
             const decorated = {...generated.getPrivateJwk(), ...DESCRIPTIVE_MEMBERS};
 
             const privateKey = await JwkPrivateSignatureKey.fromJwk(decorated);
-            expect(privateKey.getPrivateJwk()).toEqual(
-                sortedJwk({...generated.getPrivateJwk(), use: "sig", key_ops: ["sign", "verify"]}),
-            );
-            expect(privateKey.getPrivateKeyAsBytes()).not.toEqual(generated.getPrivateKeyAsBytes());
-            // `sign` becomes `verify`, without duplicate.
-            expect(privateKey.getPublicJwk()).toEqual(
-                sortedJwk({...generated.getPublicJwk(), use: "sig", key_ops: ["verify"]}),
-            );
+            expect(privateKey.getPrivateJwk()).toEqual(sortedJwk(decorated));
+            expect(Object.keys(privateKey.getPrivateJwk())).toEqual(Object.keys(decorated).sort());
+
+            // Only the private members are removed; `sign` becomes `verify`, without duplicate.
+            const {d, p, q, dp, dq, qi, oth, priv, ...publicMembers} = decorated as Record<string, unknown>;
+            expect(privateKey.getPublicJwk()).toEqual(sortedJwk({...publicMembers, key_ops: ["verify"]}));
             expect((await privateKey.getPublicKey()).getPublicJwk()).toEqual(privateKey.getPublicJwk());
+
+            const restored = await JwkPrivateSignatureKey.fromBytes(privateKey.getPrivateKeyAsBytes());
+            expect(restored.getPrivateJwk()).toEqual(privateKey.getPrivateJwk());
         });
 
         it.each(ALGORITHMS)("preserves every member of a $alg public JWK", async ({alg}) => {
@@ -284,10 +353,10 @@ describe("JWK signature keys", () => {
             ) as SignatureJwk;
 
             const privateKey = await JwkPrivateSignatureKey.fromJwk(shuffled);
-            expect(Object.keys(privateKey.getPrivateJwk())).toEqual(["crv", "d", "key_ops", "kty", "use", "x", "y"]);
+            expect(Object.keys(privateKey.getPrivateJwk())).toEqual(Object.keys(shuffled).sort());
         });
 
-        it("normalises the 'EdDSA' spelling RFC 8037 gave the OKP curves", async () => {
+        it("resolves the 'EdDSA' spelling RFC 8037 gave the OKP curves", async () => {
             const generated = await JwkPrivateSignatureKey.gen("Ed25519");
             const privateKey = await JwkPrivateSignatureKey.fromJwk({
                 ...generated.getPrivateJwk(),
@@ -295,7 +364,8 @@ describe("JWK signature keys", () => {
             });
 
             expect(privateKey.getAlgorithm()).toBe("Ed25519");
-            expect(privateKey.getPrivateKeyAsBytes()).toEqual(generated.getPrivateKeyAsBytes());
+            expect(privateKey.getPrivateJwk().alg).toBe("EdDSA");
+            expect(privateKey.getRawPrivateKeyBytes()).toEqual(generated.getRawPrivateKeyBytes());
         });
     });
 

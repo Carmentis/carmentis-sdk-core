@@ -54,25 +54,33 @@ export class JwkPrivateSignatureKey extends BasePrivateSignatureKey {
     /**
      * Imports a private signature key from a JWK.
      *
-     * Any JWK is accepted, whatever it carries beyond the key itself. Only the members
-     * that model the key, and its declared usage (`use`, `key_ops`), are retained; see
-     * {@link JwkFilter.toPrivateJwk} for what is dropped. The usage, if declared, must
-     * allow signing: `use` must be `sig` and `key_ops` must contain `sign`.
+     * Any JWK is accepted and trusted as provided: members beyond the key itself (`kid`,
+     * `x5c`, `ext`, unknown members...) are preserved, and only reordered
+     * lexicographically. Use {@link JwkFilter} to reduce a JWK beforehand.
      *
-     * The public half takes the same usage, with `sign` replaced by `verify`; no usage is
-     * added when the private JWK declares none.
+     * The declared usage is checked: `use`, if present, must be `sig`, and `key_ops`, if
+     * present, must contain `sign`. Both may be absent.
+     *
+     * The public half is the same JWK, deprived of its private members only, with `sign`
+     * replaced by `verify` in `key_ops`; no usage is added when none is declared.
      *
      * @param {SignatureJwk} jwk - The private JWK to import.
      * @return {Promise<JwkPrivateSignatureKey>} The imported private key.
-     * @throws {Error} If the JWK is malformed, carries no private material, or denotes an
-     *                 unsupported algorithm.
+     * @throws {Error} If the JWK is malformed, carries no private material, denotes an
+     *                 unsupported algorithm, or declares a usage that does not allow signing.
      */
     static async fromJwk(jwk: SignatureJwk): Promise<JwkPrivateSignatureKey> {
         const algorithm = resolveJwkSignatureAlgorithm(jwk);
-        const privateJwk = sortJwkMembers({...JwkFilter.toPrivateJwk(jwk, algorithm), ...JwkFilter.getUsage(jwk)});
+        // Fails when a public or private member of the key is missing.
+        JwkFilter.toPrivateJwk(jwk, algorithm);
+
+        const privateJwk = sortJwkMembers({...jwk});
         assertSignatureUsage(privateJwk, "sign");
-        const publicJwk = sortJwkMembers({...JwkFilter.toPublicJwk(jwk, algorithm), ...JwkFilter.toPublicUsage(jwk)});
-        const signer = await createJwkSigner(algorithm, privateJwk);
+        const publicJwk = sortJwkMembers({
+            ...JwkFilter.stripPrivateMembers(jwk).jwk,
+            ...JwkFilter.toPublicUsage(jwk),
+        });
+        const signer = await createJwkSigner(algorithm, JwkPrivateSignatureKey.toBackendJwk(algorithm, privateJwk));
         return new JwkPrivateSignatureKey(
             algorithm,
             privateJwk,
@@ -80,6 +88,18 @@ export class JwkPrivateSignatureKey extends BasePrivateSignatureKey {
             signer,
             JwkSignatureScheme.forJwk(algorithm, publicJwk),
         );
+    }
+
+    /**
+     * Adapts the stored JWK to what the signing backends accept: Web Crypto imports the
+     * key as extractable (to expose its raw bytes), which an `ext: false` member forbids,
+     * and rejects an `alg` it does not know for the key, such as `EdDSA`.
+     */
+    private static toBackendJwk(algorithm: JwkSignatureAlgorithm, privateJwk: SignatureJwk): SignatureJwk {
+        const backendJwk: SignatureJwk = {...privateJwk};
+        if (backendJwk.ext !== undefined) backendJwk.ext = true;
+        if (algorithm.kty === "EC" || algorithm.kty === "OKP") delete backendJwk.alg;
+        return backendJwk;
     }
 
     /**
@@ -103,29 +123,27 @@ export class JwkPrivateSignatureKey extends BasePrivateSignatureKey {
     }
 
     /**
-     * Returns the canonical private JWK of the key.
+     * Returns the private JWK of the key, as imported, with its members ordered
+     * lexicographically.
      *
-     * The JWK holds the members that model the key and nothing else, ordered
-     * lexicographically, so that two keys imported from different JWKs of the same
-     * cryptographic key expose the exact same JWK here.
-     *
-     * @return {SignatureJwk} A copy of the canonical private JWK.
+     * @return {SignatureJwk} A copy of the private JWK.
      */
     getPrivateJwk(): SignatureJwk {
         return {...this.privateJwk};
     }
 
     /**
-     * Returns the canonical public JWK of the key, stripped of every private component.
+     * Returns the public JWK of the key: the private JWK deprived of its private members
+     * only, every other member being preserved.
      *
-     * @return {SignatureJwk} A copy of the canonical public JWK.
+     * @return {SignatureJwk} A copy of the public JWK.
      */
     getPublicJwk(): SignatureJwk {
         return {...this.publicJwk};
     }
 
     /**
-     * Returns the binary form of the private key: the CBOR encoding of its canonical
+     * Returns the binary form of the private key: the CBOR encoding of its
      * private JWK, members ordered lexicographically.
      *
      * The JWK is serialised rather than the bare key material because the material alone
