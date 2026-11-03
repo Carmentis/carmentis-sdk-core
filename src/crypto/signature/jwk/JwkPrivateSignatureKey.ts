@@ -1,12 +1,13 @@
 import {BasePrivateSignatureKey} from "../BasePrivateSignatureKey";
 import {
-    extractPrivateJwk,
-    extractPublicJwk,
+    assertSignatureUsage,
     JwkSignatureAlgorithm,
     JwkSignatureAlgorithmName,
     resolveJwkSignatureAlgorithm,
     SignatureJwk,
+    sortJwkMembers,
 } from "./JwkSignatureAlgorithm";
+import {JwkFilter} from "./JwkFilter";
 import {JwkSignatureScheme} from "./JwkSignatureScheme";
 import {createJwkSigner, generateSignatureJwk, JwkGenerationOptions, JwkSigner} from "./JwkSignatureBackend";
 import {JwkPublicSignatureKey} from "./JwkPublicSignatureKey";
@@ -54,8 +55,12 @@ export class JwkPrivateSignatureKey extends BasePrivateSignatureKey {
      * Imports a private signature key from a JWK.
      *
      * Any JWK is accepted, whatever it carries beyond the key itself. Only the members
-     * that model the key are retained; see {@link extractPrivateJwk} for what that means
-     * and for the list of what is dropped.
+     * that model the key, and its declared usage (`use`, `key_ops`), are retained; see
+     * {@link JwkFilter.toPrivateJwk} for what is dropped. The usage, if declared, must
+     * allow signing: `use` must be `sig` and `key_ops` must contain `sign`.
+     *
+     * The public half takes the same usage, with `sign` replaced by `verify`; no usage is
+     * added when the private JWK declares none.
      *
      * @param {SignatureJwk} jwk - The private JWK to import.
      * @return {Promise<JwkPrivateSignatureKey>} The imported private key.
@@ -64,8 +69,9 @@ export class JwkPrivateSignatureKey extends BasePrivateSignatureKey {
      */
     static async fromJwk(jwk: SignatureJwk): Promise<JwkPrivateSignatureKey> {
         const algorithm = resolveJwkSignatureAlgorithm(jwk);
-        const privateJwk = extractPrivateJwk(jwk, algorithm);
-        const publicJwk = extractPublicJwk(jwk, algorithm);
+        const privateJwk = sortJwkMembers({...JwkFilter.toPrivateJwk(jwk, algorithm), ...JwkFilter.getUsage(jwk)});
+        assertSignatureUsage(privateJwk, "sign");
+        const publicJwk = sortJwkMembers({...JwkFilter.toPublicJwk(jwk, algorithm), ...JwkFilter.toPublicUsage(jwk)});
         const signer = await createJwkSigner(algorithm, privateJwk);
         return new JwkPrivateSignatureKey(
             algorithm,

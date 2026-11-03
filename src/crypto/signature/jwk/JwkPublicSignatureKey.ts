@@ -1,11 +1,13 @@
 import {BasePublicSignatureKey} from "../BasePublicSignatureKey";
 import {
-    extractPublicJwk,
+    assertSignatureUsage,
     JwkSignatureAlgorithm,
     JwkSignatureAlgorithmName,
     resolveJwkSignatureAlgorithm,
     SignatureJwk,
+    sortJwkMembers,
 } from "./JwkSignatureAlgorithm";
+import {JwkFilter} from "./JwkFilter";
 import {JwkSignatureScheme} from "./JwkSignatureScheme";
 import {createJwkVerifier, JwkVerifier} from "./JwkSignatureBackend";
 import {decodeSignatureJwk, encodeSignatureJwk} from "./JwkBinaryEncoder";
@@ -36,25 +38,52 @@ export class JwkPublicSignatureKey extends BasePublicSignatureKey {
     /**
      * Imports a public signature key from a JWK.
      *
-     * Any JWK is accepted, whatever it carries beyond the key itself. Only the members
-     * that model the key are retained; see {@link extractPublicJwk} for what that means
-     * and for the list of what is dropped. A private JWK is accepted as well: only its
-     * public members are retained.
+     * Any JWK is accepted and trusted as provided: members beyond the key itself (`kid`,
+     * `x5c`, `ext`, unknown members...) are preserved, and only reordered
+     * lexicographically. Use {@link JwkFilter} to reduce a JWK beforehand.
+     *
+     * The declared usage is checked: `use`, if present, must be `sig`, and `key_ops`, if
+     * present, must contain `verify`. Both may be absent.
+     *
+     * A private JWK is accepted as well, but its private members are removed, and a
+     * `sign` operation of its `key_ops` becomes `verify`.
      *
      * @param {SignatureJwk} jwk - The JWK to import.
      * @return {Promise<JwkPublicSignatureKey>} The imported public key.
-     * @throws {Error} If the JWK is malformed or denotes an unsupported algorithm.
+     * @throws {Error} If the JWK is malformed, denotes an unsupported algorithm, or declares
+     *                 a usage that does not allow verifying.
      */
     static async fromJwk(jwk: SignatureJwk): Promise<JwkPublicSignatureKey> {
         const algorithm = resolveJwkSignatureAlgorithm(jwk);
-        const publicJwk = extractPublicJwk(jwk, algorithm);
-        const verifier = await createJwkVerifier(algorithm, publicJwk);
+        // Fails when a member of the public key is missing.
+        JwkFilter.toPublicJwk(jwk, algorithm);
+
+        const {jwk: withoutPrivate, stripped} = JwkFilter.stripPrivateMembers(jwk);
+        const publicJwk = sortJwkMembers({
+            ...withoutPrivate,
+            ...(stripped ? JwkFilter.toPublicUsage(jwk) : {}),
+        });
+        assertSignatureUsage(publicJwk, "verify");
+
+        const verifier = await createJwkVerifier(algorithm, JwkPublicSignatureKey.toBackendJwk(algorithm, publicJwk));
         return new JwkPublicSignatureKey(
             algorithm,
             publicJwk,
             verifier,
             JwkSignatureScheme.forJwk(algorithm, publicJwk),
         );
+    }
+
+    /**
+     * Adapts the stored JWK to what the verification backends accept: Web Crypto imports
+     * the key as extractable (to expose its raw bytes), which an `ext: false` member
+     * forbids, and rejects an `alg` it does not know for the key, such as `EdDSA`.
+     */
+    private static toBackendJwk(algorithm: JwkSignatureAlgorithm, publicJwk: SignatureJwk): SignatureJwk {
+        const backendJwk: SignatureJwk = {...publicJwk};
+        if (backendJwk.ext !== undefined) backendJwk.ext = true;
+        if (algorithm.kty === "EC" || algorithm.kty === "OKP") delete backendJwk.alg;
+        return backendJwk;
     }
 
     /**
@@ -78,21 +107,18 @@ export class JwkPublicSignatureKey extends BasePublicSignatureKey {
     }
 
     /**
-     * Returns the canonical public JWK of the key.
+     * Returns the public JWK of the key, as imported, with its members ordered
+     * lexicographically.
      *
-     * The JWK holds the members that model the key and nothing else, ordered
-     * lexicographically, so that two keys imported from different JWKs of the same
-     * cryptographic key expose the exact same JWK here.
-     *
-     * @return {SignatureJwk} A copy of the canonical public JWK.
+     * @return {SignatureJwk} A copy of the public JWK.
      */
     getPublicJwk(): SignatureJwk {
         return {...this.publicJwk};
     }
 
     /**
-     * Returns the binary form of the public key: the CBOR encoding of its canonical
-     * public JWK, members ordered lexicographically.
+     * Returns the binary form of the public key: the CBOR encoding of its public JWK,
+     * members ordered lexicographically.
      *
      * The JWK is serialised rather than the bare key material because the material alone
      * does not say which primitive it belongs to — `x` is a 32-byte string for both an

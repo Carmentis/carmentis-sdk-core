@@ -6,10 +6,9 @@
  * `alg` for RSA and ML-DSA. This module centralises that derivation so that
  * {@link JwkPrivateSignatureKey} and {@link JwkPublicSignatureKey} agree on it.
  *
- * It also reduces an incoming JWK to its canonical form: the lexicographically ordered
- * set of members that are strictly necessary to model the key. Any other member is
- * accepted on import and then dropped, so that two JWKs describing the same key always
- * produce the same canonical form and, in turn, the same serialised bytes.
+ * A JWK is trusted as the caller provides it: members beyond the key material are
+ * accepted and preserved. Reducing a JWK to the members that strictly model the key is
+ * the job of {@link JwkFilter}.
  */
 
 /**
@@ -46,9 +45,8 @@ export type JwkSignatureBackend = "webcrypto" | "ed25519" | "secp256k1" | "ml-ds
  * Extends the DOM `JsonWebKey` with the AKP members of RFC 9836, which the standard
  * library type does not know about, and with the certificate members of RFC 7517.
  *
- * The members beyond the key material itself are declared for the sake of the JWKs
- * handed to {@link extractPublicJwk} and {@link extractPrivateJwk}, which tolerate them
- * on input; none of them survives into the canonical form those functions return.
+ * The members beyond the key material itself are declared because they are accepted,
+ * and preserved, on import; {@link JwkFilter} can strip them.
  */
 export interface SignatureJwk extends JsonWebKey {
     /** Key identifier (RFC 7517 §4.5). */
@@ -119,48 +117,6 @@ const ML_DSA_SIGNATURE_SIZES: Record<string, number> = {
     "ML-DSA-65": 3309,
     "ML-DSA-87": 4627,
 };
-
-/** JWK members carrying public key material, per key type. */
-const PUBLIC_MEMBERS: Record<JwkSignatureKeyType, readonly string[]> = {
-    EC: ["crv", "x", "y"],
-    OKP: ["crv", "x"],
-    RSA: ["n", "e"],
-    AKP: ["pub"],
-};
-
-/**
- * JWK members carrying private key material, per key type.
- *
- * The RSA list keeps the CRT parameters even though `n`, `e` and `d` already determine
- * the key: `SubtleCrypto.importKey` rejects a private RSA JWK that omits them, and `oth`
- * is the only record that a key is multi-prime.
- */
-const PRIVATE_MEMBERS: Record<JwkSignatureKeyType, readonly string[]> = {
-    EC: ["d"],
-    OKP: ["d"],
-    RSA: ["d", "p", "q", "dp", "dq", "qi", "oth"],
-    AKP: ["priv"],
-};
-
-/** Members of {@link PRIVATE_MEMBERS} without which the key cannot sign. */
-const REQUIRED_PRIVATE_MEMBERS: Record<JwkSignatureKeyType, readonly string[]> = {
-    EC: ["d"],
-    OKP: ["d"],
-    RSA: ["d"],
-    AKP: ["priv"],
-};
-
-/**
- * Key types whose canonical form keeps the `alg` member.
- *
- * `alg` is only retained where the key material does not already imply the primitive.
- * An `RSA` key needs it to tell RS* from PS* and to pick the digest, and an `AKP` key
- * needs it to name the ML-DSA parameter set. `EC` and `OKP` keys do not: RFC 7518 and
- * RFC 8037 bind exactly one algorithm to each signing curve, so `crv` says everything
- * `alg` would, and keeping it would only add a second spelling of the same fact — one
- * that `EdDSA` versus `Ed25519` shows is not even unique.
- */
-const ALG_DEPENDENT_KEY_TYPES: ReadonlySet<JwkSignatureKeyType> = new Set(["RSA", "AKP"]);
 
 /**
  * Resolves the signature primitive denoted by a JWK.
@@ -393,66 +349,6 @@ function assertDeclaredAlgorithm(jwk: SignatureJwk, accepted: readonly string[])
 }
 
 /**
- * Reduces a JWK to the canonical public form of the key it holds.
- *
- * The result carries `kty`, the public members of that key type, and `alg` only where
- * {@link ALG_DEPENDENT_KEY_TYPES} says the key material does not already imply the
- * primitive. Everything else the JWK may have arrived with is dropped: the private
- * members, and the members that describe the JWK rather than the key — `use`, `key_ops`,
- * `ext`, `kid`, `x5u`, `x5c`, `x5t`, `x5t#S256` and anything unrecognised.
- *
- * The extraction works on an allow-list rather than by deleting known private members,
- * so that a private RSA JWK cannot leak `p`, `q`, `dp`, `dq`, `qi` or `oth` into the
- * public key, and so that a member added by a future JWK revision cannot slip through.
- *
- * @param {SignatureJwk} jwk - The JWK to derive the public key from.
- * @param {JwkSignatureAlgorithm} algorithm - The algorithm resolved from that JWK.
- * @return {SignatureJwk} The canonical public JWK, with its members ordered.
- * @throws {Error} If a public member required by the key type is missing.
- */
-export function extractPublicJwk(jwk: SignatureJwk, algorithm: JwkSignatureAlgorithm): SignatureJwk {
-    const members: Record<string, unknown> = {kty: algorithm.kty};
-    if (ALG_DEPENDENT_KEY_TYPES.has(algorithm.kty)) members.alg = algorithm.alg;
-
-    for (const member of PUBLIC_MEMBERS[algorithm.kty]) {
-        const value = (jwk as Record<string, unknown>)[member];
-        if (value === undefined) {
-            throw new Error(`Cannot import ${algorithm.kty} JWK: missing public member '${member}'`);
-        }
-        members[member] = value;
-    }
-    return sortJwkMembers(members);
-}
-
-/**
- * Reduces a JWK to the canonical private form of the key it holds.
- *
- * The result is {@link extractPublicJwk} completed by the private members of the key
- * type; the same members are dropped, on the same allow-list basis.
- *
- * @param {SignatureJwk} jwk - The private JWK.
- * @param {JwkSignatureAlgorithm} algorithm - The algorithm resolved from that JWK.
- * @return {SignatureJwk} The canonical private JWK, with its members ordered.
- * @throws {Error} If a member required to sign is missing.
- */
-export function extractPrivateJwk(jwk: SignatureJwk, algorithm: JwkSignatureAlgorithm): SignatureJwk {
-    for (const member of REQUIRED_PRIVATE_MEMBERS[algorithm.kty]) {
-        if ((jwk as Record<string, unknown>)[member] === undefined) {
-            throw new Error(
-                `Cannot import ${algorithm.kty} JWK as a private key: missing member '${member}'`,
-            );
-        }
-    }
-
-    const members: Record<string, unknown> = {...extractPublicJwk(jwk, algorithm)};
-    for (const member of PRIVATE_MEMBERS[algorithm.kty]) {
-        const value = (jwk as Record<string, unknown>)[member];
-        if (value !== undefined) members[member] = value;
-    }
-    return sortJwkMembers(members);
-}
-
-/**
  * Returns a copy of a JWK whose members are ordered lexicographically.
  *
  * Both JSON and CBOR serialise object members in insertion order, so ordering them is
@@ -482,4 +378,29 @@ export function requireJwkMember(jwk: SignatureJwk, member: string): string {
     const value = (jwk as Record<string, unknown>)[member];
     if (typeof value !== "string") throw new Error(`Malformed JWK: missing or invalid member '${member}'`);
     return value;
+}
+
+/**
+ * Checks that the usage declared by a JWK, if any, allows `operation`.
+ *
+ * A JWK that declares no `use` and no `key_ops` is implicitly a signature key. When they
+ * are present, `use` must be `sig` and `key_ops` must contain `operation` — it may list
+ * further operations, as it has to allow signing or verifying *at least*.
+ *
+ * @param {SignatureJwk} jwk - The JWK to check.
+ * @param {"sign" | "verify"} operation - The operation the key is imported for.
+ * @throws {Error} If the declared usage does not allow the operation.
+ */
+export function assertSignatureUsage(jwk: SignatureJwk, operation: "sign" | "verify"): void {
+    if (jwk.use !== undefined && jwk.use !== "sig") {
+        throw new Error(`Cannot import JWK: its 'use' member is '${jwk.use}', expected 'sig'`);
+    }
+    if (jwk.key_ops !== undefined) {
+        if (!Array.isArray(jwk.key_ops) || !jwk.key_ops.includes(operation)) {
+            throw new Error(
+                `Cannot import JWK: its 'key_ops' member does not allow '${operation}': ` +
+                JSON.stringify(jwk.key_ops),
+            );
+        }
+    }
 }

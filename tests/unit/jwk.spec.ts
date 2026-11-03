@@ -4,6 +4,7 @@ import {base64url} from "jose";
 import {JwkPrivateSignatureKey} from "../../src/crypto/signature/jwk/JwkPrivateSignatureKey";
 import {JwkPublicSignatureKey} from "../../src/crypto/signature/jwk/JwkPublicSignatureKey";
 import {
+    resolveJwkSignatureAlgorithm,
     JwkSignatureAlgorithmName,
     SignatureJwk,
 } from "../../src/crypto/signature/jwk/JwkSignatureAlgorithm";
@@ -14,6 +15,8 @@ import {CryptoEncoderFactory} from "../../src/crypto/encoder/CryptoEncoderFactor
 import {decode as cborDecode} from "cbor-x";
 import {encodeSignatureJwk} from "../../src/crypto/signature/jwk/JwkBinaryEncoder";
 import {getSubtle} from "../../src/crypto/signature/jwk/webcrypto";
+import {JwkFilter} from "../../src/crypto/signature/jwk/JwkFilter";
+import {PublicSignatureComparator} from "../../src/crypto/signature/PublicSignatureComparator";
 
 
 const MESSAGE = new TextEncoder().encode("The quick brown fox jumps over the lazy dog");
@@ -130,22 +133,21 @@ describe("JWK signature keys", () => {
             .each([
                 ...SomeDidsFoundOnline,
                 ...CarmentisDid
-            ])("decode $did and re-encode it canonically", async (did) => {
+            ])("decode $did and re-encode it as provided", async (did) => {
                 const encoder = CryptoEncoderFactory.defaultStringSignatureEncoder();
                 const decoded = await encoder.decodePublicKey(did);
-                const canonical = await encoder.encodePublicKey(decoded);
+                const reEncoded = await encoder.encodePublicKey(decoded);
 
-                // The re-encoded DID is not the input one: these DIDs all carry members
-                // beyond the key itself — `kid`, `key_ops`, `ext`, `x5c` — which the
-                // import drops. It is stable from the first re-encoding onwards.
-                expect(canonical.startsWith("did:jwk:")).toBeTruthy();
-                expect(await encoder.encodePublicKey(await encoder.decodePublicKey(canonical)))
-                    .toEqual(canonical);
-
+                // Every member the DID carries (`kid`, `key_ops`, `ext`, `x5c`...) is
+                // preserved; only the member order is normalised.
+                expect(reEncoded.startsWith("did:jwk:")).toBeTruthy();
+                const original = JSON.parse(new TextDecoder().decode(base64url.decode(did.split(/[#?]/)[0].slice("did:jwk:".length))));
                 const jwk = (decoded as JwkPublicSignatureKey).getPublicJwk();
-                for (const member of ["kid", "use", "key_ops", "ext", "x5c", "x5t", "x5u", "x5t#S256"]) {
-                    expect(jwk, `canonical JWK must not expose '${member}'`).not.toHaveProperty(member);
-                }
+                expect(jwk).toEqual(original);
+                expect(Object.keys(jwk)).toEqual(Object.keys(original).sort());
+
+                // The re-encoded DID is stable.
+                expect(await encoder.encodePublicKey(await encoder.decodePublicKey(reEncoded))).toEqual(reEncoded);
             })
     })
 
@@ -172,8 +174,13 @@ describe("JWK signature keys", () => {
             const encoder = CryptoEncoderFactory.defaultStringSignatureEncoder();
             const pk1 = await JwkPublicSignatureKey.fromJwk(jwk1);
             const pk2 = await JwkPublicSignatureKey.fromJwk(jwk2);
-            expect(await pk1.getPublicKeyAsBytes()).toEqual(await pk2.getPublicKeyAsBytes());
-            expect(await encoder.encodePublicKey(pk1)).toEqual(await encoder.encodePublicKey(pk2));
+            // The JWKs are preserved as provided, so the encodings differ...
+            expect(await pk1.getPublicKeyAsBytes()).not.toEqual(await pk2.getPublicKeyAsBytes());
+            expect(await encoder.encodePublicKey(pk1)).not.toEqual(await encoder.encodePublicKey(pk2));
+            // ...yet both model the same key, which the comparator and the filter see.
+            expect(await PublicSignatureComparator.areEquals(pk1, pk2)).toBe(true);
+            const algorithm = resolveJwkSignatureAlgorithm(jwk1);
+            expect(JwkFilter.toPublicJwk(jwk1, algorithm)).toEqual(JwkFilter.toPublicJwk(jwk2, algorithm));
         });
     })
 
@@ -213,18 +220,61 @@ describe("JWK signature keys", () => {
             expect(Object.keys(publicKey.getPublicJwk())).toEqual(expected.publicMembers);
         });
 
-        it.each(ALGORITHMS)("drops every descriptive member of a $alg JWK", async ({alg}) => {
+        it.each(ALGORITHMS)("JwkFilter drops every descriptive member of a $alg JWK", async ({alg}) => {
+            const generated = await JwkPrivateSignatureKey.gen(alg);
+            const decorated = {...generated.getPrivateJwk(), ...DESCRIPTIVE_MEMBERS};
+            const algorithm = resolveJwkSignatureAlgorithm(decorated);
+
+            expect(JwkFilter.toPrivateJwk(decorated, algorithm)).toEqual(generated.getPrivateJwk());
+            expect(JwkFilter.toPublicJwk(decorated, algorithm)).toEqual(generated.getPublicJwk());
+        });
+
+        it.each(ALGORITHMS)("keeps the usage of a $alg private key, and derives the public one", async ({alg}) => {
             const generated = await JwkPrivateSignatureKey.gen(alg);
             const decorated = {...generated.getPrivateJwk(), ...DESCRIPTIVE_MEMBERS};
 
             const privateKey = await JwkPrivateSignatureKey.fromJwk(decorated);
-            expect(privateKey.getPrivateJwk()).toEqual(generated.getPrivateJwk());
-            expect(privateKey.getPrivateKeyAsBytes()).toEqual(generated.getPrivateKeyAsBytes());
+            expect(privateKey.getPrivateJwk()).toEqual(
+                sortedJwk({...generated.getPrivateJwk(), use: "sig", key_ops: ["sign", "verify"]}),
+            );
+            expect(privateKey.getPrivateKeyAsBytes()).not.toEqual(generated.getPrivateKeyAsBytes());
+            // `sign` becomes `verify`, without duplicate.
+            expect(privateKey.getPublicJwk()).toEqual(
+                sortedJwk({...generated.getPublicJwk(), use: "sig", key_ops: ["verify"]}),
+            );
+            expect((await privateKey.getPublicKey()).getPublicJwk()).toEqual(privateKey.getPublicJwk());
+        });
+
+        it.each(ALGORITHMS)("preserves every member of a $alg public JWK", async ({alg}) => {
+            const generated = await JwkPrivateSignatureKey.gen(alg);
+            const decorated = {...generated.getPublicJwk(), ...DESCRIPTIVE_MEMBERS, key_ops: ["verify"]};
 
             const publicKey = await JwkPublicSignatureKey.fromJwk(decorated);
-            expect(publicKey.getPublicJwk()).toEqual(generated.getPublicJwk());
-            expect(await publicKey.getPublicKeyAsBytes())
-                .toEqual(await (await generated.getPublicKey()).getPublicKeyAsBytes());
+            expect(publicKey.getPublicJwk()).toEqual(sortedJwk(decorated));
+            expect(Object.keys(publicKey.getPublicJwk())).toEqual(Object.keys(decorated).sort());
+
+            const restored = await JwkPublicSignatureKey.fromBytes(await publicKey.getPublicKeyAsBytes());
+            expect(restored.getPublicJwk()).toEqual(publicKey.getPublicJwk());
+            expect(await restored.getPublicKeyAsBytes()).toEqual(await publicKey.getPublicKeyAsBytes());
+
+            const signature = await generated.sign(MESSAGE);
+            await expect(publicKey.verify(MESSAGE, signature)).resolves.toBe(true);
+        });
+
+        it("strips the private members of a private JWK given as a public key", async () => {
+            const generated = await JwkPrivateSignatureKey.gen("ES256");
+            const publicKey = await JwkPublicSignatureKey.fromJwk({
+                ...generated.getPrivateJwk(), kid: "k", key_ops: ["sign"],
+            });
+            expect(publicKey.getPublicJwk()).toEqual(
+                sortedJwk({...generated.getPublicJwk(), kid: "k", key_ops: ["verify"]}),
+            );
+        });
+
+        it("adds no usage to the public key when the private key declares none", async () => {
+            const generated = await JwkPrivateSignatureKey.gen("ES256");
+            expect(Object.keys(generated.getPublicJwk())).toEqual(["crv", "kty", "x", "y"]);
+            expect(Object.keys((await generated.getPublicKey()).getPublicJwk())).toEqual(["crv", "kty", "x", "y"]);
         });
 
         it("orders the members lexicographically, whatever order they arrived in", async () => {
@@ -234,8 +284,7 @@ describe("JWK signature keys", () => {
             ) as SignatureJwk;
 
             const privateKey = await JwkPrivateSignatureKey.fromJwk(shuffled);
-            expect(Object.keys(privateKey.getPrivateJwk())).toEqual(["crv", "d", "kty", "x", "y"]);
-            expect(privateKey.getPrivateKeyAsBytes()).toEqual(generated.getPrivateKeyAsBytes());
+            expect(Object.keys(privateKey.getPrivateJwk())).toEqual(["crv", "d", "key_ops", "kty", "use", "x", "y"]);
         });
 
         it("normalises the 'EdDSA' spelling RFC 8037 gave the OKP curves", async () => {
@@ -315,7 +364,7 @@ describe("JWK signature keys", () => {
             const publicKey = await privateKey.getPublicKey();
             const decoded = cborDecode(await publicKey.getPublicKeyAsBytes()) as Record<string, unknown>;
 
-            expect(Object.keys(decoded)).toEqual(["alg", "e", "kty", "n"]);
+            expect(Object.keys(decoded)).toEqual(["alg", "e", "kty", "n", "use"]);
         });
 
         it("rejects a payload that is not CBOR, or does not hold a map", async () => {
@@ -459,7 +508,7 @@ describe("JWK signature keys", () => {
             for (const member of ["d", "p", "q", "dp", "dq", "qi", "oth"]) {
                 expect(publicJwk, `public JWK must not expose '${member}'`).not.toHaveProperty(member);
             }
-            expect(Object.keys(publicJwk)).toEqual(["alg", "e", "kty", "n"]);
+            expect(Object.keys(publicJwk)).toEqual(["alg", "e", "kty", "n", "use"]);
         });
 
         it("honours the requested modulus length", async () => {
@@ -617,16 +666,35 @@ describe("JWK signature keys", () => {
                 .rejects.toThrow(/symmetric/);
         });
 
-        it("ignores 'use', 'key_ops' and 'ext' rather than rejecting on them", async () => {
-            const {x, y, crv} = (await JwkPrivateSignatureKey.gen("ES256")).getPublicJwk();
-            const publicKey = await JwkPublicSignatureKey.fromJwk({
-                kty: "EC", crv, x, y,
-                use: "enc",
-                key_ops: ["deriveBits"],
-                ext: false,
-            });
+        it("accepts a JWK that declares no usage", async () => {
+            const publicJwk = (await JwkPrivateSignatureKey.gen("ES256")).getPublicJwk();
+            const publicKey = await JwkPublicSignatureKey.fromJwk(publicJwk);
+            expect(publicKey.getPublicJwk()).toEqual(publicJwk);
+        });
 
-            expect(Object.keys(publicKey.getPublicJwk())).toEqual(["crv", "kty", "x", "y"]);
+        it("accepts 'use', 'key_ops' and 'ext' that allow verifying", async () => {
+            const publicJwk = (await JwkPrivateSignatureKey.gen("ES256")).getPublicJwk();
+            const publicKey = await JwkPublicSignatureKey.fromJwk({
+                ...publicJwk, use: "sig", key_ops: ["verify", "encrypt"], ext: false,
+            });
+            expect(Object.keys(publicKey.getPublicJwk())).toEqual(["crv", "ext", "key_ops", "kty", "use", "x", "y"]);
+            expect(publicKey.getPublicJwk().ext).toBe(false);
+        });
+
+        it("rejects a usage that does not allow verifying", async () => {
+            const publicJwk = (await JwkPrivateSignatureKey.gen("ES256")).getPublicJwk();
+            await expect(JwkPublicSignatureKey.fromJwk({...publicJwk, use: "enc"})).rejects.toThrow(/'use'/);
+            await expect(JwkPublicSignatureKey.fromJwk({...publicJwk, key_ops: ["encrypt"]}))
+                .rejects.toThrow(/key_ops/);
+            await expect(JwkPublicSignatureKey.fromJwk({...publicJwk, key_ops: ["sign"]}))
+                .rejects.toThrow(/key_ops/);
+        });
+
+        it("rejects a private usage that does not allow signing", async () => {
+            const privateJwk = (await JwkPrivateSignatureKey.gen("ES256")).getPrivateJwk();
+            await expect(JwkPrivateSignatureKey.fromJwk({...privateJwk, use: "enc"})).rejects.toThrow(/'use'/);
+            await expect(JwkPrivateSignatureKey.fromJwk({...privateJwk, key_ops: ["verify"]}))
+                .rejects.toThrow(/key_ops/);
         });
 
         it("rejects curves that cannot sign", async () => {
@@ -674,3 +742,7 @@ describe("JWK signature keys", () => {
         });
     });
 });
+
+function sortedJwk(jwk: Record<string, unknown>): SignatureJwk {
+    return Object.fromEntries(Object.entries(jwk).sort(([a], [b]) => (a < b ? -1 : 1))) as SignatureJwk;
+}

@@ -4,7 +4,8 @@ import {PublicSignatureKey} from "./PublicSignatureKey";
 import {SignatureSchemeId} from "./SignatureSchemeId";
 import {JwkPublicSignatureKey} from "./jwk/JwkPublicSignatureKey";
 import {encodeSignatureJwk} from "./jwk/JwkBinaryEncoder";
-import {SignatureJwk} from "./jwk/JwkSignatureAlgorithm";
+import {resolveJwkSignatureAlgorithm, SignatureJwk} from "./jwk/JwkSignatureAlgorithm";
+import {JwkFilter} from "./jwk/JwkFilter";
 import {getSubtle} from "./jwk/webcrypto";
 
 /** A public key, either a Carmentis key or a key managed by the Web Crypto API. */
@@ -15,7 +16,7 @@ export type ComparablePublicKey = PublicSignatureKey | CryptoKey;
  *
  * The keys may come from different worlds: Carmentis native keys (secp256k1, Ed25519,
  * ML-DSA-65), JWK-backed keys, and `CryptoKey`s managed by Node.js or the browser. Each
- * is reduced to its canonical public JWK, and the CBOR encodings of those JWKs are
+ * is reduced to its canonical public JWK (see {@link JwkFilter}), and the CBOR encodings of those JWKs are
  * compared, so that representation details (member order, `kid`, `key_ops`, compressed
  * versus uncompressed points...) never make two equivalent keys look different.
  */
@@ -49,10 +50,10 @@ async function toCanonicalJwk(key: ComparablePublicKey): Promise<SignatureJwk> {
             throw new Error("Cannot compare a non-extractable CryptoKey");
         }
         const jwk = await getSubtle().exportKey("jwk", key) as SignatureJwk;
-        return (await JwkPublicSignatureKey.fromJwk(jwk)).getPublicJwk();
+        return canonical(jwk);
     }
 
-    if (key instanceof JwkPublicSignatureKey) return key.getPublicJwk();
+    if (key instanceof JwkPublicSignatureKey) return canonical(key.getPublicJwk());
 
     const bytes = await key.getPublicKeyAsBytes();
     switch (key.getSignatureSchemeId()) {
@@ -76,7 +77,12 @@ async function toCanonicalJwk(key: ComparablePublicKey): Promise<SignatureJwk> {
     }
 }
 
-/** Runs a hand-built JWK through the importer, so it takes the exact canonical form. */
+/**
+ * Reduces a JWK to its canonical form, so that descriptive members (`kid`, `x5c`,
+ * `key_ops`...) never make two equivalent keys look different. The JWK is imported
+ * first, so that an unsupported or unusable JWK is rejected.
+ */
 async function canonical(jwk: SignatureJwk): Promise<SignatureJwk> {
-    return (await JwkPublicSignatureKey.fromJwk(jwk)).getPublicJwk();
+    const imported = await JwkPublicSignatureKey.fromJwk(jwk);
+    return JwkFilter.toPublicJwk(imported.getPublicJwk(), resolveJwkSignatureAlgorithm(jwk));
 }

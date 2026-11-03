@@ -147,7 +147,11 @@ export async function generateSignatureJwk(
                 true,
                 ["sign", "verify"],
             ) as CryptoKeyPair;
-            return await subtle.exportKey("jwk", keyPair.privateKey) as SignatureJwk;
+            const exported = await subtle.exportKey("jwk", keyPair.privateKey) as SignatureJwk;
+            // Web Crypto adds usage and extractability members; a fresh key declares no usage.
+            delete exported.key_ops;
+            delete exported.ext;
+            return exported;
         }
         case "ed25519": {
             const privateKey = ed25519Utils.randomSecretKey();

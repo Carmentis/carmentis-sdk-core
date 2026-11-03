@@ -18,6 +18,7 @@ import {
 } from "../../../../type/Resolver";
 import {EncoderFactory} from "../../../../utils/encoder";
 import {JwkPublicSignatureKey} from "../../../signature/jwk/JwkPublicSignatureKey";
+import {sortJwkMembers} from "../../../signature/jwk/JwkSignatureAlgorithm";
 import {base64url} from "jose";
 import {JwkPrivateSignatureKey} from "../../../signature/jwk/JwkPrivateSignatureKey";
 
@@ -33,13 +34,14 @@ export class DckfSignatureEncoder implements ISignatureEncoderHandler {
     }
 
     async encodePublicKey(publicKey: PublicSignatureKey): Promise<string> {
-        if (!this.isAcceptingPublicKeyEncodingRequest(publicKey)) {
+        if (!await this.isAcceptingPublicKeyEncodingRequest(publicKey)) {
             throw new Error('unexpected public key type');
         }
         if (publicKey instanceof JwkPublicSignatureKey) {
-            // The JWK is already canonical, members included: `JSON.stringify` walks them
-            // in insertion order, so the identifier is a function of the key alone.
-            return `did:jwk:${base64url.encode(JSON.stringify(publicKey.getPublicJwk()))}`;
+            // The JWK is kept as provided, members included. `getPublicJwk` orders them
+            // lexicographically and `JSON.stringify` walks them in insertion order, so the
+            // identifier is a function of the JWK alone.
+            return `did:jwk:${base64url.encode(JSON.stringify(sortJwkMembers(publicKey.getPublicJwk())))}`;
         }
         const schemeTags = this.getPublicKeySchemeTags(publicKey);
         const keyPayload = await this.getPublicKeyPayload(publicKey);
