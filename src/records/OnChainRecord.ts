@@ -12,10 +12,10 @@ import {
     OnChainChannelSchema,
     OnChainItemListSchema,
     TypeEnum,
+    TransformationTypeEnum,
 } from "../type/valibot/proofs/AppLedgerProof";
 import {Logger} from "../utils/Logger";
 import {CBORCryptoBinaryEncoder} from "../crypto/encoder/CryptoEncoderFactory";
-import { TransformationTypeEnum } from "../../dist/carmentis-sdk-core";
 
 type ChannelMapEntry = {
     rootHash: Uint8Array,
