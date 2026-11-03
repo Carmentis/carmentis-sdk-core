@@ -11,6 +11,8 @@ import {
     NumberItem,
     BooleanItem,
     NullItem,
+    EmptyArrayItem,
+    EmptyObjectItem,
 } from '../type/valibot/proofs/AppLedgerProof';
 
 export class Record {
@@ -230,10 +232,10 @@ export class Record {
             return TypeEnum.Null;
         }
         if (Array.isArray(field)) {
-            return TypeEnum.Array;
+            return field.length > 0 ? TypeEnum.Array : TypeEnum.EmptyArray;
         }
         if (typeof field == 'object' && Object.getPrototypeOf(field).isPrototypeOf(Object)) {
-            return TypeEnum.Object;
+            return Object.keys(field).length > 0 ? TypeEnum.Object : TypeEnum.EmptyObject;
         }
         throw new Error('unsupported field type');
     }
@@ -246,7 +248,7 @@ export class Record {
         return type;
     }
 
-    private buildItemListByDfs(field: Json, path: Path = []): Item {
+    private buildItemListByDfs(field: Json, path: Path = []) {
         const type = Record.getValueType(field);
         switch (type) {
             case TypeEnum.String: {
@@ -266,11 +268,19 @@ export class Record {
                 break;
             }
             case TypeEnum.Array: {
-                this.buildArrayItem(field as Json[], path);
+                this.buildArrayItem(field as Item[], path);
+                break;
+            }
+            case TypeEnum.EmptyArray: {
+                this.addFlatItem(path, this.buildEmptyArrayItem());
                 break;
             }
             case TypeEnum.Object: {
-                this.buildObjectItem(field as {[key: string]: Json}, path);
+                this.buildObjectItem(field as {[key: string]: Item}, path);
+                break;
+            }
+            case TypeEnum.EmptyObject: {
+                this.addFlatItem(path, this.buildEmptyObjectItem());
                 break;
             }
             default: {
@@ -312,7 +322,20 @@ export class Record {
     private buildNullItem(): NullItem {
         return {
             type: TypeEnum.Null,
-            value: null,
+            channelId: -1,
+        };
+    }
+
+    private buildEmptyArrayItem(): EmptyArrayItem {
+        return {
+            type: TypeEnum.EmptyArray,
+            channelId: -1,
+        };
+    }
+
+    private buildEmptyObjectItem(): EmptyObjectItem {
+        return {
+            type: TypeEnum.EmptyObject,
             channelId: -1,
         };
     }

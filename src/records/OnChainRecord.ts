@@ -3,15 +3,19 @@ import {Utils} from '../utils/utils';
 import {RecordByChannels} from "./RecordByChannels";
 import {MerkleRecord} from "./MerkleRecord";
 import {Record} from "./Record";
+import {ItemManager} from "./ItemManager";
 import {
     OnChainChannel,
     OnChainItem,
     FlatItem,
+    Item,
     OnChainChannelSchema,
     OnChainItemListSchema,
+    TypeEnum,
 } from "../type/valibot/proofs/AppLedgerProof";
 import {Logger} from "../utils/Logger";
 import {CBORCryptoBinaryEncoder} from "../crypto/encoder/CryptoEncoderFactory";
+import { TransformationTypeEnum } from "../../dist/carmentis-sdk-core";
 
 type ChannelMapEntry = {
     rootHash: Uint8Array,
@@ -23,6 +27,7 @@ export class OnChainRecord {
     private encoder = new CBORCryptoBinaryEncoder()
     private channelMap: Map<number, ChannelMapEntry>;
     private publicChannels: Set<number>;
+    private logger = Logger.getLogger([OnChainRecord.name]);
 
     constructor() {
         this.channelMap = new Map;
@@ -35,7 +40,6 @@ export class OnChainRecord {
         return onChainRecord;
     }
 
-    private logger = Logger.getLogger([OnChainRecord.name]);
     private setChannelsFromMerkleRecord(merkleRecord: MerkleRecord) {
         this.publicChannels = merkleRecord.getPublicChannels();
         const recordByChannels = merkleRecord.getRecordByChannels();
@@ -48,8 +52,11 @@ export class OnChainRecord {
             const onChainItems: OnChainItem[] = flatItems.map((flatItem) => {
                 return {
                     path: flatItem.path,
-                    value: flatItem.item.value,
-                    ...flatItem.item.transformation ? {transformation: flatItem.item.transformation} : {}
+                    value: ItemManager.getValue(flatItem.item),
+                    ...flatItem.item.type === TypeEnum.String && flatItem.item.transformation ?
+                        { transformation: flatItem.item.transformation }
+                    :
+                        {}
                 }
             });
             this.channelMap.set(
@@ -70,7 +77,6 @@ export class OnChainRecord {
     getOnChainData(channelId: number, pack = false) {
         const channel = this.getChannel(channelId);
         const encoder = new CBORCryptoBinaryEncoder();
-        //const encoder = new Encoder({pack});
         const encodedPayload = encoder.encode(channel.onChainItems);
         const onChainData: OnChainChannel = {
             pepper: channel.pepper,
@@ -115,11 +121,42 @@ export class OnChainRecord {
         const peppers: Map<number, Uint8Array> = new Map();
         for (const [ channelId, channel ] of this.channelMap) {
             const flatItems: FlatItem[] = channel.onChainItems.map((field: OnChainItem) => {
-                const item = {
-                    channelId,
-                    type: Record.getPrimitiveValueType(field.value),
-                    value: field.value,
-                    ...field.transformation ? {transformation: field.transformation} : {},
+                const type = Record.getPrimitiveValueType(field.value);
+                let item: Item;
+                switch (type) {
+                    case TypeEnum.String: {
+                        const transformation = field.transformation ?? { type: TransformationTypeEnum.None };
+                        item = {
+                            channelId,
+                            type,
+                            value: field.value as string,
+                            transformation,
+                        };
+                        break;
+                    }
+                    case TypeEnum.Number: {
+                        item = {
+                            channelId,
+                            type,
+                            value: field.value as number,
+                        };
+                        break;
+                    }
+                    case TypeEnum.Boolean: {
+                        item = {
+                            channelId,
+                            type,
+                            value: field.value as boolean,
+                        };
+                        break;
+                    }
+                    default: {
+                        item = {
+                            channelId,
+                            type,
+                        };
+                        break;
+                    }
                 }
                 return {
                     path: field.path,

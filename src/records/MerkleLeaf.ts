@@ -1,6 +1,7 @@
 import {Crypto} from '../crypto/crypto';
 import {Utils} from '../utils/utils';
 import {SaltShaker} from './SaltShaker';
+import {ItemManager} from './ItemManager';
 import {
     Path,
     Item,
@@ -12,6 +13,8 @@ import {
     MerkleLeafCommitment,
     ProofFieldTypeEnum,
     ProofField,
+    TypeEnum,
+    TransformationTypeEnum,
 } from '../type/valibot/proofs/AppLedgerProof';
 import {CBORCryptoBinaryEncoder} from "../crypto/encoder/CryptoEncoderFactory";
 
@@ -27,25 +30,28 @@ export class MerkleLeaf {
 
     static fromItemWithPublicData(item: Item) {
         const merkleLeaf = new MerkleLeaf();
-        merkleLeaf.setPublicDataFromValue(item.value);
+        merkleLeaf.setPublicDataFromValue(ItemManager.getValue(item));
         return merkleLeaf;
     }
 
     static fromItemWithPlainData(saltShaker: SaltShaker, item: Item) {
         const merkleLeaf = new MerkleLeaf();
         const salt = saltShaker.getSalt();
-        merkleLeaf.setPlainDataFromValue(salt, item.value);
+        merkleLeaf.setPlainDataFromValue(salt, ItemManager.getValue(item));
         return merkleLeaf;
     }
 
     static fromItemWithHashedData(saltShaker: SaltShaker, item: Item) {
         const merkleLeaf = new MerkleLeaf();
         const salt = saltShaker.getSalt();
-        merkleLeaf.setHashedDataFromValue(salt, item.value);
+        merkleLeaf.setHashedDataFromValue(salt, ItemManager.getValue(item));
         return merkleLeaf;
     }
 
     static fromItemWithMaskedData(saltShaker: SaltShaker, item: Item) {
+        if (item.type !== TypeEnum.String || item.transformation.type !== TransformationTypeEnum.Maskable) {
+            throw new Error(`the item is not a maskable string`);
+        }
         const merkleLeaf = new MerkleLeaf();
         const visibleSalt = saltShaker.getSalt();
         const hiddenSalt = saltShaker.getSalt();
@@ -323,7 +329,6 @@ export class MerkleLeaf {
 
     getRawValue(): PrimitiveValue {
         const data = this.getInternalData();
-
         switch (data.type) {
             case MerkleLeafTypeEnum.Public:
             case MerkleLeafTypeEnum.Plain:

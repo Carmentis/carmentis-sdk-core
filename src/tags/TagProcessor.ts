@@ -92,7 +92,8 @@ export class TagProcessor {
             this.mapNode(res, ResolverPath.clone(path).removeLast());
             return res;
         }
-        catch {
+        catch(err) {
+            console.error(err);
             return { node: null, resolveOutput: false };
         }
     }

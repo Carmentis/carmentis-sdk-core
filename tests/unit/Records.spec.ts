@@ -8,7 +8,7 @@ import {AppLedgerProofVB} from "../../src/proofs/AppLedgerProofVB";
 import {AppLedgerProofWrapper} from "../../src/proofs/AppLedgerProofWrapper";
 import { describe, it, expect } from 'vitest'
 
-const initialJson = {
+const initialJson0 = {
     "publicField": "This is public",
     "array0": [ { "thisIsARepeatedKey": 0 }, { "thisIsARepeatedKey": 1 }, { "thisIsARepeatedKey": 2 } ],
     "array1": [ "thisIsARepeatedValue", "thisIsARepeatedValue", "thisIsARepeatedValue" ],
@@ -18,30 +18,41 @@ const initialJson = {
     "null": null,
     "object": {
         "foo": 123,
-        "bar": [ 456, "hello" ]
+        "bar": [ 456, "hello" ],
+        "emptyArray": [],
+        "emptyObject": {},
     }
 };
 
-const finalJson = {
+const finalJson0 = {
     "array0": [ {"thisIsARepeatedKey": 0 }, { "thisIsARepeatedKey": 1 }, { "thisIsARepeatedKey": 2 } ],
     "array1": [ "thisIsARepeatedValue", "thisIsARepeatedValue", "thisIsARepeatedValue" ],
     "email": "j***@g***",
     "null": null,
     "object":{
         "foo": 123,
-        "bar": [ null, "CB835593E4FA3633CC971FCBD1EB080CA322258220548EB7087BEAF8EF6D7FF4" ]
+        "bar": [ null, "CB835593E4FA3633CC971FCBD1EB080CA322258220548EB7087BEAF8EF6D7FF4" ],
+        "emptyArray": [],
+        "emptyObject": {},
     },
     "publicField": "This is public"
 };
 
+const initialJson1 = {
+    "nonEmptyArray": [ 123 ],
+    "emptyArray": [],
+    "nonEmptyObject": { foo: 123 },
+    "emptyObject": {},
+};
+
 describe('Record', () => {
-    it('Testing record classes', async () => {
+    it('Testing low-level methods of record classes', async () => {
         // build a Record from a primitive type
         const jsonObject0 = 12345;
         const record0 = Record.fromObject(jsonObject0);
 
         // build a Record with a hashable field and a maskable field
-        const record1 = Record.fromObject(initialJson);
+        const record1 = Record.fromObject(initialJson0);
         record1.setChannel("this.*", 1);
         record1.setChannel("this.publicField", 2);
         record1.setChannelAsPublic(2);
@@ -117,6 +128,21 @@ describe('Record', () => {
         const proofRootHashAsHex3 = proofRecord3.getRootHashAsHexString(1);
         expect(proofRootHashAsHex3).toEqual(onChainRootHashAsHex);
         const recoveredFinalJson = proofRecord3.toJson();
-        expect(JSON.stringify(recoveredFinalJson)).toEqual(JSON.stringify(finalJson));
+        expect(JSON.stringify(recoveredFinalJson)).toEqual(JSON.stringify(finalJson0));
+    });
+    it('Testing empty arrays/objects', async () => {
+        const record = Record.fromObject(initialJson1);
+        record.setChannel("this.*", 1);
+        const recordByChannels = RecordByChannels.fromRecord(record);
+        const merkleRecord = MerkleRecord.fromRecordByChannels(recordByChannels);
+        const onChainRecord = OnChainRecord.fromMerkleRecord(merkleRecord);
+        const onChainData = onChainRecord.getOnChainData(1);
+        const onChainRootHashAsHex = Utils.binaryToHexa(onChainData.merkleRootHash);
+        const rebuiltOnChainRecord = new OnChainRecord;
+        rebuiltOnChainRecord.addOnChainData(1, onChainData.isPublic, onChainData.merkleRootHash, onChainData.data);
+        const rebuiltMerkleRecord = rebuiltOnChainRecord.toMerkleRecord();
+        const rebuiltProofRecord = ProofRecord.fromMerkleRecord(rebuiltMerkleRecord);
+        const rebuiltProofRootHashAsHex = rebuiltProofRecord.getRootHashAsHexString(1);
+        expect(rebuiltProofRootHashAsHex).toEqual(onChainRootHashAsHex);
     });
 })

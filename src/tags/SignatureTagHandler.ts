@@ -41,16 +41,21 @@ export class SignatureTagHandler extends TagHandler {
             verifier.setPayload(wrapper.payload);
         }
         const result = await verifier.verify(pk, parsedSignature, parsedContext.output);
+        let payload: JsonObject;
         if (!result.verified) {
-            throw new Error("the signature verification failed");
+            console.error(result.errors);
+            payload = {};
+        }
+        else {
+            payload = result.payload as JsonObject;
         }
         const node: SignatureNode = {
             type: "signature",
             publicKey: wrapper.publicKey,
-            valid: true,
+            valid: result.verified,
         }
         return {
-            output: result.payload as JsonObject,
+            output: payload,
             node,
             resolveOutput: false,
         };

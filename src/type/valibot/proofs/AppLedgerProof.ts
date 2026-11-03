@@ -49,9 +49,9 @@ export enum TypeEnum {
     Null = 3,
     Array = 4,
     Object = 5,
+    EmptyArray = 6,
+    EmptyObject = 7,
 }
-
-let ItemSchema: v.GenericSchema<any>;
 
 const PrimitiveItemCommonProperties = {
     channelId: v.number(),
@@ -85,45 +85,39 @@ export type BooleanItem = v.InferOutput<typeof BooleanItemSchema>;
 const NullItemSchema = v.object({
     ...PrimitiveItemCommonProperties,
     type: v.literal(TypeEnum.Null),
-    value: v.null(),
 });
 
 export type NullItem = v.InferOutput<typeof NullItemSchema>;
 
-const ArrayItemSchema = v.object({
-    type: v.literal(TypeEnum.Array),
-    value: v.array(v.lazy(() => ItemSchema)),
+const EmptyArrayItemSchema = v.object({
+    ...PrimitiveItemCommonProperties,
+    type: v.literal(TypeEnum.EmptyArray),
 });
 
-const ObjectItemSchema = v.object({
-    type: v.literal(TypeEnum.Object),
-    value: v.array(
-        v.object({
-            key: v.string(),
-            value: v.lazy(() => ItemSchema)
-        })
-    ),
+export type EmptyArrayItem = v.InferOutput<typeof EmptyArrayItemSchema>;
+
+const EmptyObjectItemSchema = v.object({
+    ...PrimitiveItemCommonProperties,
+    type: v.literal(TypeEnum.EmptyObject),
 });
 
-ItemSchema = v.variant(
-    'type',
-    [
-        StringItemSchema,
-        NumberItemSchema,
-        BooleanItemSchema,
-        NullItemSchema,
-        ArrayItemSchema,
-        ObjectItemSchema,
-    ]
-);
+export type EmptyObjectItem = v.InferOutput<typeof EmptyObjectItemSchema>;
 
-export type Item = v.InferOutput<typeof ItemSchema>;
+export type Item =
+    | StringItem
+    | NumberItem
+    | BooleanItem
+    | NullItem
+    | EmptyArrayItem
+    | EmptyObjectItem;
 
 const PrimitiveValueSchema = v.union([
     v.string(),
     v.number(),
     v.boolean(),
     v.null(),
+    v.tuple([]),
+    v.strictObject({}),
 ]);
 
 export type PrimitiveValue = v.InferOutput<typeof PrimitiveValueSchema>;

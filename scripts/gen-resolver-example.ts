@@ -328,7 +328,10 @@ async function createReport(test: Test, userWallet: WalletCrypto, studentData: a
     const sigSk = await JwkPrivateSignatureKey.gen('ES256');
     const sigDate = Date.now();
     const signer = new JsonCanonicalUtf8Signer();
-    const payload = { message: "Additional signed data" }
+    const payload = {
+        message: "Additional signed data",
+        emptyArrayInsideSignature: ["not_so_empty"],
+    };
     const context: SignatureContext = {
         signedAt: sigDate,
         purpose: 'Test signature',
@@ -361,6 +364,13 @@ async function createReport(test: Test, userWallet: WalletCrypto, studentData: a
         applicationId,
         {
             eleve: { __link__: `cmts://resolve/al/${studentVbId}/mb/h/1` },
+
+            emptyArray: [],
+            nonEmptyArray: [ 123 ],
+            emptyObject: {},
+            nonEmptyObject: { foo: 123 },
+            null: null,
+
             periode: {
                 debut: "2026-01-01",
                 fin: "2026-03-30"
