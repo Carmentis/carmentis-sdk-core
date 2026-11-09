@@ -18,6 +18,7 @@ import {
 export class TagProcessor {
     private registeredTags = new Map<string, { handler: TagHandler, noOutput: boolean }>();
     private nodes = new Map<string, ResolutionNode[]>;
+    private representationTagHandler?: RepresentationTagHandler;
 
     constructor(
         protected readonly hydrator: ResolverHydrator,
@@ -38,6 +39,9 @@ export class TagProcessor {
         for (const tag of tags) {
             this.registeredTags.set(tag.name, { handler, noOutput: tag.noOutput ?? false });
         }
+        if (handler instanceof RepresentationTagHandler) {
+            this.representationTagHandler = handler;
+        }
     }
 
     getRegisteredTag(tag: string) {
@@ -50,6 +54,10 @@ export class TagProcessor {
 
     getNodes() {
         return this.nodes;
+    }
+
+    getRepresentations() {
+        return this.representationTagHandler?.getRepresentations() ?? new Map;
     }
 
     /**
@@ -76,11 +84,7 @@ export class TagProcessor {
     }
 
     async process(tag: string, object: any, path: ResolverPath): Promise<TagHandlerOutput> {
-        const tagEntry = this.registeredTags.get(tag);
-
-        if (tagEntry === undefined) {
-            throw new Error(`Unknown tag: '${tag}'`);
-        }
+        const tagEntry = this.getTagEntryOrFail(tag);
 
         try {
             const res = await tagEntry.handler.handle(tag, object, path, {
@@ -115,5 +119,14 @@ export class TagProcessor {
                 entry.push(tagOutput.node);
             }
         }
+    }
+
+    private getTagEntryOrFail(tag: string) {
+        const tagEntry = this.registeredTags.get(tag);
+
+        if (tagEntry === undefined) {
+            throw new Error(`Unknown tag: '${tag}'`);
+        }
+        return tagEntry;
     }
 }

@@ -363,6 +363,11 @@ async function createReport(test: Test, userWallet: WalletCrypto, studentData: a
         sk,
         applicationId,
         {
+            __representation__ : {
+                templateEngine: "Liquid",
+                format: "markdown",
+                template: "# Hello world",
+            },
             eleve: { __link__: `cmts://resolve/al/${studentVbId}/mb/h/1` },
 
             emptyArray: [],
@@ -402,4 +407,5 @@ function dumpReport(report: ResolverReport) {
         console.log(ResolverPath.fromSerialized(key).toString());
         console.log(JSON.stringify(value));
     }
+    console.log("representations", report.representations);
 }

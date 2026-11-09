@@ -2,6 +2,7 @@ import * as v from 'valibot';
 import { JsonData, JsonObject } from '../type/valibot/json/Json';
 import { ResolutionProofProofs } from '../type/valibot/proofs/ResolutionProof';
 import { ResolutionNode } from '../type/valibot/resolutionNodes/ResolutionNodes';
+import { Representation } from '../type/RepresentationSchema';
 
 export interface Policies {
     onResolutionFailure?: 'ignore' | 'throw'
@@ -67,6 +68,7 @@ export interface ResolverHydrator {
 export interface ResolverReport {
     passes: number
     nodes: Map<string, ResolutionNode[]>
+    representations: Map<string, Representation>
 }
 
 export interface TagHandlerOutput {

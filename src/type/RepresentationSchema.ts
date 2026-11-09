@@ -13,3 +13,5 @@ export const RepresentationSchema = v.object({
 	format: v.enum(RepresentationFormat),
 	template: v.string(),
 });
+
+export type Representation = v.InferOutput<typeof RepresentationSchema>

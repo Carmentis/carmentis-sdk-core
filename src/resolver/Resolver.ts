@@ -31,9 +31,11 @@ export class Resolver {
     }
 
     getReport(): ResolverReport {
+        const tagProcessor = this.getTagProcessor();
         return {
             passes: this.pass,
-            nodes: this.getTagProcessor().getNodes(),
+            nodes: tagProcessor.getNodes(),
+            representations: tagProcessor.getRepresentations(),
         };
     }
 
