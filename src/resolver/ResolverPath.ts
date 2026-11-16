@@ -1,3 +1,5 @@
+import { JsonData, JsonObject } from '../type/valibot/json/Json';
+
 type Path = (string | number)[]
 
 export class ResolverPath {
@@ -38,6 +40,45 @@ export class ResolverPath {
     append(key: string | number) {
         this.path.push(key);
         return this;
+    }
+
+    join(relativePath: Path) {
+        for (const item of relativePath) {
+            switch (item) {
+                case ".": {
+                    break;
+                }
+                case "..": {
+                    if (this.path.length === 0) {
+                        throw new Error(`encountered '..' at the root of the path`);
+                    }
+                    this.removeLast();
+                    break;
+                }
+                default: {
+                    this.append(item);
+                    break;
+                }
+            }            
+        }
+        return this;
+    }
+
+    applyToData(root: JsonData): JsonData {
+        let node = root;
+        let path = "root";
+        for (const item of this.path) {
+            const isNumber = typeof item === 'number';
+            if (node === null || typeof node !== 'object' || Array.isArray(node) !== isNumber) {
+                throw new Error(`property ${JSON.stringify(item)} cannot be applied to '${path}'`);
+            }
+            node = (node as any)[item];
+            if (node === undefined) {
+                throw new Error(`property ${JSON.stringify(item)} of '${path}' not found`);
+            }
+            path += isNumber ? `[${item}]` : '.' + item;
+        }
+        return node;
     }
 
     removeLast() {
