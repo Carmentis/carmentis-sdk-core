@@ -273,6 +273,8 @@ export class BalanceAvailability {
                     unstakedAmountInAtomics,
                     lock.parameters.validatorNodeId
                 );
+                lock.parameters.plannedUnlockAmountInAtomics = 0;
+                lock.parameters.plannedUnlockTimestamp = 0;
                 totalUnstaked += unstakedAmountInAtomics;
             }
         }

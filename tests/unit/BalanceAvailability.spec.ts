@@ -75,4 +75,22 @@ describe("Balance availability", () => {
         );
         assertVested(balanceAvailability, amountToVest);
     })
+
+    it("clears the unstake plan once applied", () => {
+        const nodeId = new Uint8Array([0, 1, 2, 3]);
+        const ba = new BalanceAvailability(1000);
+        ba.addNodeStaking(100, nodeId);
+        ba.planNodeStakingUnlock(30, 1700000000, nodeId);
+
+        expect(ba.applyNodeStakingUnlocks(1700100000)).toEqual(30);
+        // the plan must not match again on the next run
+        expect(ba.applyNodeStakingUnlocks(1700100000 + 86400)).toEqual(0);
+        expect(ba.getNodeStakingLockAmount(nodeId)).toEqual(70);
+
+        const params = ba.getNodeStakingLockOrFail(nodeId).parameters;
+        expect(params.plannedUnlockAmountInAtomics).toEqual(0);
+        expect(params.plannedUnlockTimestamp).toEqual(0);
+        // a new plan can be created
+        expect(() => ba.planNodeStakingUnlock(10, 1700200000, nodeId)).not.toThrow();
+    })
 })
