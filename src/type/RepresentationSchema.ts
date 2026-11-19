@@ -11,6 +11,7 @@ export enum RepresentationFormat {
 export const RepresentationSchema = v.object({
 	templateEngine: v.enum(RepresentationTemplateEngine),
 	format: v.enum(RepresentationFormat),
+	relativePath: v.optional(v.array(v.union([v.string(), v.number()]))),
 	template: v.string(),
 });
 

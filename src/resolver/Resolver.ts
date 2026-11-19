@@ -90,7 +90,7 @@ export class Resolver {
         }
 
         const tagList = this.extractTags(node);
-        let object = await this.resolveObject(node, path);
+        let object: JsonObject = {};
 
         for (const tag of tagList) {
             const tagOutput = await this.resolveTag(tag, node, path);
@@ -102,7 +102,7 @@ export class Resolver {
                 object = { ...object, ...tagObject };
             }
         }
-        return object;
+        return { ...object, ...await this.resolveObject(node, path) };
     }
 
     private extractTags(node: JsonObject) {

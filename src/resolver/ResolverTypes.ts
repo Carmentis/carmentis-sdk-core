@@ -64,7 +64,6 @@ export interface ResolverHydrator {
     hydrateMicroblock(link: string, mbRef: MbRef): Promise<JsonData | undefined>;
 }
 
-
 export interface ResolverReport {
     passes: number
     nodes: Map<string, ResolutionNode[]>
