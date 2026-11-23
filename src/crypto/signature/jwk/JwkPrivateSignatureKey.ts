@@ -27,7 +27,7 @@ import {decodeSignatureJwk, encodeSignatureJwk} from "./JwkBinaryEncoder";
  * the ones they do not (secp256k1, Ed25519, ML-DSA).
  */
 export class JwkPrivateSignatureKey extends BasePrivateSignatureKey {
-    private constructor(
+    protected constructor(
         private readonly algorithm: JwkSignatureAlgorithm,
         private readonly privateJwk: SignatureJwk,
         private readonly publicJwk: SignatureJwk,

@@ -26,7 +26,7 @@ import {decodeSignatureJwk, encodeSignatureJwk} from "./JwkBinaryEncoder";
  * the ones they do not (secp256k1, Ed25519, ML-DSA).
  */
 export class JwkPublicSignatureKey extends BasePublicSignatureKey {
-    private constructor(
+    protected constructor(
         private readonly algorithm: JwkSignatureAlgorithm,
         private readonly publicJwk: SignatureJwk,
         private readonly verifier: JwkVerifier,
@@ -79,7 +79,7 @@ export class JwkPublicSignatureKey extends BasePublicSignatureKey {
      * the key as extractable (to expose its raw bytes), which an `ext: false` member
      * forbids, and rejects an `alg` it does not know for the key, such as `EdDSA`.
      */
-    private static toBackendJwk(algorithm: JwkSignatureAlgorithm, publicJwk: SignatureJwk): SignatureJwk {
+    protected static toBackendJwk(algorithm: JwkSignatureAlgorithm, publicJwk: SignatureJwk): SignatureJwk {
         const backendJwk: SignatureJwk = {...publicJwk};
         if (backendJwk.ext !== undefined) backendJwk.ext = true;
         if (algorithm.kty === "EC" || algorithm.kty === "OKP") delete backendJwk.alg;
