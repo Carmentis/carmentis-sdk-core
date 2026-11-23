@@ -99,8 +99,8 @@ export class MerkleRecord {
         }
         const tree = new MerkleTree;
 
-        for (const obj of channel.positionedLeaves) {
-            const leafHash = obj.leaf.getHash();
+        for (const entry of channel.positionedLeaves) {
+            const leafHash = entry.leaf.getHash(entry.path);
             tree.addLeaf(leafHash);
         }
 

@@ -320,10 +320,10 @@ export class MerkleLeaf {
         }
     }
 
-    getHash() {
-        const commitmentData = this.getCommitmentData();
-        const encodedCommitmentData = this.encoder.encode(commitmentData);
-        const hash = Crypto.Hashes.sha256AsBinary(encodedCommitmentData);
+    getHash(path: Path) {
+        const hashObject = { path, ...this.getCommitmentData() };
+        const encodedHashObject = this.encoder.encode(hashObject);
+        const hash = Crypto.Hashes.sha256AsBinary(encodedHashObject);
         return hash;
     }
 

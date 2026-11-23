@@ -14,12 +14,6 @@ export default defineConfig({
             name: 'CarmentisSDKCore',
             formats: ['es', 'cjs'],
             fileName: (format) => `carmentis-sdk-core.${format === 'es' ? 'js' : 'cjs'}`,
-            /*
-
-
-
-
-             */
         },
         sourcemap: false,
     },
