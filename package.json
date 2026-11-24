@@ -26,7 +26,8 @@
   "scripts": {
     "dev": "vite",
     "build": "barrelsby --config barrelsby.json && vite build",
-    "test": "vitest --globals"
+    "test": "vitest --globals --project node",
+    "test:all": "vitest --globals"
   },
   "publishConfig": {
     "access": "public"
@@ -42,7 +43,9 @@
     "@types/node": "^25.5.2",
     "@typescript-eslint/eslint-plugin": "^8.59.4",
     "@typescript-eslint/parser": "^8.59.4",
-    "@vitest/coverage-v8": "4.1.3",
+    "@vitest/browser-playwright": "5.1.1",
+    "@vitest/coverage-v8": "5.1.1",
+    "@vitest/ui": "5.1.1",
     "barrelsby": "^2.8.1",
     "eslint": "^10.4.0",
     "globals": "^17.6.0",
@@ -51,7 +54,7 @@
     "vite": "^8.0.4",
     "vite-plugin-dts": "^4.5.4",
     "vite-plugin-node-polyfills": "^0.26.0",
-    "vitest": "^4.1.3"
+    "vitest": "5.1.1"
   },
   "dependencies": {
     "@logtape/logtape": "^1.2.0",

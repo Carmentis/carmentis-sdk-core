@@ -40,6 +40,8 @@ import {
 } from "../type/valibot/blockchain/chainReference/ChainReference";
 import {Logger} from "./Logger";
 import {CryptoEncoderFactory} from "../crypto/encoder/CryptoEncoderFactory";
+import {Microblock} from "../blockchain/microblock/Microblock";
+import {MicroblockStruct} from "../type/valibot/blockchain/microblock/MicroblockStruct";
 
 export class BlockchainUtils {
     private static encoder  = CryptoEncoderFactory.getCryptoBinaryEncoder();
@@ -48,6 +50,10 @@ export class BlockchainUtils {
     static computeMicroblockHashFromHeader(header: MicroblockHeader) {
         const serializedHeader = BlockchainUtils.encodeMicroblockHeader(header);
         return Crypto.Hashes.sha256AsBinary(serializedHeader);
+    }
+
+    static encodeMicroblockStruct(microblock: MicroblockStruct) {
+        return this.encoder.encode(microblock);
     }
 
     /**
