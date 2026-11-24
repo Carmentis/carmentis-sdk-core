@@ -9,7 +9,7 @@ import {
 import {JwkSignatureScheme} from "../crypto/signature/jwk/JwkSignatureScheme";
 import {createJwkVerifier, JwkVerifier} from "../crypto/signature/jwk/JwkSignatureBackend";
 import {JwkFilter} from "../crypto/signature/jwk/JwkFilter";
-import {KmsKeyReference} from "./KmsTypes";
+import {KmsWalletReference} from "./KmsTypes";
 
 /**
  * Public half of a KMS-managed key. It is a plain JWK public key: verification is local,
@@ -21,12 +21,12 @@ export class KmsPublicSignatureKey extends JwkPublicSignatureKey {
         publicJwk: SignatureJwk,
         verifier: JwkVerifier,
         scheme: JwkSignatureScheme,
-        private readonly reference: KmsKeyReference,
+        private readonly reference: KmsWalletReference,
     ) {
         super(algorithm, publicJwk, verifier, scheme);
     }
 
-    static async fromKmsJwk(jwk: SignatureJwk, reference: KmsKeyReference): Promise<KmsPublicSignatureKey> {
+    static async fromKmsJwk(jwk: SignatureJwk, reference: KmsWalletReference): Promise<KmsPublicSignatureKey> {
         const algorithm = resolveJwkSignatureAlgorithm(jwk);
         JwkFilter.toPublicJwk(jwk, algorithm);
         const publicJwk = sortJwkMembers({...JwkFilter.stripPrivateMembers(jwk).jwk});
@@ -36,8 +36,8 @@ export class KmsPublicSignatureKey extends JwkPublicSignatureKey {
             algorithm, publicJwk, verifier, JwkSignatureScheme.forJwk(algorithm, publicJwk), reference);
     }
 
-    /** The KMS userspace and key this public key belongs to. */
-    getKmsReference(): KmsKeyReference {
+    /** The KMS wallet this public key belongs to. */
+    getKmsReference(): KmsWalletReference {
         return {...this.reference};
     }
 }

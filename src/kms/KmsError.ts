@@ -9,7 +9,15 @@ export class KmsError extends Error {
         this.name = "KmsError";
     }
 
-    /** True when the key's plugin does not implement the requested method. */
+    /**
+     * True for an unknown wallet, a wallet API key used on another wallet, or a signed
+     * request on a wallet the signer does not administer (the KMS answers 404 in all cases).
+     */
+    isNotFound(): boolean {
+        return this.status === 404;
+    }
+
+    /** True when the wallet's plugin does not implement the requested method. */
     isUnsupported(): boolean {
         return this.status === 501;
     }

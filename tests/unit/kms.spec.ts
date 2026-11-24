@@ -2,68 +2,85 @@ import {describe, expect, it, vi} from "vitest";
 import {JwkPrivateSignatureKey} from "../../src/crypto/signature/jwk/JwkPrivateSignatureKey";
 import {Secp256k1PrivateSignatureKey} from "../../src/crypto/signature/secp256k1/Secp256k1PrivateSignatureKey";
 import {SignatureSchemeId} from "../../src/crypto/signature/SignatureSchemeId";
+import {CryptoEncoderFactory} from "../../src/crypto/encoder/CryptoEncoderFactory";
 import {CarmentisKmsClient} from "../../src/kms/CarmentisKmsClient";
-import {KmsSession} from "../../src/kms/KmsSession";
+import {KmsWalletAdmin} from "../../src/kms/KmsWalletAdmin";
+import {KmsManagementClient} from "../../src/kms/KmsManagementClient";
 import {KmsPrivateSignatureKey} from "../../src/kms/KmsPrivateSignatureKey";
 import {KmsPublicSignatureKey} from "../../src/kms/KmsPublicSignatureKey";
+import {KmsError} from "../../src/kms/KmsError";
 import {base64ToBytes, bytesToBase64} from "../../src/kms/KmsBase64";
 import {JsonEncoder} from "../../src/crypto/signature/signer/json/JsonEncoder";
 import {JsonCanonicalizationMethod} from "../../src/crypto/signature/signer/json/JsonCanonicalizationMethod";
 
 const BASE = "https://kms.test";
+const API_KEY = "wlt_secret";
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {status});
 
+type Call = { method: string; path: string; body: any; headers: Record<string, string> };
+
 async function mockKms() {
-    const serverKey = await JwkPrivateSignatureKey.gen("ES256");
-    const calls: {method: string; path: string; body: any; auth?: string}[] = [];
-    let tokens = 0;
-    let rejectNext = false;
-    const accessKey = Secp256k1PrivateSignatureKey.gen();
+    const walletKey = await JwkPrivateSignatureKey.gen("ES256");
+    const calls: Call[] = [];
+    let challenges = 0;
+    const wallet = (adminPublicKey: string) => ({
+        id: "w1", pluginId: "local", publicJwk: walletKey.getPublicJwk(), adminPublicKey,
+        certificates: null, createdBy: "public", createdAt: "2026-11-19T10:00:00.000Z",
+    });
     const fetchMock = vi.fn(async (url: string, init: any) => {
         const path = url.slice(BASE.length);
         const body = init.body ? JSON.parse(init.body) : undefined;
-        calls.push({method: init.method, path, body, auth: init.headers.Authorization});
-        if (path === "/api/auth/user/challenge") return json({challenge: "Y2hhbGxlbmdl"});
-        if (path === "/api/auth/user/login") return json({token: `jwt-${++tokens}`, expiresIn: 1200, publicKey: body.publicKey});
-        if (rejectNext) { rejectNext = false; return json({message: "expired"}, 401); }
-        if (path.endsWith("/public-key?format=jwk")) return json(serverKey.getPublicJwk());
-        if (path.endsWith("/sign/raw")) {
-            const sig = await serverKey.sign(base64ToBytes(body.data));
+        calls.push({method: init.method, path, body, headers: init.headers});
+        if (path === "/api/wallets/challenge") return json({challenge: `nonce-${++challenges}`});
+        if (path === "/api/wallets/w1/public-key?format=jwk") return json(walletKey.getPublicJwk());
+        if (path === "/api/wallets" && init.method === "POST") {
+            return json({...wallet(body.publicKey), apiKey: API_KEY}, 201);
+        }
+        if (path.startsWith("/api/wallets/w1/") && path.endsWith("/sign/raw")) {
+            if (init.headers["x-api-key"] !== API_KEY) return json({}, 404);
+            const sig = await walletKey.sign(base64ToBytes(body.data));
             return json({signature: bytesToBase64(sig)});
         }
-        return json({}, 404);
+        if (path.startsWith("/api/manage/wallets")) return json([wallet("sig:x")]);
+        return json({message: "not found"}, 404);
     });
-    return {serverKey, calls, fetchMock, accessKey, rejectOnce: () => { rejectNext = true; }};
+    const client = new CarmentisKmsClient({baseUrl: BASE, fetch: fetchMock as any});
+    return {walletKey, calls, client};
 }
 
-describe("Carmentis KMS integration", () => {
-    it("logs in by signing the canonical challenge payload and caches the token", async () => {
+describe("Carmentis KMS wallets", () => {
+    it("creates a wallet with a signed request covering method, path, body and a fresh nonce", async () => {
         const kms = await mockKms();
-        const session = new KmsSession({baseUrl: BASE, accessKey: await kms.accessKey, fetch: kms.fetchMock as any});
-        expect(await session.getToken()).toBe("jwt-1");
-        expect(await session.getToken()).toBe("jwt-1");
-        const login = kms.calls.find(c => c.path === "/api/auth/user/login")!;
-        expect(login.body.payload).toEqual({challenge: "Y2hhbGxlbmdl"});
-        const message = JsonEncoder.encode(login.body.payload, JsonCanonicalizationMethod.JSON_CANONICAL);
-        const pk = await (await kms.accessKey).getPublicKey();
-        expect(await pk.verify(message, base64ToBytes(login.body.signature))).toBe(true);
-        expect(kms.calls.filter(c => c.path.endsWith("/login"))).toHaveLength(1);
+        const adminKey = await Secp256k1PrivateSignatureKey.gen();
+        const admin = new KmsWalletAdmin(kms.client, adminKey);
+
+        const created = await admin.createWallet({pluginId: "local", params: {algorithm: "ES256"}, label: "Invoices"});
+        expect(created.apiKey).toBe(API_KEY);
+
+        const call = kms.calls.find(c => c.path === "/api/wallets")!;
+        expect(call.method).toBe("POST");
+        expect(call.body.payload).toEqual({
+            challenge: "nonce-1",
+            method: "POST",
+            path: "/api/wallets",
+            body: {pluginId: "local", params: {algorithm: "ES256"}, label: "Invoices"},
+        });
+        const expectedPk = await CryptoEncoderFactory.defaultStringSignatureEncoder()
+            .encodePublicKey(await adminKey.getPublicKey());
+        expect(call.body.publicKey).toBe(expectedPk);
+        const message = JsonEncoder.encode(call.body.payload, JsonCanonicalizationMethod.JSON_CANONICAL);
+        expect(await (await adminKey.getPublicKey()).verify(message, base64ToBytes(call.body.signature))).toBe(true);
+
+        // Each signed request consumes its own challenge.
+        await expect(admin.deleteWallet("w1")).rejects.toBeInstanceOf(KmsError);
+        const del = kms.calls.find(c => c.method === "DELETE")!;
+        expect(del.path).toBe("/api/wallets/w1");
+        expect(del.body.payload).toMatchObject({challenge: "nonce-2", method: "DELETE", path: "/api/wallets/w1", body: {}});
     });
 
-    it("refreshes the token once expired", async () => {
+    it("signs with the wallet API key and verifies locally", async () => {
         const kms = await mockKms();
-        let now = 0;
-        const session = new KmsSession({baseUrl: BASE, accessKey: await kms.accessKey, fetch: kms.fetchMock as any, now: () => now});
-        expect(await session.getToken()).toBe("jwt-1");
-        now = 1_200_000;
-        expect(await session.getToken()).toBe("jwt-2");
-    });
-
-    it("signs through the KMS and verifies locally", async () => {
-        const kms = await mockKms();
-        const session = new KmsSession({baseUrl: BASE, accessKey: await kms.accessKey, fetch: kms.fetchMock as any});
-        const client = session.createClient();
-        const key = await KmsPrivateSignatureKey.fromKmsKey({client, userspaceId: "u1", keyId: "k1"});
+        const key = await kms.client.wallet("w1", API_KEY).getSignatureKey();
 
         expect(key).toBeInstanceOf(JwkPrivateSignatureKey);
         expect(key.getSignatureSchemeId()).toBe(SignatureSchemeId.JWK);
@@ -72,31 +89,39 @@ describe("Carmentis KMS integration", () => {
         const signature = await key.sign(data);
         const pk = await key.getPublicKey();
         expect(pk).toBeInstanceOf(KmsPublicSignatureKey);
-        expect(pk.getKmsReference()).toEqual({userspaceId: "u1", keyId: "k1"});
+        expect(pk.getKmsReference()).toEqual({walletId: "w1"});
         expect(await pk.verify(data, signature)).toBe(true);
         expect(await pk.verify(new TextEncoder().encode("other"), signature)).toBe(false);
-        const call = kms.calls.find(c => c.path === "/api/userspaces/u1/keys/k1/sign/raw")!;
-        expect(call.auth).toBe("Bearer jwt-1");
+
+        const sign = kms.calls.find(c => c.path === "/api/wallets/w1/sign/raw")!;
+        expect(sign.headers["x-api-key"]).toBe(API_KEY);
+        const publicKeyCall = kms.calls.find(c => c.path.includes("/public-key"))!;
+        expect(publicKeyCall.headers["x-api-key"]).toBeUndefined();
+    });
+
+    it("reports a wrong wallet API key as not found", async () => {
+        const kms = await mockKms();
+        const key = await kms.client.wallet("w1", "wlt_other").getSignatureKey();
+        const error = await key.sign(new Uint8Array([1])).catch(e => e);
+        expect(error).toBeInstanceOf(KmsError);
+        expect((error as KmsError).isNotFound()).toBe(true);
     });
 
     it("refuses to export private material", async () => {
         const kms = await mockKms();
-        const client = new CarmentisKmsClient({baseUrl: BASE, fetch: kms.fetchMock as any});
-        const key = await KmsPrivateSignatureKey.fromKmsKey({
-            client, userspaceId: "u1", keyId: "k1", publicJwk: kms.serverKey.getPublicJwk(),
-        });
+        const key = await KmsPrivateSignatureKey.fromWallet(kms.client.wallet("w1", API_KEY), kms.walletKey.getPublicJwk());
+        expect(kms.calls).toHaveLength(0);
         expect(() => key.getPrivateKeyAsBytes()).toThrow(/KMS/);
         expect(() => key.getPrivateJwk()).toThrow(/KMS/);
         expect(() => key.getRawPrivateKeyBytes()).toThrow(/KMS/);
     });
 
-    it("re-authenticates once on 401", async () => {
+    it("sends the management credential", async () => {
         const kms = await mockKms();
-        const session = new KmsSession({baseUrl: BASE, accessKey: await kms.accessKey, fetch: kms.fetchMock as any});
-        const client = session.createClient();
-        await session.getToken();
-        kms.rejectOnce();
-        await client.getPublicJwk("u1", "k1");
-        expect(kms.calls.filter(c => c.path.endsWith("/login"))).toHaveLength(2);
+        await new KmsManagementClient(kms.client, {apiKey: "jwks_global"}).listWallets("sig:a b");
+        await new KmsManagementClient(kms.client, {bearerToken: "jwt"}).listWallets();
+        expect(kms.calls[0].path).toBe("/api/manage/wallets?adminPublicKey=sig%3Aa%20b");
+        expect(kms.calls[0].headers["x-api-key"]).toBe("jwks_global");
+        expect(kms.calls[1].headers["Authorization"]).toBe("Bearer jwt");
     });
 });

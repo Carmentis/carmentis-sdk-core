@@ -8,18 +8,18 @@ import {
 import {JwkSignatureScheme} from "../crypto/signature/jwk/JwkSignatureScheme";
 import {JwkFilter} from "../crypto/signature/jwk/JwkFilter";
 import {JwkSigner} from "../crypto/signature/jwk/JwkSignatureBackend";
-import {CarmentisKmsClient} from "./CarmentisKmsClient";
 import {KmsPublicSignatureKey} from "./KmsPublicSignatureKey";
-import {KmsKeyReference} from "./KmsTypes";
+import {KmsWalletReference} from "./KmsTypes";
+import type {KmsWalletClient} from "./KmsWalletClient";
 
-const NON_EXPORTABLE = "This key is managed by a Carmentis KMS: its private material never leaves the server";
+const NON_EXPORTABLE = "This key is managed by a Carmentis KMS wallet: its private material never leaves the server";
 
 /**
- * Private signature key held by a Carmentis KMS.
+ * Private signature key of a Carmentis KMS wallet.
  *
  * It behaves like any {@link JwkPrivateSignatureKey}, with JWK scheme and JOSE-style
- * signatures, but {@link sign} is delegated to the KMS and the private material can't be
- * exported. Signing requires a session whose key is an access key of the userspace.
+ * signatures, but {@link sign} is delegated to the KMS (with the wallet API key) and the
+ * private material can't be exported.
  */
 export class KmsPrivateSignatureKey extends JwkPrivateSignatureKey {
     protected constructor(
@@ -27,59 +27,30 @@ export class KmsPrivateSignatureKey extends JwkPrivateSignatureKey {
         publicJwk: SignatureJwk,
         signer: JwkSigner,
         scheme: JwkSignatureScheme,
-        private readonly client: CarmentisKmsClient,
-        private readonly reference: KmsKeyReference,
+        private readonly reference: KmsWalletReference,
     ) {
         // The base class holds the public JWK in place of the private one: there is none.
         super(algorithm, publicJwk, publicJwk, signer, scheme);
     }
 
-    /** Wraps an existing KMS key. Only its public JWK is fetched. */
-    static async fromKmsKey(params: {
-        client: CarmentisKmsClient;
-        userspaceId: string;
-        keyId: string;
-        /** Skips the public-key request when the JWK is already known. */
-        publicJwk?: SignatureJwk;
-    }): Promise<KmsPrivateSignatureKey> {
-        const {client, userspaceId, keyId} = params;
-        const reference = {userspaceId, keyId};
-        const jwk = params.publicJwk ?? await client.getPublicJwk(userspaceId, keyId);
+    /** Wraps the key of a wallet. Only its public JWK is fetched, unless already known. */
+    static async fromWallet(wallet: KmsWalletClient, publicJwk?: SignatureJwk): Promise<KmsPrivateSignatureKey> {
+        const jwk = publicJwk ?? await wallet.getPublicJwk();
         const algorithm = resolveJwkSignatureAlgorithm(jwk);
         JwkFilter.toPublicJwk(jwk, algorithm);
-        const publicJwk = sortJwkMembers({...JwkFilter.stripPrivateMembers(jwk).jwk});
+        const sanitized = sortJwkMembers({...JwkFilter.stripPrivateMembers(jwk).jwk});
         const signer: JwkSigner = {
             get privateKeyBytes(): Uint8Array {
                 throw new Error(NON_EXPORTABLE);
             },
-            sign: (data: Uint8Array) => client.signRaw(userspaceId, keyId, data),
+            sign: (data: Uint8Array) => wallet.signRaw(data),
         };
         return new KmsPrivateSignatureKey(
-            algorithm, publicJwk, signer, JwkSignatureScheme.forJwk(algorithm, publicJwk), client, reference);
+            algorithm, sanitized, signer, JwkSignatureScheme.forJwk(algorithm, sanitized),
+            {walletId: wallet.walletId});
     }
 
-    /** Creates a new server-managed key through a KMS plugin, and wraps it. */
-    static async create(params: {
-        client: CarmentisKmsClient;
-        userspaceId: string;
-        pluginId: string;
-        label?: string;
-        params?: Record<string, unknown>;
-    }): Promise<KmsPrivateSignatureKey> {
-        const key = await params.client.createKey(params.userspaceId, {
-            pluginId: params.pluginId,
-            label: params.label,
-            params: params.params,
-        });
-        return KmsPrivateSignatureKey.fromKmsKey({
-            client: params.client,
-            userspaceId: params.userspaceId,
-            keyId: key.id,
-            publicJwk: key.publicJwk,
-        });
-    }
-
-    getKmsReference(): KmsKeyReference {
+    getKmsReference(): KmsWalletReference {
         return {...this.reference};
     }
 
