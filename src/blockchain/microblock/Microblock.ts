@@ -471,7 +471,8 @@ export class Microblock {
                 sections: this.sections
             }
         };
-        const microblockData = encode(v.parse(MicroblockStructSchema, microblock));
+        const microblockData = BlockchainUtils.encodeMicroblockStruct(v.parse(MicroblockStructSchema, microblock));
+        //const microblockData = encode(v.parse(MicroblockStructSchema, microblock));
         return {microblockHash, headerData, bodyHash, bodyData, microblockData};
     }
 
