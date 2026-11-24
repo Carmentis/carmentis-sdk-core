@@ -133,7 +133,7 @@ export class ProofRecord {
             }
             for (const entry of channel.leaves) {
                 if (entry === null) continue;
-                channel.tree.setLeaf(entry.index, entry.leaf.getHash());
+                channel.tree.setLeaf(entry.index, entry.leaf.getHash(entry.path));
             }
             channel.tree.finalize(channel.nLeaves);
             channel.tree.setWitnesses(channel.witnesses);
